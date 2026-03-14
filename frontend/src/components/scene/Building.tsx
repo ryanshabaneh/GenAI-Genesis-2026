@@ -19,9 +19,9 @@ import type { BuildingId } from '@/types'
 // Scanning overrides all of these with cyan — checked before this lookup.
 const STAGE_COLORS: Record<string, string> = {
   foundation: '#6B7A94', // --fog
-  frame:      '#4A78D4', // --amber (mid blue)
-  halfBuilt:  '#4A78D4', // --amber
-  almostDone: '#4A78D4', // --amber
+  frame:      '#4A78D4', // --blue
+  halfBuilt:  '#4A78D4', // --blue
+  almostDone: '#4A78D4', // --blue
   complete:   '#3ECFB2', // --teal
 }
 

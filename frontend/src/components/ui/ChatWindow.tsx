@@ -91,12 +91,12 @@ export default function ChatWindow({ buildingId }: { buildingId: BuildingId }) {
           onKeyDown={handleKeyDown}
           placeholder="Ask the agent…"
           disabled={isLoading}
-          className="flex-1 bg-surface2 text-white text-xs font-ui rounded-[10px] px-3 py-2 resize-none border border-white/10 focus:outline-none focus:border-amber/40 placeholder:text-fog transition-colors duration-[120ms]"
+          className="flex-1 bg-surface2 text-white text-xs font-ui rounded-[10px] px-3 py-2 resize-none border border-white/10 focus:outline-none focus:border-blue/40 placeholder:text-fog transition-colors duration-[120ms]"
         />
         <button
           onClick={() => void handleSend()}
           disabled={isLoading || !input.trim()}
-          className="self-end px-3 py-2 rounded-[999px] bg-amber text-ink text-xs font-display font-black transition-all duration-[120ms] active:scale-[0.97] disabled:opacity-40 disabled:pointer-events-none btn-fx-shimmer"
+          className="self-end px-3 py-2 rounded-[999px] bg-blue text-ink text-xs font-display font-black transition-all duration-[120ms] active:scale-[0.97] disabled:opacity-40 disabled:pointer-events-none btn-fx-shimmer"
         >
           Send
         </button>

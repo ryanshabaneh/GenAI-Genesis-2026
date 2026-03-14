@@ -44,7 +44,7 @@ export default function ScoreBar() {
       </div>
       <div className="w-full bg-surface3 rounded-full h-1">
         <div
-          className={`h-1 rounded-full transition-all duration-[380ms] ease-in-out ${isComplete ? 'bg-teal' : 'bg-amber'}`}
+          className={`h-1 rounded-full transition-all duration-[380ms] ease-in-out ${isComplete ? 'bg-teal' : 'bg-blue'}`}
           style={{ width: `${score}%` }}
         />
       </div>

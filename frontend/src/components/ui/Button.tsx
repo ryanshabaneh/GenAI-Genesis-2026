@@ -25,17 +25,17 @@ type ButtonProps = AsButton | AsLink
 
 const VARIANT_CLASSES = {
   primary: [
-    'bg-amber text-ink font-display font-black',
+    'bg-blue text-ink font-display font-black',
     'hover:brightness-110 hover:-translate-y-0.5',
     'active:scale-[0.97] active:brightness-90',
-    'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber',
+    'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue',
     'disabled:opacity-40 disabled:pointer-events-none',
   ],
   ghost: [
     'bg-surface2 text-white font-ui font-semibold border border-white/[0.12]',
     'hover:bg-surface3 hover:border-white/[0.2] hover:-translate-y-0.5',
     'active:scale-[0.97]',
-    'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber',
+    'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue',
     'disabled:opacity-40 disabled:pointer-events-none',
   ],
 }

@@ -64,7 +64,7 @@ export default function CodePreview({ codeBlock, buildingId, onAccepted, onRejec
               </button>
               <button
                 onClick={handleAccept}
-                className="text-[11px] px-2.5 py-1 rounded-[999px] bg-amber text-ink font-display font-black transition-all duration-[120ms] active:scale-[0.97] btn-fx-gradient-shift"
+                className="text-[11px] px-2.5 py-1 rounded-[999px] bg-blue text-ink font-display font-black transition-all duration-[120ms] active:scale-[0.97] btn-fx-gradient-shift"
               >
                 Accept
               </button>

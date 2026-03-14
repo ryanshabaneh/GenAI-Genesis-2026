@@ -17,7 +17,7 @@ interface BubblyButtonProps {
 export default function BubblyButton({
   label,
   onClick,
-  color = 'var(--amber)',
+  color = 'var(--blue)',
   className = '',
 }: BubblyButtonProps) {
   const [animating, setAnimating] = useState(false)

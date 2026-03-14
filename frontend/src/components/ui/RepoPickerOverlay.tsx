@@ -60,7 +60,7 @@ export default function RepoPickerOverlay({ scanError = false }: { scanError?: b
           Pick a repo to survey.
         </h2>
         {scanError
-          ? <p className="text-amber text-sm mt-1">Something went wrong on our end — try again?</p>
+          ? <p className="text-blue text-sm mt-1">Something went wrong on our end — try again?</p>
           : <p className="text-fog-light text-sm mt-1">Your city awaits.</p>
         }
       </div>
@@ -88,10 +88,10 @@ export default function RepoPickerOverlay({ scanError = false }: { scanError?: b
               placeholder="github.com/user/repo"
               disabled={isScanning}
               className={`w-full px-3 py-2.5 rounded-[10px] bg-surface2 border text-white text-sm font-mono placeholder:text-fog focus:outline-none transition-colors duration-fast ${
-                urlError ? 'border-amber' : 'border-white/10 focus:border-amber/40'
+                urlError ? 'border-blue' : 'border-white/10 focus:border-blue/40'
               }`}
             />
-            {urlError && <p className="text-amber text-xs">{urlError}</p>}
+            {urlError && <p className="text-blue text-xs">{urlError}</p>}
             <Button
               type="submit"
               effect="shimmer"
@@ -120,7 +120,7 @@ export default function RepoPickerOverlay({ scanError = false }: { scanError?: b
             value={repoSearch}
             onChange={e => setRepoSearch(e.target.value)}
             placeholder="Search repos…"
-            className="w-full px-3 py-2 rounded-[10px] bg-surface2 border border-white/10 text-white text-sm font-mono placeholder:text-fog focus:outline-none focus:border-amber/40 transition-colors duration-fast"
+            className="w-full px-3 py-2 rounded-[10px] bg-surface2 border border-white/10 text-white text-sm font-mono placeholder:text-fog focus:outline-none focus:border-blue/40 transition-colors duration-fast"
           />
 
           <div className="flex flex-col gap-1.5 overflow-y-auto max-h-48 mt-auto">
@@ -135,10 +135,10 @@ export default function RepoPickerOverlay({ scanError = false }: { scanError?: b
                 key={repo.fullName}
                 onClick={() => handleOwnRepo(repo.fullName)}
                 disabled={isScanning}
-                className="flex items-center justify-between px-3 py-2.5 rounded-[10px] bg-surface2 border border-white/5 hover:border-amber-border hover:bg-surface3 text-left transition-all duration-fast group disabled:opacity-40"
+                className="flex items-center justify-between px-3 py-2.5 rounded-[10px] bg-surface2 border border-white/5 hover:border-blue-border hover:bg-surface3 text-left transition-all duration-fast group disabled:opacity-40"
               >
                 <div className="min-w-0">
-                  <p className="text-white text-sm font-mono truncate group-hover:text-amber transition-colors duration-fast">
+                  <p className="text-white text-sm font-mono truncate group-hover:text-blue transition-colors duration-fast">
                     {repo.fullName.split('/')[1]}
                   </p>
                   {repo.description && (

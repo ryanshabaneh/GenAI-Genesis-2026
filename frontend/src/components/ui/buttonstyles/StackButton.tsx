@@ -11,7 +11,7 @@ interface StackButtonProps {
 export default function StackButton({
   icon,
   onClick,
-  color = 'var(--amber)',
+  color = 'var(--blue)',
   size = 60,
   className = '',
 }: StackButtonProps) {
