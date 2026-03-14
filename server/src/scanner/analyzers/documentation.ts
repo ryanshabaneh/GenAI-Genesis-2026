@@ -7,8 +7,8 @@ const README_NAMES = ['README.md', 'README.MD', 'readme.md', 'Readme.md']
 const SETUP_KEYWORDS = ['install', 'setup', 'usage', 'getting started', 'quick start']
 const BADGE_PATTERN = /!\[.*?\]\(https?:\/\/.*?(badge|shield|img\.shields)/i
 
-export const readmeAnalyzer: Analyzer = {
-  buildingId: 'readme',
+export const documentationAnalyzer: Analyzer = {
+  buildingId: 'documentation',
 
   async analyze(ctx: AnalyzerContext): Promise<AnalyzerResult> {
     let readmeContent: string | null = null
@@ -29,16 +29,16 @@ export const readmeAnalyzer: Analyzer = {
     const hasBadges = exists && BADGE_PATTERN.test(readmeContent ?? '')
 
     const tasks: Task[] = [
-      { id: 'readme-exists', label: 'README file exists', done: exists },
-      { id: 'readme-setup', label: 'Includes setup/usage instructions', done: hasSetup },
-      { id: 'readme-description', label: 'Has a meaningful description', done: hasDescription },
-      { id: 'readme-badges', label: 'Includes badges or shields', done: hasBadges },
+      { id: 'docs-exists', label: 'README file exists', done: exists },
+      { id: 'docs-setup', label: 'Includes setup/usage instructions', done: hasSetup },
+      { id: 'docs-description', label: 'Has a meaningful description', done: hasDescription },
+      { id: 'docs-badges', label: 'Includes badges or shields', done: hasBadges },
     ]
 
     const percent = tasks.filter((t) => t.done).length * 25
 
     return {
-      buildingId: 'readme',
+      buildingId: 'documentation',
       percent,
       tasks,
       details: { exists, hasSetup, hasDescription, hasBadges },

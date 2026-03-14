@@ -40,6 +40,7 @@ When a version is released, rename `[Unreleased]` to the version number and date
 - Initial project scaffold: frontend (Next.js) and server directories — `main`
 - CHANGELOG with contribution requirements for branch and merge tracking — `main`
 - Per-entry branch attribution format added to CHANGELOG — `main`
+- Per-entry branch attribution format added to CHANGELOG — `main`
 - Express + Socket.IO server with CORS, JSON parsing, and global error handling — `infra-branch`
 - `POST /api/scan` endpoint: accepts a GitHub URL, creates a session, returns sessionId immediately, runs clone + scan in background — `infra-branch`
 - `POST /api/chat` endpoint: routes messages to the specialist AI agent for a given building — `infra-branch`
@@ -54,3 +55,15 @@ When a version is released, rename `[Unreleased]` to the version number and date
 
 ### Changed
 - Updated `@anthropic-ai/sdk` from `^0.34.0` to `^0.78.0` to match latest available version — `infra-branch`
+
+- GitHub OAuth flow: session-based auth with token stored server-side, never exposed to frontend — `frontend`
+- `GET /api/auth/github`, `/callback`, `/me`, `/logout` endpoints — `frontend`
+- `express-session` middleware with httpOnly cookie — `frontend`
+- `GitHubUser` type shared across server and frontend — `frontend`
+- `useAuth` hook and `GitHubAuthButton` component — `frontend`
+- `githubUser` state added to Zustand store — `frontend`
+- `.env.local.example` for frontend environment setup — `frontend`
+
+### Changed
+- Updated `@anthropic-ai/sdk` to `^0.78.0` (previous version `^0.34.0` did not exist in registry) — `frontend`
+- `server/.env.example` updated with `GITHUB_CLIENT_ID`, `GITHUB_CLIENT_SECRET`, `SESSION_SECRET`, `BACKEND_URL` — `frontend`

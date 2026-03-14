@@ -9,17 +9,11 @@ export type BuildingId =
   | 'tests'
   | 'cicd'
   | 'docker'
-  | 'readme'
-  | 'errorHandling'
+  | 'documentation'
   | 'envVars'
-  | 'logging'
-  | 'linting'
-  | 'license'
   | 'security'
-  | 'healthCheck'
-  | 'scripts'
+  | 'logging'
   | 'deployment'
-  | 'hosting'
 
 export interface Task {
   id: string

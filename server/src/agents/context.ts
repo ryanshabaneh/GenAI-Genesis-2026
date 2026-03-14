@@ -5,16 +5,11 @@ import type { BuildingId } from '../types'
 // Files to read per building type — these are the starting points.
 // The context builder also follows imports from these files to find related code.
 const CONTEXT_FILES: Record<BuildingId, string[]> = {
-  scripts: ['package.json'],
   tests: ['package.json', 'src', 'tests', '__tests__'],
   cicd: ['.github/workflows', 'package.json'],
   docker: ['Dockerfile', 'docker-compose.yml', 'docker-compose.yaml', '.dockerignore', 'package.json'],
-  readme: ['README.md', 'package.json'],
-  errorHandling: ['src', 'package.json'],
+  documentation: ['README.md', 'package.json'],
   envVars: ['.env.example', 'package.json', 'src'],
-  logging: ['src', 'package.json'],
-  linting: ['.eslintrc.json', '.eslintrc.js', 'eslint.config.js', 'eslint.config.mjs', '.prettierrc', 'package.json'],
-  license: ['LICENSE', 'package.json'],
   security: ['.gitignore', '.env.example', 'package.json'],
   healthCheck: ['src', 'package.json'],
   deployment: ['vercel.json', 'fly.toml', 'railway.toml', 'render.yaml', 'Procfile', 'Dockerfile', 'package.json', 'netlify.toml', 'wrangler.toml'],

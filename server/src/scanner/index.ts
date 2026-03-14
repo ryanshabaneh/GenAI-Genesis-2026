@@ -3,38 +3,26 @@ import path from 'path'
 import type { Server as SocketIOServer } from 'socket.io'
 import type { AnalyzerContext } from './analyzers/base'
 import type { AnalyzerResult } from '../types'
-import { scriptsAnalyzer } from './analyzers/scripts'
-import { readmeAnalyzer } from './analyzers/readme'
-import { lintingAnalyzer } from './analyzers/linting'
-import { licenseAnalyzer } from './analyzers/license'
 import { testsAnalyzer } from './analyzers/tests'
-import { envVarsAnalyzer } from './analyzers/envVars'
-import { securityAnalyzer } from './analyzers/security'
-import { errorHandlingAnalyzer } from './analyzers/errorHandling'
-import { loggingAnalyzer } from './analyzers/logging'
 import { cicdAnalyzer } from './analyzers/cicd'
 import { dockerAnalyzer } from './analyzers/docker'
-import { healthCheckAnalyzer } from './analyzers/healthCheck'
+import { documentationAnalyzer } from './analyzers/documentation'
+import { envVarsAnalyzer } from './analyzers/envVars'
+import { securityAnalyzer } from './analyzers/security'
+import { loggingAnalyzer } from './analyzers/logging'
 import { deploymentAnalyzer } from './analyzers/deployment'
-import { hostingAnalyzer } from './analyzers/hosting'
 import { getSession, updateSession } from '../session/store'
 
-// Run order: roads (scripts) first, hosting last
+// The 8 buildings from the execution plan
 const ANALYZERS = [
-  scriptsAnalyzer,
-  readmeAnalyzer,
-  lintingAnalyzer,
-  licenseAnalyzer,
+  documentationAnalyzer,
   testsAnalyzer,
   envVarsAnalyzer,
   securityAnalyzer,
-  errorHandlingAnalyzer,
   loggingAnalyzer,
   cicdAnalyzer,
   dockerAnalyzer,
-  healthCheckAnalyzer,
   deploymentAnalyzer,
-  hostingAnalyzer,
 ]
 
 async function loadPackageJson(repoPath: string): Promise<Record<string, unknown> | null> {
