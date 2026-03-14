@@ -14,6 +14,7 @@ export async function startScan(repoUrl: string): Promise<{ sessionId: string }>
   const res = await fetch(`${API_BASE}/api/scan`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
     body: JSON.stringify({ repoUrl }),
   })
   if (!res.ok) {
@@ -34,6 +35,7 @@ export async function sendChatMessage(params: {
   const res = await fetch(`${API_BASE}/api/chat`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
     body: JSON.stringify(params),
   })
   if (!res.ok) {
@@ -54,6 +56,7 @@ export async function acceptChange(params: {
   const res = await fetch(`${API_BASE}/api/accept`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
     body: JSON.stringify(params),
   })
   if (!res.ok) {
@@ -72,6 +75,7 @@ export async function exportChanges(params: {
   const res = await fetch(`${API_BASE}/api/export`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
     body: JSON.stringify(params),
   })
   if (!res.ok) {
@@ -79,4 +83,53 @@ export async function exportChanges(params: {
     throw new Error(`Export failed: ${text}`)
   }
   return res.blob()
+}
+
+// POST /api/implement — runs the aider + evaluator loop for the given tasks.
+// Progress streams via Socket.IO; this resolves once the full loop is done.
+export async function implementTasks(params: {
+  sessionId: string
+  buildingId: BuildingId
+  taskIds: string[]
+  message?: string
+}): Promise<{ success: boolean; completedTaskIds: string[]; percent: number; score: number }> {
+  const res = await fetch(`${API_BASE}/api/implement`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify(params),
+  })
+  if (!res.ok) {
+    const text = await res.text()
+    throw new Error(`Implement failed: ${text}`)
+  }
+  return res.json() as Promise<{ success: boolean; completedTaskIds: string[]; percent: number; score: number }>
+}
+
+// POST /api/evaluate — checks which tasks are now fulfilled in the repo.
+// Returns per-task pass/fail with feedback and the updated percent + score.
+export async function evaluateTasks(params: {
+  sessionId: string
+  buildingId: BuildingId
+  taskIds?: string[]
+}): Promise<{
+  results: Array<{ taskId: string; pass: boolean; feedback?: string; summary?: string }>
+  percent: number
+  score: number
+}> {
+  const res = await fetch(`${API_BASE}/api/evaluate`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify(params),
+  })
+  if (!res.ok) {
+    const text = await res.text()
+    throw new Error(`Evaluate failed: ${text}`)
+  }
+  return res.json() as Promise<{
+    results: Array<{ taskId: string; pass: boolean; feedback?: string; summary?: string }>
+    percent: number
+    score: number
+  }>
 }

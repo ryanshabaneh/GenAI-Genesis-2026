@@ -5,6 +5,8 @@ import { BUILDINGS } from '@/lib/buildings'
 import { percentToStage } from '@/lib/stages'
 import TaskChecklist from './TaskChecklist'
 import ChatWindow from './ChatWindow'
+import Button from './Button'
+import { useImplement } from '@/hooks/useImplement'
 
 export default function BuildingPanel() {
   const activeBuilding = useStore((s) => s.activeBuilding)
@@ -20,6 +22,9 @@ export default function BuildingPanel() {
 
   const progressColor = isComplete ? 'bg-teal' : 'bg-blue'
   const percentColor  = isComplete ? 'text-teal' : 'text-blue'
+
+  // Pending task IDs for implement/evaluate actions
+  const pendingTaskIds = state.tasks.filter((t) => !t.done).map((t) => t.id)
 
   return (
     <div className="absolute right-4 top-4 bottom-4 w-80 flex flex-col overlay rounded-[18px] animate-slide-in-right overflow-hidden">
@@ -68,6 +73,11 @@ export default function BuildingPanel() {
           Checklist
         </p>
         <TaskChecklist tasks={state.tasks} />
+
+        {/* Implement / Evaluate actions */}
+        {pendingTaskIds.length > 0 && (
+          <ImplementActions buildingId={activeBuilding} pendingTaskIds={pendingTaskIds} />
+        )}
       </div>
 
       {/* Chat — fills remaining height */}
@@ -75,6 +85,37 @@ export default function BuildingPanel() {
         <ChatWindow buildingId={activeBuilding} />
       </div>
 
+    </div>
+  )
+}
+
+function ImplementActions({
+  buildingId,
+  pendingTaskIds,
+}: {
+  buildingId: import('@/types').BuildingId
+  pendingTaskIds: string[]
+}) {
+  const { runImplement, runEvaluate, isRunning } = useImplement(buildingId)
+
+  return (
+    <div className="flex gap-2 mt-3">
+      <Button
+        variant="primary"
+        disabled={isRunning}
+        onClick={() => runImplement(pendingTaskIds)}
+        className="flex-1 !px-3 !py-2 text-xs"
+      >
+        {isRunning ? 'Working…' : 'Auto-fix'}
+      </Button>
+      <Button
+        variant="ghost"
+        disabled={isRunning}
+        onClick={() => runEvaluate(pendingTaskIds)}
+        className="flex-1 !px-3 !py-2 text-xs"
+      >
+        Evaluate
+      </Button>
     </div>
   )
 }

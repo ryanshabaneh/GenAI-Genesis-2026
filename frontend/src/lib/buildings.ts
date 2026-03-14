@@ -37,7 +37,6 @@ export const BUILDINGS: BuildingConfig[] = [
   {
     id: 'documentation',
     name: 'Town Hall',
-    emoji: '🏛️',
     category: 'Documentation',
     description: 'Checks README quality: description, setup instructions, badges',
     position: [-3, 0, 1],
@@ -62,7 +61,7 @@ export const BUILDINGS: BuildingConfig[] = [
   {
     id: 'logging',
     name: 'Watchtower',
-    emoji: '🗼',
+  
     category: 'Logging',
     description: 'Checks for structured logging library and absence of raw console.log',
     position: [0, 0, 4],

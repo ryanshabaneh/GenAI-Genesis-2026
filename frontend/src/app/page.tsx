@@ -12,6 +12,7 @@ import BuildingPanel from '@/components/ui/BuildingPanel'
 import ScanProgress from '@/components/ui/ScanProgress'
 
 import CityStub from '@/components/scene/CityStub'
+import { SocketProvider } from '@/contexts/SocketContext'
 
 const VillageScene = dynamic(() => import('@/components/scene/Village'), {
   ssr: false,
@@ -25,6 +26,7 @@ export default function HomePage() {
   const scanStatus = useStore((s) => s.scanStatus)
 
   return (
+    <SocketProvider>
     <main className="relative w-screen h-screen overflow-hidden bg-ink">
       {/* City — always in background */}
       <div className="absolute inset-0">
@@ -53,5 +55,6 @@ export default function HomePage() {
         </>
       )}
     </main>
+    </SocketProvider>
   )
 }
