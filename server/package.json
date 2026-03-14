@@ -1,0 +1,31 @@
+{
+  "name": "shipcity-server",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "nodemon --exec ts-node src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "express": "^4.21.2",
+    "socket.io": "^4.8.1",
+    "simple-git": "^3.27.0",
+    "@anthropic-ai/sdk": "^0.34.0",
+    "archiver": "^7.0.1",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "uuid": "^11.0.3"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.0",
+    "@types/cors": "^2.8.17",
+    "@types/archiver": "^6.0.3",
+    "@types/uuid": "^10.0.0",
+    "@types/node": "^22",
+    "typescript": "^5",
+    "ts-node": "^10.9.2",
+    "nodemon": "^3.1.9"
+  }
+}
