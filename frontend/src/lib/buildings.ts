@@ -61,7 +61,10 @@ export const BUILDINGS: BuildingConfig[] = [
   {
     id: 'logging',
     name: 'Watchtower',
+<<<<<<< HEAD
   
+=======
+>>>>>>> 6519381 (remove emoji fields from buildings config)
     category: 'Logging',
     description: 'Checks for structured logging library and absence of raw console.log',
     position: [0, 0, 4],
