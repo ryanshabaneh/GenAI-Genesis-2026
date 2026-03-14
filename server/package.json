@@ -6,12 +6,11 @@
     "dev": "nodemon --exec ts-node src/index.ts",
     "build": "tsc",
     "start": "node dist/index.js",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "dependencies": {
-    "express": "^4.21.2",
-    "socket.io": "^4.8.1",
-    "simple-git": "^3.27.0",
     "@anthropic-ai/sdk": "^0.78.0",
     "archiver": "^7.0.1",
     "cors": "^2.8.5",
@@ -31,6 +30,7 @@
     "@types/uuid": "^10.0.0",
     "nodemon": "^3.1.9",
     "ts-node": "^10.9.2",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^4.1.0"
   }
 }

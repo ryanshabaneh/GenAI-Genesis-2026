@@ -49,8 +49,8 @@ export async function sendChatMessage(params: {
 export async function acceptChange(params: {
   sessionId: string
   buildingId: BuildingId
-  files: { path: string; content: string }[]
-}): Promise<{ newPercent: number; tasks: Task[] }> {
+  files: { path: string; content: string; isNew: boolean }[]
+}): Promise<{ percent: number; tasks: Task[]; score: number }> {
   const res = await fetch(`${API_BASE}/api/accept`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -60,7 +60,7 @@ export async function acceptChange(params: {
     const text = await res.text()
     throw new Error(`Accept change failed: ${text}`)
   }
-  return res.json() as Promise<{ newPercent: number; tasks: Task[] }>
+  return res.json() as Promise<{ percent: number; tasks: Task[]; score: number }>
 }
 
 // POST /api/export — downloads all accepted changes for this session as a zip.

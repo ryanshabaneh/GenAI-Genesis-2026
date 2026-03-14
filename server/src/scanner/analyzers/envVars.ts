@@ -3,7 +3,9 @@ import path from 'path'
 import type { Analyzer, AnalyzerContext } from './base'
 import type { AnalyzerResult, Task } from '../../types'
 
-const DOTENV_DEPS = ['dotenv', 'dotenv-safe', 'dotenv-flow', 'env-var']
+const NODE_DOTENV_DEPS = ['dotenv', 'dotenv-safe', 'dotenv-flow', 'env-var']
+const PYTHON_DOTENV_DEPS = ['python-dotenv', 'environs', 'django-environ', 'decouple']
+const GO_DOTENV_MODS = ['github.com/joho/godotenv', 'github.com/caarlos0/env']
 
 function hasDepInPackageJson(pkg: Record<string, unknown> | null, names: string[]): boolean {
   if (!pkg) return false
@@ -14,11 +16,33 @@ function hasDepInPackageJson(pkg: Record<string, unknown> | null, names: string[
   return names.some((name) => name in deps)
 }
 
+function hasDotenvInRequirements(repoPath: string): boolean {
+  const reqFile = path.join(repoPath, 'requirements.txt')
+  if (!fs.existsSync(reqFile)) return false
+  try {
+    const content = fs.readFileSync(reqFile, 'utf8').toLowerCase()
+    return PYTHON_DOTENV_DEPS.some((d) => content.includes(d))
+  } catch { return false }
+}
+
+function hasDotenvInGoMod(repoPath: string): boolean {
+  const goMod = path.join(repoPath, 'go.mod')
+  if (!fs.existsSync(goMod)) return false
+  try {
+    const content = fs.readFileSync(goMod, 'utf8')
+    return GO_DOTENV_MODS.some((m) => content.includes(m))
+  } catch { return false }
+}
+
+const SOURCE_EXT = /\.[jt]sx?$|\.py$|\.go$|\.rb$/
+
 export const envVarsAnalyzer: Analyzer = {
   buildingId: 'envVars',
 
   async analyze(ctx: AnalyzerContext): Promise<AnalyzerResult> {
-    const hasEnvExample = fs.existsSync(path.join(ctx.repoPath, '.env.example'))
+    const hasEnvExample =
+      fs.existsSync(path.join(ctx.repoPath, '.env.example')) ||
+      fs.existsSync(path.join(ctx.repoPath, '.env.template'))
 
     let envInGitignore = false
     const gitignorePath = path.join(ctx.repoPath, '.gitignore')
@@ -27,43 +51,43 @@ export const envVarsAnalyzer: Analyzer = {
       envInGitignore = content.split('\n').some((line) => line.trim() === '.env')
     }
 
-    // Check for hardcoded localhost:PORT patterns (e.g., 'localhost:3000' literally in source)
-    // Simple heuristic — scan .js/.ts files in src/ for hardcoded localhost URLs
     let noHardcodedPorts = true
     const srcDir = path.join(ctx.repoPath, 'src')
-    if (fs.existsSync(srcDir)) {
-      const checkDir = (dir: string) => {
-        let entries: fs.Dirent[]
-        try {
-          entries = fs.readdirSync(dir, { withFileTypes: true })
-        } catch {
-          return
-        }
-        for (const entry of entries) {
-          if (entry.name === 'node_modules') continue
-          const full = path.join(dir, entry.name)
-          if (entry.isDirectory()) {
-            checkDir(full)
-          } else if (entry.isFile() && /\.[jt]sx?$/.test(entry.name)) {
-            try {
-              const src = fs.readFileSync(full, 'utf8')
-              if (/localhost:\d{4,5}/.test(src)) {
-                noHardcodedPorts = false
-              }
-            } catch { /* ignore */ }
-          }
+    const searchDir = fs.existsSync(srcDir) ? srcDir : ctx.repoPath
+    const checkDir = (dir: string) => {
+      let entries: fs.Dirent[]
+      try {
+        entries = fs.readdirSync(dir, { withFileTypes: true })
+      } catch {
+        return
+      }
+      for (const entry of entries) {
+        if (entry.name === 'node_modules' || entry.name === '.git') continue
+        const full = path.join(dir, entry.name)
+        if (entry.isDirectory()) {
+          checkDir(full)
+        } else if (entry.isFile() && SOURCE_EXT.test(entry.name)) {
+          try {
+            const src = fs.readFileSync(full, 'utf8')
+            if (/localhost:\d{4,5}/.test(src)) {
+              noHardcodedPorts = false
+            }
+          } catch { /* ignore */ }
         }
       }
-      checkDir(srcDir)
     }
+    checkDir(searchDir)
 
-    const hasDotenvDep = hasDepInPackageJson(ctx.packageJson, DOTENV_DEPS)
+    const hasDotenvDep =
+      hasDepInPackageJson(ctx.packageJson, NODE_DOTENV_DEPS) ||
+      hasDotenvInRequirements(ctx.repoPath) ||
+      hasDotenvInGoMod(ctx.repoPath)
 
     const tasks: Task[] = [
-      { id: 'env-example', label: '.env.example file exists', done: hasEnvExample },
+      { id: 'env-example', label: '.env.example or .env.template exists', done: hasEnvExample },
       { id: 'env-gitignore', label: '.env in .gitignore', done: envInGitignore },
       { id: 'env-no-hardcode', label: 'No hardcoded localhost ports in source', done: noHardcodedPorts },
-      { id: 'env-dotenv', label: 'dotenv or similar dep installed', done: hasDotenvDep },
+      { id: 'env-dotenv', label: 'dotenv or env management library installed', done: hasDotenvDep },
     ]
 
     const percent = tasks.filter((t) => t.done).length * 25
