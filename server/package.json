@@ -12,7 +12,7 @@
     "express": "^4.21.2",
     "socket.io": "^4.8.1",
     "simple-git": "^3.27.0",
-    "@anthropic-ai/sdk": "^0.34.0",
+    "@anthropic-ai/sdk": "^0.78.0",
     "archiver": "^7.0.1",
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",

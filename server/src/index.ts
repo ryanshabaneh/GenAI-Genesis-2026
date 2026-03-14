@@ -12,6 +12,7 @@ import cors from 'cors'
 import { Server as SocketIOServer } from 'socket.io'
 import scanRouter from './routes/scan'
 import chatRouter from './routes/chat'
+import acceptRouter from './routes/accept'
 import exportRouter from './routes/export'
 
 const PORT = process.env['PORT'] ? parseInt(process.env['PORT'], 10) : 3001
@@ -43,6 +44,7 @@ app.locals['io'] = io
 // Mount API routes
 app.use('/api/scan', scanRouter)
 app.use('/api/chat', chatRouter)
+app.use('/api/accept', acceptRouter)
 app.use('/api/export', exportRouter)
 
 // Health check — used by hosting platforms (Railway, Fly.io) to verify the process is alive
