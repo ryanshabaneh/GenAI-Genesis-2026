@@ -14,7 +14,7 @@ export default function ScanProgress() {
 
   return (
     <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-      <div className="overlay rounded-[18px] px-6 py-6 w-full max-w-sm pointer-events-auto animate-slide-up">
+      <div className="overlay rounded-[18px] px-6 py-6 w-full max-w-sm pointer-events-auto animate-slide-up hover-lift">
 
         {/* Header */}
         <div className="mb-4">
@@ -36,9 +36,9 @@ export default function ScanProgress() {
               <li
                 key={cfg.id}
                 className={clsx(
-                  'flex items-center justify-between px-3 py-2 rounded-[10px] text-sm transition-colors duration-[220ms]',
-                  isScanning && 'bg-cyan-dim border border-cyan-border',
-                  isDone     && 'bg-teal-dim border border-teal-border',
+                  'flex items-center justify-between px-3 py-2 rounded-[10px] text-sm transition-all duration-[220ms]',
+                  isScanning && 'bg-cyan-dim border border-cyan-border hover:scale-[1.02]',
+                  isDone     && 'bg-teal-dim border border-teal-border hover:scale-[1.02] hover:brightness-110',
                   !isScanning && !isDone && 'border border-transparent opacity-40'
                 )}
               >

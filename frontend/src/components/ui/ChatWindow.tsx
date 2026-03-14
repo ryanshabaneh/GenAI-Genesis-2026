@@ -96,7 +96,7 @@ export default function ChatWindow({ buildingId }: { buildingId: BuildingId }) {
         <button
           onClick={() => void handleSend()}
           disabled={isLoading || !input.trim()}
-          className="self-end px-3 py-2 rounded-[999px] bg-amber text-ink text-xs font-display font-black transition-all duration-[120ms] hover:brightness-110 hover:-translate-y-0.5 active:scale-[0.97] disabled:opacity-40 disabled:pointer-events-none"
+          className="self-end px-3 py-2 rounded-[999px] bg-amber text-ink text-xs font-display font-black transition-all duration-[120ms] active:scale-[0.97] disabled:opacity-40 disabled:pointer-events-none btn-fx-shimmer"
         >
           Send
         </button>

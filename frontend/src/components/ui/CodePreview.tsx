@@ -50,13 +50,13 @@ export default function CodePreview({ codeBlock, buildingId, onAccepted, onRejec
             <>
               <button
                 onClick={handleReject}
-                className="text-[11px] px-2.5 py-1 rounded-[999px] border border-white/10 text-fog hover:text-white hover:border-white/20 font-display font-black transition-all duration-[120ms]"
+                className="text-[11px] px-2.5 py-1 rounded-[999px] border border-white/10 text-fog font-display font-black transition-all duration-[120ms] active:scale-[0.97] btn-fx-glow"
               >
                 Skip
               </button>
               <button
                 onClick={handleAccept}
-                className="text-[11px] px-2.5 py-1 rounded-[999px] bg-amber text-ink font-display font-black transition-all duration-[120ms] hover:brightness-110 active:scale-[0.97]"
+                className="text-[11px] px-2.5 py-1 rounded-[999px] bg-amber text-ink font-display font-black transition-all duration-[120ms] active:scale-[0.97] btn-fx-gradient-shift"
               >
                 Accept
               </button>

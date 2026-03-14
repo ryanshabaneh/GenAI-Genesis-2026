@@ -8,7 +8,7 @@ export function GitHubAuthButton() {
   if (!githubUser) return null
 
   return (
-    <div className="flex items-center gap-2 px-3 py-1.5 overlay rounded-[999px]">
+    <div className="flex items-center gap-2 px-3 py-1.5 overlay rounded-[999px] hover-lift">
       <img
         src={githubUser.avatarUrl}
         alt={githubUser.login}
@@ -17,7 +17,7 @@ export function GitHubAuthButton() {
       <span className="text-white text-xs font-mono">{githubUser.login}</span>
       <button
         onClick={logout}
-        className="text-fog text-xs font-ui hover:text-white transition-colors duration-[120ms] ml-1"
+        className="text-fog text-xs font-ui transition-all duration-[120ms] ml-1 px-2 py-0.5 rounded-[999px] border border-transparent btn-fx-border-draw"
       >
         Sign out
       </button>

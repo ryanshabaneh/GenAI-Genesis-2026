@@ -7,7 +7,7 @@ export default function ScoreBar() {
   const isComplete = score === 100
 
   return (
-    <div className="absolute bottom-4 left-4 w-64 overlay rounded-[14px] px-4 py-3">
+    <div className="absolute bottom-4 left-4 w-64 overlay rounded-[14px] px-4 py-3 hover-lift">
       <div className="flex items-center justify-between mb-2">
         <span className="text-fog text-[10px] font-display font-black uppercase tracking-[1.5px]">
           Production Readiness
