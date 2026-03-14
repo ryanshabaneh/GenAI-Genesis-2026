@@ -6,6 +6,7 @@ import type { AnalyzerResult, Task } from '../../types'
 const DEPLOY_CONFIG_FILES = [
   'vercel.json',
   'railway.toml',
+  'railway.json',
   'fly.toml',
   'render.yaml',
   'netlify.toml',

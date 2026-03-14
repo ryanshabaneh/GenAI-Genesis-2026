@@ -10,16 +10,10 @@ export type BuildingId =
   | 'cicd'
   | 'docker'
   | 'readme'
-  | 'errorHandling'
   | 'envVars'
-  | 'logging'
-  | 'linting'
-  | 'license'
   | 'security'
-  | 'healthCheck'
-  | 'scripts'
+  | 'logging'
   | 'deployment'
-  | 'hosting'
 
 export interface Task {
   id: string

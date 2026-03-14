@@ -10,16 +10,10 @@ export type BuildingId =
   | 'cicd'
   | 'docker'
   | 'readme'
-  | 'errorHandling'
   | 'envVars'
-  | 'logging'
-  | 'linting'
-  | 'license'
   | 'security'
-  | 'healthCheck'
-  | 'scripts'
+  | 'logging'
   | 'deployment'
-  | 'hosting'
 
 // BuildingStatus drives the visual state of a building in the 3D scene.
 // 'idle' → hasn't been scanned yet; 'scanning' → in-flight; the rest reflect score.

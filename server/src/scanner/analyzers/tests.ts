@@ -4,7 +4,7 @@ import type { Analyzer, AnalyzerContext } from './base'
 import type { AnalyzerResult, Task } from '../../types'
 
 const TEST_DEPS = ['jest', 'vitest', 'mocha', '@jest/core', 'jasmine', 'ava']
-const TEST_FILE_PATTERNS = [/\.test\.[jt]sx?$/, /\.spec\.[jt]sx?$/]
+const TEST_FILE_PATTERNS = [/\.test\.[jt]sx?$/, /\.spec\.[jt]sx?$/, /^test_.+\.py$/, /^.+_test\.py$/]
 
 function hasTestDep(pkg: Record<string, unknown> | null): boolean {
   if (!pkg) return false

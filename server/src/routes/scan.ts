@@ -3,7 +3,7 @@
 // Returns the sessionId immediately (HTTP response) so the client can join
 // the WebSocket room, then runs the actual scan in the background via setImmediate.
 // This fire-and-forget pattern keeps the HTTP response fast while the scan
-// (clone + 14 analyzers) runs asynchronously and streams results over Socket.IO.
+// (clone + 8 analyzers) runs asynchronously and streams results over Socket.IO.
 
 import { Router } from 'express'
 import type { Request, Response } from 'express'

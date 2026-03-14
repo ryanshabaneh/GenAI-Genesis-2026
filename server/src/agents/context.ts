@@ -4,20 +4,14 @@ import type { BuildingId } from '../types'
 
 // Files to read per building type
 const CONTEXT_FILES: Record<BuildingId, string[]> = {
-  scripts: ['package.json'],
   tests: ['package.json', 'src', 'tests', '__tests__'],
   cicd: ['.github/workflows', 'package.json'],
   docker: ['Dockerfile', 'docker-compose.yml', 'docker-compose.yaml', '.dockerignore', 'package.json'],
   readme: ['README.md', 'package.json'],
-  errorHandling: ['src', 'package.json'],
   envVars: ['.env.example', 'package.json', 'src'],
-  logging: ['src', 'package.json'],
-  linting: ['.eslintrc.json', '.eslintrc.js', 'eslint.config.js', 'eslint.config.mjs', '.prettierrc', 'package.json'],
-  license: ['LICENSE', 'package.json'],
   security: ['.gitignore', '.env.example', 'package.json'],
-  healthCheck: ['src', 'package.json'],
-  deployment: ['vercel.json', 'fly.toml', 'railway.toml', 'Procfile', 'package.json'],
-  hosting: ['src/index.ts', 'src/index.js', 'src/app.ts', 'src/app.js', 'src/server.ts', 'src/server.js', 'package.json'],
+  logging: ['src', 'package.json'],
+  deployment: ['vercel.json', 'fly.toml', 'railway.toml', 'railway.json', 'Procfile', 'package.json'],
 }
 
 const MAX_FILE_SIZE = 8_000 // ~8KB per file to stay within context limits

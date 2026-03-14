@@ -5,7 +5,7 @@
 ## What it does
 
 - Paste a GitHub repo URL
-- ShipCity clones and scans it across 14 production-readiness categories
+- ShipCity clones and scans it across 8 production-readiness categories
 - Your score is visualized as a 3D island village
 - Click any building to chat with its AI agent, get real code suggestions, and accept changes
 - Export all accepted changes as a ZIP

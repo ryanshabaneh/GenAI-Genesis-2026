@@ -21,16 +21,10 @@ const ALL_BUILDING_IDS: BuildingId[] = [
   'cicd',
   'docker',
   'readme',
-  'errorHandling',
   'envVars',
-  'logging',
-  'linting',
-  'license',
   'security',
-  'healthCheck',
-  'scripts',
+  'logging',
   'deployment',
-  'hosting',
 ]
 
 // Creates a fresh idle BuildingState for every known building.
@@ -47,7 +41,7 @@ function makeInitialBuildings(): Record<BuildingId, BuildingState> {
         chatHistory: [],
       },
     ])
-  ) as Record<BuildingId, BuildingState>
+  ) as unknown as Record<BuildingId, BuildingState>
 }
 
 // --- Store shape ---
