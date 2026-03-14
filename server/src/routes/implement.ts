@@ -8,6 +8,7 @@ import type { Request, Response } from 'express'
 import type { BuildingId, Task } from '../types'
 import { getSession } from '../session/store'
 import { callAider, resetAiderChanges } from '../agents/aider'
+import { buildScannerPreprompt } from '../agents/scanner-context'
 
 const router = Router()
 
@@ -63,7 +64,9 @@ router.post('/', async (req: Request, res: Response): Promise<void> => {
   }
 
   try {
-    const taskDescription = buildTaskMessage(selectedTasks, message)
+    // Include scanner findings as preprompt so aider has full context
+    const scannerPreprompt = buildScannerPreprompt(buildingResult)
+    const taskDescription = `${scannerPreprompt}\n\n---\n\n${buildTaskMessage(selectedTasks, message)}`
 
     const result = await callAider({
       buildingId,

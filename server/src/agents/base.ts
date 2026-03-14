@@ -1,7 +1,8 @@
 import Anthropic from '@anthropic-ai/sdk'
-import type { AgentReply, BuildingId, Message } from '../types'
+import type { AgentReply, AnalyzerResult, BuildingId, Message } from '../types'
 import { AGENT_PROMPTS } from './prompts'
 import { buildAgentContext } from './context'
+import { buildScannerPreprompt } from './scanner-context'
 import { client } from './client'
 
 // Parse code blocks from assistant response text
@@ -34,13 +35,15 @@ export async function callAgent(params: {
   repoPath: string
   message: string
   history: Message[]
+  scanResult?: AnalyzerResult
 }): Promise<AgentReply> {
-  const { buildingId, repoPath, message, history } = params
+  const { buildingId, repoPath, message, history, scanResult } = params
 
   const systemPrompt = AGENT_PROMPTS[buildingId]
   const context = await buildAgentContext(buildingId, repoPath)
+  const scannerPreprompt = buildScannerPreprompt(scanResult)
 
-  const systemWithContext = `${systemPrompt}\n\n---\n\n${context}`
+  const systemWithContext = `${systemPrompt}\n\n---\n\n${scannerPreprompt ? scannerPreprompt + '\n\n---\n\n' : ''}${context}`
 
   // Map history to Anthropic message format
   const messages: Anthropic.MessageParam[] = [

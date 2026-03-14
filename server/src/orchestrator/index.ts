@@ -12,6 +12,7 @@ import { v4 as uuid } from 'uuid'
 import { getSession, updateSession } from '../session/store'
 import { callAider, resetAiderChanges } from '../agents/aider'
 import { callEvaluator } from '../agents/evaluator'
+import { buildScannerPreprompt, calculatePercent } from '../agents/scanner-context'
 import { addChange } from '../changes/queue'
 import type { AnalyzerResult, BuildingId } from '../types'
 
@@ -22,15 +23,16 @@ const MAX_ITERATIONS = 3
  * exactly which tasks to fix.
  */
 function craftTaskDescription(result: AnalyzerResult): string {
+  const scannerPreprompt = buildScannerPreprompt(result)
   const incomplete = result.tasks.filter((t) => !t.done)
   const lines = incomplete.map((t) => `- [ ] ${t.label}`)
 
-  return `The "${result.buildingId}" building scored ${result.percent}%. The following tasks are incomplete and need to be fixed:\n\n${lines.join('\n')}\n\nPlease implement ALL of these tasks. Edit existing files or create new ones as needed.`
+  return `${scannerPreprompt}\n\n---\n\nPlease implement ALL of these incomplete tasks:\n\n${lines.join('\n')}\n\nEdit existing files or create new ones as needed.`
 }
 
 /**
- * After auto-accepting code for a building, update the session results
- * to reflect the fix — bump percent to 100 and mark all tasks done.
+ * After auto-accepting code for a building, mark incomplete tasks as done
+ * and recalculate percent from the actual task completion ratio.
  */
 function markBuildingFixed(sessionId: string, buildingId: BuildingId): void {
   const session = getSession(sessionId)
@@ -39,13 +41,15 @@ function markBuildingFixed(sessionId: string, buildingId: BuildingId): void {
   const current = session.results[buildingId]
   if (!current) return
 
+  const updatedTasks = current.tasks.map((t) => ({ ...t, done: true }))
+
   updateSession(sessionId, {
     results: {
       ...session.results,
       [buildingId]: {
         ...current,
-        percent: 100,
-        tasks: current.tasks.map((t) => ({ ...t, done: true })),
+        percent: calculatePercent(updatedTasks),
+        tasks: updatedTasks,
       },
     },
   })

@@ -10,6 +10,7 @@ import { v4 as uuidv4 } from 'uuid'
 import type { BuildingId } from '../types'
 import { getSession, updateSession } from '../session/store'
 import { addChange } from '../changes/queue'
+import { calculatePercent } from '../agents/scanner-context'
 
 const router = Router()
 
@@ -59,10 +60,7 @@ router.post('/', (req: Request, res: Response): void => {
       }
     }
 
-    // Calculate percent from actual task completion ratio
-    const doneCount = updatedTasks.filter((t) => t.done).length
-    const totalCount = updatedTasks.length
-    const percent = totalCount > 0 ? Math.round((doneCount / totalCount) * 100) : 0
+    const percent = calculatePercent(updatedTasks)
 
     updateSession(sessionId, {
       results: {
