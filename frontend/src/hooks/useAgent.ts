@@ -41,7 +41,11 @@ export function useAgent(buildingId: BuildingId) {
         // Send the full history so the server-side agent has context for follow-up questions
         history: chatHistory,
       })
-      addMessage(buildingId, reply)
+      addMessage(buildingId, {
+        ...reply,
+        id: `msg-${Date.now()}-assistant`,
+        timestamp: Date.now(),
+      })
     } catch (err) {
       console.error('Agent chat error:', err)
       // Add a synthetic error message so the user knows something went wrong

@@ -10,3 +10,6 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .DS_Store
+
+# Analyzer unit tests (test against real repos instead)
+server/src/scanner/analyzers/__tests__/
