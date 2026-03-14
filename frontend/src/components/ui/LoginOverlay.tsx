@@ -5,6 +5,7 @@ import { motion } from 'framer-motion'
 import { useSearchParams } from 'next/navigation'
 import { FiGithub } from 'react-icons/fi'
 import { SplitHeader } from '@/components/text'
+import LighthouseLogo from '@/components/landing/LighthouseLogo'
 import GameModal from './GameModal'
 import BubblyButton from './buttonstyles/BubblyButton'
 import WaterButton from './buttonstyles/WaterButton'
@@ -26,27 +27,46 @@ export default function LoginOverlay() {
 
   return (
     <>
-      {/* landing — header + subheader + cube CTA, scooted up for city visibility */}
-      <div className="absolute inset-0 flex flex-col items-center justify-center gap-8 px-6 -translate-y-16">
+      {/* landing — header + subheader + CTA, shifted up to reveal more land */}
+      <div className="absolute inset-0 flex flex-col items-center justify-center px-6 -translate-y-32">
+
+        {/* glowing orbs rising from the bottom */}
+        <div className="absolute inset-0 pointer-events-none overflow-hidden">
+          {([
+            { size: 7,  left: '12%', delay: '0s',   dur: '9s'  },
+            { size: 13, left: '27%', delay: '2.5s', dur: '12s' },
+            { size: 5,  left: '48%', delay: '0.8s', dur: '7s'  },
+            { size: 10, left: '63%', delay: '4s',   dur: '10s' },
+            { size: 16, left: '80%', delay: '1.2s', dur: '14s' },
+            { size: 6,  left: '38%', delay: '6s',   dur: '8s'  },
+            { size: 9,  left: '90%', delay: '3s',   dur: '11s' },
+          ] as const).map((orb, i) => (
+            <div
+              key={i}
+              className="landing-orb"
+              style={{ width: orb.size, height: orb.size, left: orb.left, animationDelay: orb.delay, animationDuration: orb.dur }}
+            />
+          ))}
+        </div>
+
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.4 }}
-          className="flex flex-col items-center gap-4 text-center"
+          className="flex flex-col items-center text-center"
         >
           {/* logo mark */}
-          <div className="w-14 h-14 rounded-[16px] bg-amber flex items-center justify-center animate-bob glow-blue hover:scale-110 transition-transform duration-[150ms] cursor-pointer">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
-              <circle cx="12" cy="12" r="8" stroke="#090C12" strokeWidth="2.5"/>
-              <circle cx="12" cy="12" r="3" fill="#090C12"/>
-            </svg>
+          <div className="animate-bob" style={{ marginBottom: '2.5rem' }}>
+            <LighthouseLogo size={120} />
           </div>
 
-          <SplitHeader left="Ship" right="Crossing" />
+          <div style={{ marginBottom: '0.75rem' }}>
+            <SplitHeader left="Ship" right="Crossing" />
+          </div>
 
           <p
-            className="text-white/60 font-ui leading-relaxed max-w-xs"
-            style={{ fontSize: 'clamp(1rem, 2.2vw, 1.25rem)' }}
+            className="text-white/60 leading-relaxed max-w-xs"
+            style={{ fontSize: 'clamp(1rem, 2.2vw, 1.25rem)', marginBottom: '3rem', fontFamily: "'Gabarito', sans-serif", fontWeight: 400 }}
           >
             Every codebase deserves to ship.<br />Fix what's broken, then set sail.
           </p>
@@ -61,6 +81,7 @@ export default function LoginOverlay() {
           <WaterButton
             label="Cast Off"
             onClick={() => setIsAuthOpen(true)}
+            className="water-btn--lg"
           />
         </motion.div>
       </div>

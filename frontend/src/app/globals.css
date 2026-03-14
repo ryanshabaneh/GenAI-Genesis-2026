@@ -99,27 +99,27 @@
   font-size: 1rem; font-weight: 900;
   text-transform: uppercase; letter-spacing: 1.5px;
   color: #090C12;
-  background-color: var(--bubbly-color, var(--amber));
+  background-color: var(--bubbly-color, var(--blue));
   border-radius: 999px; border: none; cursor: pointer;
   position: relative;
   transition: box-shadow 0.25s ease, letter-spacing 0.25s ease, filter 0.25s ease;
-  box-shadow: 0 2px 24px color-mix(in srgb, var(--bubbly-color, var(--amber)) 50%, transparent);
+  box-shadow: 0 2px 24px color-mix(in srgb, var(--bubbly-color, var(--blue)) 50%, transparent);
 }
 .bubbly-btn:hover {
   letter-spacing: 3px;
   filter: brightness(1.15) saturate(1.2);
   box-shadow:
-    0 2px 12px color-mix(in srgb, var(--bubbly-color, var(--amber)) 70%, transparent),
-    0 0 32px color-mix(in srgb, var(--bubbly-color, var(--amber)) 45%, transparent),
-    0 0 64px color-mix(in srgb, var(--bubbly-color, var(--amber)) 20%, transparent);
+    0 2px 12px color-mix(in srgb, var(--bubbly-color, var(--blue)) 70%, transparent),
+    0 0 32px color-mix(in srgb, var(--bubbly-color, var(--blue)) 45%, transparent),
+    0 0 64px color-mix(in srgb, var(--bubbly-color, var(--blue)) 20%, transparent);
 }
 .bubbly-btn:active {
   transform: scale(0.93);
-  box-shadow: 0 1px 12px color-mix(in srgb, var(--bubbly-color, var(--amber)) 25%, transparent);
+  box-shadow: 0 1px 12px color-mix(in srgb, var(--bubbly-color, var(--blue)) 25%, transparent);
 }
 /* animated gradient variant — used for the github auth CTA */
 .bubbly-btn.bubbly-gradient {
-  background: linear-gradient(90deg, var(--amber), var(--teal), var(--cyan), var(--amber));
+  background: linear-gradient(90deg, var(--blue), var(--teal), var(--cyan), var(--blue));
   background-size: 300% auto;
   animation: gradient-shift 4s ease infinite;
 }
@@ -134,24 +134,24 @@
     radial-gradient(circle, var(--bubbly-color, var(--amber)) 20%, transparent 20%),
     radial-gradient(circle, transparent 20%, var(--bubbly-color, var(--amber)) 20%, transparent 30%),
     radial-gradient(circle, var(--bubbly-color, var(--amber)) 20%, transparent 20%),
-    radial-gradient(circle, var(--bubbly-color, var(--amber)) 20%, transparent 20%),
-    radial-gradient(circle, transparent 10%, var(--bubbly-color, var(--amber)) 15%, transparent 20%),
-    radial-gradient(circle, var(--bubbly-color, var(--amber)) 20%, transparent 20%),
-    radial-gradient(circle, var(--bubbly-color, var(--amber)) 20%, transparent 20%),
-    radial-gradient(circle, var(--bubbly-color, var(--amber)) 20%, transparent 20%),
-    radial-gradient(circle, var(--bubbly-color, var(--amber)) 20%, transparent 20%);
+    radial-gradient(circle, var(--bubbly-color, var(--blue)) 20%, transparent 20%),
+    radial-gradient(circle, transparent 10%, var(--bubbly-color, var(--blue)) 15%, transparent 20%),
+    radial-gradient(circle, var(--bubbly-color, var(--blue)) 20%, transparent 20%),
+    radial-gradient(circle, var(--bubbly-color, var(--blue)) 20%, transparent 20%),
+    radial-gradient(circle, var(--bubbly-color, var(--blue)) 20%, transparent 20%),
+    radial-gradient(circle, var(--bubbly-color, var(--blue)) 20%, transparent 20%);
   background-size: 10% 10%, 20% 20%, 15% 15%, 20% 20%, 18% 18%, 10% 10%, 15% 15%, 10% 10%, 18% 18%;
 }
 .bubbly-btn::after {
   bottom: -75%;
   background-image:
-    radial-gradient(circle, var(--bubbly-color, var(--amber)) 20%, transparent 20%),
-    radial-gradient(circle, var(--bubbly-color, var(--amber)) 20%, transparent 20%),
-    radial-gradient(circle, transparent 10%, var(--bubbly-color, var(--amber)) 15%, transparent 20%),
-    radial-gradient(circle, var(--bubbly-color, var(--amber)) 20%, transparent 20%),
-    radial-gradient(circle, var(--bubbly-color, var(--amber)) 20%, transparent 20%),
-    radial-gradient(circle, var(--bubbly-color, var(--amber)) 20%, transparent 20%),
-    radial-gradient(circle, var(--bubbly-color, var(--amber)) 20%, transparent 20%);
+    radial-gradient(circle, var(--bubbly-color, var(--blue)) 20%, transparent 20%),
+    radial-gradient(circle, var(--bubbly-color, var(--blue)) 20%, transparent 20%),
+    radial-gradient(circle, transparent 10%, var(--bubbly-color, var(--blue)) 15%, transparent 20%),
+    radial-gradient(circle, var(--bubbly-color, var(--blue)) 20%, transparent 20%),
+    radial-gradient(circle, var(--bubbly-color, var(--blue)) 20%, transparent 20%),
+    radial-gradient(circle, var(--bubbly-color, var(--blue)) 20%, transparent 20%),
+    radial-gradient(circle, var(--bubbly-color, var(--blue)) 20%, transparent 20%);
   background-size: 15% 15%, 20% 20%, 18% 18%, 20% 20%, 15% 15%, 10% 10%, 20% 20%;
 }
 .bubbly-btn.animate::before { display: block; animation: bubbly-top    0.7s ease-in-out forwards; }
@@ -240,6 +240,11 @@
 .cube-btn__face:nth-child(3) { transform: rotateX(-180deg) translateZ(25px); }
 .cube-btn__face:nth-child(4) { transform: rotateX(-270deg) translateZ(25px); }
 
+/* component: lighthouse logo beams */
+/* opacity 0 by default — .lighthouse-beam--active triggers the flicker */
+.lighthouse-beam { opacity: 0; }
+.lighthouse-beam--active { animation: lighthouse-flicker 4s ease-in-out infinite; }
+
 /* component: water button */
 /* 14px radius — pill clips the wave weirdly at rounded ends */
 /* <i> is the water body; top controls fill level; z-index 0 sits behind span */
@@ -313,6 +318,35 @@
   animation: water-wave 10s linear infinite;
 }
 
+/* landing orbs — glowing bubbles rising from the bottom */
+.landing-orb {
+  position: absolute;
+  bottom: -24px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, rgba(0, 212, 255, 0.45), rgba(74, 120, 212, 0.1));
+  box-shadow:
+    0 0 8px  rgba(0, 212, 255, 0.5),
+    0 0 20px rgba(74, 120, 212, 0.25);
+  animation: orb-rise linear infinite;
+  pointer-events: none;
+}
+@keyframes orb-rise {
+  0%   { transform: translateY(0)      translateX(0);    opacity: 0; }
+  8%   { opacity: 0.9; }
+  45%  { transform: translateY(-45vh)  translateX(18px); opacity: 0.7; }
+  90%  { transform: translateY(-95vh)  translateX(-8px); opacity: 0.2; }
+  100% { transform: translateY(-110vh) translateX(-8px); opacity: 0; }
+}
+
+/* water button — large variant for landing CTA */
+.water-btn--lg {
+  padding: 18px 58px;
+}
+.water-btn--lg span {
+  font-size: 17px;
+  letter-spacing: 4px;
+}
+
 /* keyframes */
 @keyframes fade-in        { from { opacity:0; transform:translateY(8px); }  to { opacity:1; transform:translateY(0); } }
 @keyframes slide-up       { from { opacity:0; transform:translateY(20px) scale(0.98); } to { opacity:1; transform:translateY(0) scale(1); } }
@@ -324,6 +358,23 @@
   0%,100% { transform:translate(0,0) scale(1); }
   33%      { transform:translate(20px,-14px) scale(1.04); }
   66%      { transform:translate(-14px,10px) scale(0.97); }
+}
+@keyframes lighthouse-flicker {
+  0%            { opacity: 0; }
+  18%           { opacity: 0; }
+  20%           { opacity: 0.9; }
+  24%           { opacity: 0.5; }
+  26%           { opacity: 0.85; }
+  30%, 55%      { opacity: 0.8; }
+  58%           { opacity: 0.15; }
+  60%           { opacity: 0.85; }
+  72%           { opacity: 0.7; }
+  75%           { opacity: 0.1; }
+  77%           { opacity: 0.8; }
+  88%, 92%      { opacity: 0.75; }
+  94%           { opacity: 0.2; }
+  96%           { opacity: 0.85; }
+  100%          { opacity: 0; }
 }
 @keyframes water-wave {
   0%   { transform: translate(-50%, -75%) rotate(0deg); }

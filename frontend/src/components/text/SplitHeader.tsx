@@ -1,11 +1,5 @@
 'use client'
 
-// split header — words slide from opposite sides, letters vary weight on hover
-// slide: word-level motion.span (x transform)
-// VariableProximity: letter-level fontVariationSettings — independent of slide
-// accentGradient (default true): right word uses animated teal→cyan gradient text
-// when false: falls back to solid accentColor + glow textShadow
-
 import { useRef } from 'react'
 import { motion } from 'framer-motion'
 import VariableProximity from './VariableProximity'
