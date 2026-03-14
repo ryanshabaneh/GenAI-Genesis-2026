@@ -1,0 +1,45 @@
+:root {
+
+  /* surfaces */
+  --ink:      #090C12;
+  --deep:     #0D1220;
+  --surface:  #141C2E;
+  --surface2: #1A2438;
+  --surface3: #202C44;
+
+  /* amber — primary/CTA/in-progress */
+  --amber:        #F5A623;
+  --amber-border: rgba(245,166,35,0.28);
+  --amber-dim:    rgba(245,166,35,0.11);
+
+  /* teal — complete/success */
+  --teal:        #3ECFB2;
+  --teal-border: rgba(62,207,178,0.28);
+  --teal-dim:    rgba(62,207,178,0.10);
+
+  /* cyan — scanning/agents */
+  --cyan:        #00D4FF;
+  --cyan-border: rgba(0,212,255,0.25);
+  --cyan-dim:    rgba(0,212,255,0.09);
+
+  /* purple — Scout NPC only */
+  --purple:        #A78BFA;
+  --purple-border: rgba(167,139,250,0.28);
+  --purple-dim:    rgba(167,139,250,0.10);
+
+  /* neutrals */
+  --fog:       #6B7A94;
+  --fog-light: #8A9BB8;
+  --white:     #F0F4FF;
+
+  /* motion */
+  --t-fast: 120ms ease;
+  --t-mid:  220ms ease;
+  --t-slow: 380ms ease;
+
+  /* fonts */
+  --font-display: 'Nunito', sans-serif;
+  --font-ui:      'Nunito', sans-serif;
+  --font-mono:    'JetBrains Mono', monospace;
+
+}
