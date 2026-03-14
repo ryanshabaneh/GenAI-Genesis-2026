@@ -7,6 +7,7 @@ import { FiGithub } from 'react-icons/fi'
 import { SplitHeader } from '@/components/text'
 import GameModal from './GameModal'
 import BubblyButton from './buttonstyles/BubblyButton'
+import WaterButton from './buttonstyles/WaterButton'
 
 const API_URL = process.env['NEXT_PUBLIC_API_URL'] ?? 'http://localhost:3001'
 
@@ -51,13 +52,13 @@ export default function LoginOverlay() {
           </p>
         </motion.div>
 
-        {/* bubbly CTA — triggers auth modal */}
+        {/* water CTA — triggers auth modal */}
         <motion.div
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3, duration: 0.4 }}
         >
-          <BubblyButton
+          <WaterButton
             label="Cast Off"
             onClick={() => setIsAuthOpen(true)}
           />
@@ -74,7 +75,7 @@ export default function LoginOverlay() {
           Connect GitHub
         </h3>
         <p className="text-white/60 text-sm font-ui mb-5">
-          Read-only access. We never write to your repo.
+          Read-only access. Until you need us.
         </p>
 
         {authError && (
@@ -87,7 +88,7 @@ export default function LoginOverlay() {
         <BubblyButton
           label="Cast Off with GitHub"
           onClick={() => setTimeout(() => { window.location.href = `${API_URL}/api/auth/github` }, 400)}
-          className="w-full"
+          className="w-full bubbly-gradient"
         />
       </GameModal>
     </>
