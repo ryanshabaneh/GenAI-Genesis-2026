@@ -1,20 +1,33 @@
-# 
+# ShipCity
 
- analyzes a GitHub repository and visualizes its production readiness as a 3D city. Each building represents a category (tests, CI/CD, Docker, logging, etc.) and grows taller as you improve it with help from specialized AI agents.
+ShipCity analyzes a GitHub repository and visualizes its production readiness as a 3D village. Each building represents a category (tests, CI/CD, Docker, logging, etc.) and grows taller as you improve it with help from specialized AI agents.
 
 ## What it does
 
-- Paste a GitHub repo URL
-- ShipCity clones and scans it across 8 production-readiness categories
-- Your score is visualized as a 3D island village
-- Click any building to chat with its AI agent, get real code suggestions, and accept changes
-- Export all accepted changes as a ZIP
+1. Paste a GitHub repo URL
+2. ShipCity clones it and runs 8 deterministic analyzers (tests, CI/CD, Docker, documentation, env vars, security, logging, deployment)
+3. Results stream live via WebSocket — buildings rise in real time as each analyzer finishes
+4. Click any building to chat with its specialized AI agent, get real generated code, and accept changes
+5. Export all accepted changes as a ZIP
+
+## The 8 buildings
+
+| Building | Category | What it checks |
+|---|---|---|
+| 🏫 School | Tests | Test framework, test files, test script, coverage ratio |
+| 🏭 Factory | CI/CD | GitHub Actions workflows, test step, build/deploy step |
+| 🚢 Shipping Dock | Docker | Dockerfile, .dockerignore, multi-stage build, docker-compose |
+| 🏛️ Town Hall | Documentation | README exists, description, setup instructions, usage section |
+| ⚡ Power Plant | Env Vars | .env.example, .env in .gitignore, no hardcoded secrets, process.env usage |
+| 🏦 Vault | Security | No exposed keys, .gitignore coverage, secret pattern detection |
+| 🗼 Watchtower | Logging | Logging library installed, imported, no raw console.log, structured logs |
+| 🚀 Launch Pad | Deployment | Deploy config, build script, start script, configurable PORT |
 
 ## Structure
 
 ```
-/frontend   — Next.js 15 app (React Three Fiber, Zustand, Socket.IO client)
-/server     — Express + Socket.IO backend (Claude API, analyzers, session store)
+/frontend   — Next.js app (React Three Fiber, Zustand, Socket.IO client)
+/server     — Express + Socket.IO backend (Claude API, analyzers, agents, session store)
 ```
 
 ## Setup
