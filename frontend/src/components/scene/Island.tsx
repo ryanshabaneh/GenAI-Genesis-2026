@@ -17,7 +17,8 @@ export default function Island() {
       receiveShadow
     >
       <planeGeometry args={[60, 60]} />
-      <meshLambertMaterial color="#4ade80" />
+      {/* muted dark green — matches ink-heavy UI rather than bright tailwind green */}
+      <meshLambertMaterial color="#1E3320" />
     </mesh>
   )
 }
