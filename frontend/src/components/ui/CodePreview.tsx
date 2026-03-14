@@ -1,18 +1,9 @@
 'use client'
 
-// components/ui/CodePreview.tsx
-// Renders a single file suggestion from the agent with Accept/Reject controls.
-// Uses Monaco Editor in read-only mode so the user can read the diff before deciding.
-// On Accept: calls /api/accept to persist the file to the server session so it
-// can be included in the zip export. On Reject: dims the card and marks it locally.
-// Local status state ('idle' | 'accepting' | 'accepted' | 'rejected') drives the UI
-// without touching the global store — this decision is ephemeral per message render.
-
 import { useState } from 'react'
 import Editor from '@monaco-editor/react'
 import { acceptChange } from '@/lib/api'
 import type { CodeBlock } from '@/types'
-import clsx from 'clsx'
 
 interface CodePreviewProps {
   codeBlock: CodeBlock
@@ -21,17 +12,11 @@ interface CodePreviewProps {
   onRejected?: (path: string) => void
 }
 
-export default function CodePreview({
-  codeBlock,
-  buildingId,
-  onAccepted,
-  onRejected,
-}: CodePreviewProps) {
+export default function CodePreview({ codeBlock, buildingId, onAccepted, onRejected }: CodePreviewProps) {
   const [status, setStatus] = useState<'idle' | 'accepting' | 'accepted' | 'rejected'>('idle')
 
   async function handleAccept() {
     setStatus('accepting')
-    // sessionId is stored in sessionStorage by useScan after the initial HTTP response
     const sessionId = sessionStorage.getItem('shipcity_session_id') ?? ''
     try {
       await acceptChange({
@@ -41,9 +26,7 @@ export default function CodePreview({
       })
       setStatus('accepted')
       onAccepted?.(codeBlock.path)
-    } catch (err) {
-      console.error('Accept change failed:', err)
-      // Reset to idle so the user can retry
+    } catch {
       setStatus('idle')
     }
   }
@@ -54,54 +37,60 @@ export default function CodePreview({
   }
 
   return (
-    <div className="rounded-lg overflow-hidden border border-gray-700 my-3">
-      {/* File path header with action buttons */}
-      <div className="flex items-center justify-between bg-gray-800 px-3 py-2">
-        <span className="text-xs font-mono text-blue-400">{codeBlock.path}</span>
-        {status === 'idle' && (
-          <div className="flex gap-2">
-            <button
-              onClick={handleAccept}
-              className="text-xs px-3 py-1 rounded bg-green-700 hover:bg-green-600 text-white font-semibold transition-colors"
-            >
-              Accept
-            </button>
-            <button
-              onClick={handleReject}
-              className="text-xs px-3 py-1 rounded bg-gray-700 hover:bg-gray-600 text-white transition-colors"
-            >
-              Reject
-            </button>
-          </div>
-        )}
-        {status === 'accepting' && (
-          <span className="text-xs text-gray-400">Saving…</span>
-        )}
-        {status === 'accepted' && (
-          <span className="text-xs text-green-400 font-semibold">Accepted ✓</span>
-        )}
-        {status === 'rejected' && (
-          <span className="text-xs text-gray-500">Rejected</span>
-        )}
+    <div className={`rounded-[10px] overflow-hidden border my-2 transition-opacity duration-[220ms] ${
+      status === 'rejected' ? 'border-white/5 opacity-40' : 'border-white/10'
+    }`}>
+
+      {/* Header */}
+      <div className="flex items-center justify-between bg-surface2 px-3 py-2 border-b border-white/[0.06]">
+        <span className="text-[11px] font-mono text-cyan truncate mr-3">{codeBlock.path}</span>
+
+        <div className="flex items-center gap-2 shrink-0">
+          {status === 'idle' && (
+            <>
+              <button
+                onClick={handleReject}
+                className="text-[11px] px-2.5 py-1 rounded-[999px] border border-white/10 text-fog hover:text-white hover:border-white/20 font-display font-black transition-all duration-[120ms]"
+              >
+                Skip
+              </button>
+              <button
+                onClick={handleAccept}
+                className="text-[11px] px-2.5 py-1 rounded-[999px] bg-amber text-ink font-display font-black transition-all duration-[120ms] hover:brightness-110 active:scale-[0.97]"
+              >
+                Accept
+              </button>
+            </>
+          )}
+          {status === 'accepting' && (
+            <span className="text-[11px] text-fog font-ui animate-scan-pulse">Applying…</span>
+          )}
+          {status === 'accepted' && (
+            <span className="text-[11px] text-teal font-display font-black">Applied ✓</span>
+          )}
+          {status === 'rejected' && (
+            <span className="text-[11px] text-fog font-ui">Skipped</span>
+          )}
+        </div>
       </div>
 
-      {/* Monaco editor — read-only so user reviews before accepting, not editing */}
-      {/* opacity-40 visually de-emphasizes rejected suggestions */}
-      <div className={clsx(status === 'rejected' && 'opacity-40')}>
-        <Editor
-          height="200px"
-          language={codeBlock.language}
-          value={codeBlock.content}
-          theme="vs-dark"
-          options={{
-            readOnly: true,
-            minimap: { enabled: false },
-            fontSize: 12,
-            scrollBeyondLastLine: false,
-            wordWrap: 'on',
-          }}
-        />
-      </div>
+      {/* Monaco — read-only review */}
+      <Editor
+        height="180px"
+        language={codeBlock.language}
+        value={codeBlock.content}
+        theme="vs-dark"
+        options={{
+          readOnly: true,
+          minimap: { enabled: false },
+          fontSize: 12,
+          scrollBeyondLastLine: false,
+          wordWrap: 'on',
+          lineNumbers: 'off',
+          renderLineHighlight: 'none',
+          padding: { top: 8, bottom: 8 },
+        }}
+      />
     </div>
   )
 }
