@@ -15,9 +15,11 @@ export function buildScannerPreprompt(result: AnalyzerResult | undefined): strin
 
   const { buildingId, percent, tasks, details } = result
 
-  const taskLines = tasks.map((t) =>
-    t.done ? `  [x] ${t.label} (id: ${t.id})` : `  [ ] ${t.label} (id: ${t.id})`
-  )
+  const taskLines = tasks.map((t) => {
+    if (t.done) return `  [x] ${t.label} (id: ${t.id})`
+    const fb = t.feedback ? ` — Last evaluation: ${t.feedback}` : ''
+    return `  [ ] ${t.label} (id: ${t.id})${fb}`
+  })
 
   const doneCount = tasks.filter((t) => t.done).length
   const totalCount = tasks.length

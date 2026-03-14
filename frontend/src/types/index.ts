@@ -23,6 +23,7 @@ export interface Task {
   id: string
   label: string
   done: boolean
+  feedback?: string
 }
 
 // BuildingState is the per-building slice of global store state.

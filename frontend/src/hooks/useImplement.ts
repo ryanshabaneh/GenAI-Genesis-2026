@@ -38,7 +38,10 @@ export function useImplement(buildingId: BuildingId) {
     setImplementStatus(buildingId, 'running')
     try {
       const result = await evaluateTasks({ sessionId, buildingId, taskIds })
-      setBuildingStatus(buildingId, { percent: result.percent })
+      setBuildingStatus(buildingId, {
+        percent: result.percent,
+        tasks: result.tasks,
+      })
       setScore(result.score)
     } catch (err) {
       console.error('[useImplement] evaluate failed:', err)

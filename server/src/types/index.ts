@@ -19,6 +19,7 @@ export interface Task {
   id: string
   label: string
   done: boolean
+  feedback?: string
 }
 
 // AnalyzerResult is what every analyzer returns after inspecting the cloned repo.

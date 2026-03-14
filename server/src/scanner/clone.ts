@@ -3,13 +3,11 @@ import fs from 'fs'
 import simpleGit from 'simple-git'
 
 export async function cloneRepo(repoUrl: string, destDir: string): Promise<string> {
-  // Normalize URL: handle both github.com/user/repo and https://github.com/user/repo
   let normalizedUrl = repoUrl.trim()
   if (!normalizedUrl.startsWith('http://') && !normalizedUrl.startsWith('https://')) {
     normalizedUrl = `https://${normalizedUrl}`
   }
 
-  // Strip trailing .git if present for consistent naming
   const repoSlug = normalizedUrl
     .replace(/^https?:\/\//, '')
     .replace(/\.git$/, '')
@@ -17,12 +15,16 @@ export async function cloneRepo(repoUrl: string, destDir: string): Promise<strin
 
   const clonePath = path.join(destDir, repoSlug)
 
-  // If already cloned, skip
   if (fs.existsSync(clonePath)) {
-    return clonePath
+    const gitDir = path.join(clonePath, '.git')
+    if (fs.existsSync(gitDir)) {
+      return clonePath
+    }
+    // Directory exists but isn't a valid git repo (partial clone) — remove and re-clone
+    fs.rmSync(clonePath, { recursive: true, force: true })
   }
 
-  fs.mkdirSync(clonePath, { recursive: true })
+  fs.mkdirSync(destDir, { recursive: true })
 
   const git = simpleGit()
   await git.clone(normalizedUrl, clonePath, ['--depth', '1'])

@@ -76,6 +76,7 @@ interface ShipCityStore {
   setGithubUser: (user: GitHubUser | null) => void
   setImplementStatus: (id: BuildingId, status: 'idle' | 'running') => void
   setTaskFeedback: (id: BuildingId, taskId: string, feedback: string) => void
+  markTaskDone: (id: BuildingId, taskId: string) => void
 }
 
 export const useStore = create<ShipCityStore>((set) => ({
@@ -146,6 +147,19 @@ export const useStore = create<ShipCityStore>((set) => ({
         [id]: {
           ...state.buildings[id],
           taskFeedback: { ...state.buildings[id].taskFeedback, [taskId]: feedback },
+        },
+      },
+    })),
+
+  markTaskDone: (id, taskId) =>
+    set((state) => ({
+      buildings: {
+        ...state.buildings,
+        [id]: {
+          ...state.buildings[id],
+          tasks: state.buildings[id].tasks.map((t) =>
+            t.id === taskId ? { ...t, done: true, feedback: undefined } : t
+          ),
         },
       },
     })),

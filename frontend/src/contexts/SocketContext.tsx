@@ -33,6 +33,7 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
   const setScore = useStore((s) => s.setScore)
   const setImplementStatus = useStore((s) => s.setImplementStatus)
   const setTaskFeedback = useStore((s) => s.setTaskFeedback)
+  const markTaskDone = useStore((s) => s.markTaskDone)
 
   useEffect(() => {
     const socket = io(API_BASE, { transports: ['websocket'] })
@@ -74,7 +75,11 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
           setTaskFeedback(msg.building, msg.taskId, msg.summary)
           break
         case 'eval:result':
-          setTaskFeedback(msg.building, msg.taskId, msg.feedback)
+          if (msg.pass) {
+            markTaskDone(msg.building, msg.taskId)
+          } else {
+            setTaskFeedback(msg.building, msg.taskId, msg.feedback)
+          }
           break
         case 'orchestrator:complete':
           setScore(msg.score)
@@ -85,7 +90,7 @@ export function SocketProvider({ children }: { children: React.ReactNode }) {
     return () => {
       socket.disconnect()
     }
-  }, [setBuildingStatus, setScanStatus, setScore, setImplementStatus, setTaskFeedback])
+  }, [setBuildingStatus, setScanStatus, setScore, setImplementStatus, setTaskFeedback, markTaskDone])
 
   function joinSession(sessionId: string) {
     socketRef.current?.emit('joinSession', sessionId)

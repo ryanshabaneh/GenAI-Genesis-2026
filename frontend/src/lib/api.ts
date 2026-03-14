@@ -114,6 +114,7 @@ export async function evaluateTasks(params: {
   taskIds?: string[]
 }): Promise<{
   results: Array<{ taskId: string; pass: boolean; feedback?: string; summary?: string }>
+  tasks: Task[]
   percent: number
   score: number
 }> {
@@ -129,6 +130,7 @@ export async function evaluateTasks(params: {
   }
   return res.json() as Promise<{
     results: Array<{ taskId: string; pass: boolean; feedback?: string; summary?: string }>
+    tasks: Task[]
     percent: number
     score: number
   }>

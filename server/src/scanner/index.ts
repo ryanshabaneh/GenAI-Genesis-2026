@@ -85,66 +85,80 @@ export async function runScan(
     }
   }
 
-  // Phase 2: deep analysis (LLM, reads actual code, adds tasks)
-  // Runs after all heuristic results are in so the frontend isn't blocked
-  const allAgentTasks = new Map<BuildingId, Task[]>()
-
-  for (const result of results) {
-    try {
-      const agentTasks = await analyzeForTasks({
-        buildingId: result.buildingId,
-        repoPath,
-        scanResult: result,
-      })
-      allAgentTasks.set(result.buildingId, agentTasks)
-    } catch (err) {
-      console.error(`Analysis agent for ${result.buildingId} failed:`, err)
-      allAgentTasks.set(result.buildingId, [])
-    }
-  }
-
-  // Dedup cross-building overlap (e.g. "hardcoded secret" → keep in security only)
-  const dedupedTasks = await deduplicateAcrossBuildings(allAgentTasks)
-
-  // Merge deduped agent tasks into scanner results and notify frontend
-  for (const result of results) {
-    const agentTasks = dedupedTasks.get(result.buildingId) ?? []
-    if (agentTasks.length === 0) continue
-
-    const mergedTasks = mergeTasks(result.tasks, agentTasks)
-    const percent = calculatePercent(mergedTasks)
-
-    const session = getSession(sessionId)
-    if (session) {
-      const enrichedResult: AnalyzerResult = {
-        ...result,
-        tasks: mergedTasks,
-        percent,
-      }
-
-      updateSession(sessionId, {
-        results: {
-          ...session.results,
-          [result.buildingId]: enrichedResult,
-        },
-      })
-
-      io.to(sessionId).emit('message', {
-        type: 'result',
-        building: result.buildingId,
-        percent,
-        tasks: mergedTasks,
-      })
-    }
-  }
-
-  // Calculate overall score from final enriched state
-  const session = getSession(sessionId)
-  const allResults = Object.values(session?.results ?? {})
-  const score =
-    allResults.length > 0
-      ? Math.round(allResults.reduce((sum, r) => sum + (r?.percent ?? 0), 0) / allResults.length)
+  // Emit complete after Phase 1 so the frontend shows the 3D scene immediately
+  const heuristicSession = getSession(sessionId)
+  const heuristicResults = Object.values(heuristicSession?.results ?? {})
+  const heuristicScore =
+    heuristicResults.length > 0
+      ? Math.round(heuristicResults.reduce((sum, r) => sum + (r?.percent ?? 0), 0) / heuristicResults.length)
       : 0
 
-  io.to(sessionId).emit('message', { type: 'complete', score })
+  io.to(sessionId).emit('message', { type: 'complete', score: heuristicScore })
+
+  // Phase 2: deep analysis (LLM, reads actual code, adds tasks)
+  // Runs in background after the frontend has transitioned to the 3D scene.
+  // Updated results stream in as each building's analysis finishes.
+  try {
+    const allAgentTasks = new Map<BuildingId, Task[]>()
+
+    for (const result of results) {
+      try {
+        const agentTasks = await analyzeForTasks({
+          buildingId: result.buildingId,
+          repoPath,
+          scanResult: result,
+        })
+        allAgentTasks.set(result.buildingId, agentTasks)
+      } catch (err) {
+        console.error(`Analysis agent for ${result.buildingId} failed:`, err)
+        allAgentTasks.set(result.buildingId, [])
+      }
+    }
+
+    // Dedup cross-building overlap (e.g. "hardcoded secret" → keep in security only)
+    const dedupedTasks = await deduplicateAcrossBuildings(allAgentTasks)
+
+    // Merge deduped agent tasks into scanner results and notify frontend
+    for (const result of results) {
+      const agentTasks = dedupedTasks.get(result.buildingId) ?? []
+      if (agentTasks.length === 0) continue
+
+      const mergedTasks = mergeTasks(result.tasks, agentTasks)
+      const percent = calculatePercent(mergedTasks)
+
+      const session = getSession(sessionId)
+      if (session) {
+        const enrichedResult: AnalyzerResult = {
+          ...result,
+          tasks: mergedTasks,
+          percent,
+        }
+
+        updateSession(sessionId, {
+          results: {
+            ...session.results,
+            [result.buildingId]: enrichedResult,
+          },
+        })
+
+        io.to(sessionId).emit('message', {
+          type: 'result',
+          building: result.buildingId,
+          percent,
+          tasks: mergedTasks,
+        })
+      }
+    }
+
+    // Emit updated score after enrichment
+    const finalSession = getSession(sessionId)
+    const allResults = Object.values(finalSession?.results ?? {})
+    const finalScore =
+      allResults.length > 0
+        ? Math.round(allResults.reduce((sum, r) => sum + (r?.percent ?? 0), 0) / allResults.length)
+        : 0
+    io.to(sessionId).emit('message', { type: 'orchestrator:complete', score: finalScore })
+  } catch (err) {
+    console.error('Phase 2 (LLM enrichment) failed:', err)
+  }
 }
