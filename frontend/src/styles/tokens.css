@@ -7,10 +7,10 @@
   --surface2: #1A2438;
   --surface3: #202C44;
 
-  /* amber — primary/CTA/in-progress */
-  --amber:        #F5A623;
-  --amber-border: rgba(245,166,35,0.28);
-  --amber-dim:    rgba(245,166,35,0.11);
+  /* primary/CTA/in-progress — mid blue, modern game UI */
+  --amber:        #4A78D4;
+  --amber-border: rgba(74,120,212,0.28);
+  --amber-dim:    rgba(74,120,212,0.11);
 
   /* teal — complete/success */
   --teal:        #3ECFB2;
@@ -38,8 +38,8 @@
   --t-slow: 380ms ease;
 
   /* fonts */
-  --font-display: var(--font-nunito), 'Nunito', sans-serif;
-  --font-ui:      var(--font-nunito), 'Nunito', sans-serif;
+  --font-display: 'Iosevka Charon Mono', var(--font-exo2), sans-serif;
+  --font-ui:      'SFTSchriftedRound', var(--font-nunito), 'Nunito', sans-serif;
   --font-mono:    var(--font-mono-jb), 'JetBrains Mono', monospace;
 
 }
