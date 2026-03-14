@@ -36,14 +36,16 @@ export async function callAgent(params: {
   message: string
   history: Message[]
   scanResult?: AnalyzerResult
+  changeLogContext?: string
 }): Promise<AgentReply> {
-  const { buildingId, repoPath, message, history, scanResult } = params
+  const { buildingId, repoPath, message, history, scanResult, changeLogContext } = params
 
   const systemPrompt = AGENT_PROMPTS[buildingId]
   const context = await buildAgentContext(buildingId, repoPath)
   const scannerPreprompt = buildScannerPreprompt(scanResult)
 
-  const systemWithContext = `${systemPrompt}\n\n---\n\n${scannerPreprompt ? scannerPreprompt + '\n\n---\n\n' : ''}${context}`
+  const changeLogBlock = changeLogContext ? changeLogContext + '\n\n---\n\n' : ''
+  const systemWithContext = `${systemPrompt}\n\n---\n\n${scannerPreprompt ? scannerPreprompt + '\n\n---\n\n' : ''}${changeLogBlock}${context}`
 
   // Map history to Anthropic message format
   const messages: Anthropic.MessageParam[] = [

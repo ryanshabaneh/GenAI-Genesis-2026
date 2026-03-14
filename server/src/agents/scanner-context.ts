@@ -4,7 +4,7 @@
 // what's done, what's not, and the raw details from heuristic checks.
 // The agent can then go deeper — but it doesn't start from zero.
 
-import type { AnalyzerResult, BuildingId } from '../types'
+import type { AnalyzerResult, BuildingId, Session } from '../types'
 
 /**
  * Convert scanner AnalyzerResult into a preprompt string that gets injected
@@ -43,6 +43,43 @@ Use these findings as your starting point. The scanner uses simple heuristic che
 (file existence, regex patterns, dependency detection). Your analysis should go deeper —
 check code quality, correctness, and completeness beyond what the scanner can detect.
 Focus your work on the incomplete tasks listed above.`
+}
+
+/**
+ * Build a change log context block showing what's been done across all buildings.
+ * Used to give per-building agents awareness of project-wide changes.
+ * Optionally excludes a building (the one currently being chatted with) to avoid redundancy.
+ */
+export function buildChangeLogContext(
+  session: Session,
+  excludeBuilding?: BuildingId
+): string {
+  const lines: string[] = []
+
+  const buildingIds = Object.keys(session.results) as BuildingId[]
+  for (const bid of buildingIds) {
+    if (bid === excludeBuilding) continue
+    const result = session.results[bid]
+    if (!result) continue
+
+    const taskLines = result.tasks.map((t) => {
+      if (t.done) {
+        const logEntry = session.changeLog.find((e) => e.taskId === t.id)
+        const summary = logEntry ? ` — ${logEntry.summary}` : ''
+        return `    [x] ${t.label}${summary}`
+      }
+      return `    [ ] ${t.label}`
+    })
+
+    lines.push(`  **${bid}** (${calculatePercent(result.tasks)}%):`)
+    lines.push(...taskLines)
+  }
+
+  if (lines.length === 0) return ''
+
+  return `## Project-Wide Progress (Other Buildings)
+
+${lines.join('\n')}`
 }
 
 /**
