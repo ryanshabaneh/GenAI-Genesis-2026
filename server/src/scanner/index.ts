@@ -104,7 +104,7 @@ export async function runScan(
   }
 
   // Dedup cross-building overlap (e.g. "hardcoded secret" → keep in security only)
-  const dedupedTasks = deduplicateAcrossBuildings(allAgentTasks)
+  const dedupedTasks = await deduplicateAcrossBuildings(allAgentTasks)
 
   // Merge deduped agent tasks into scanner results and notify frontend
   for (const result of results) {

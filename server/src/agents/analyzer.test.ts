@@ -159,63 +159,93 @@ describe('mergeTasks', () => {
 })
 
 describe('deduplicateAcrossBuildings', () => {
-  it('moves secret-related tasks to security building only', () => {
+  beforeEach(() => vi.clearAllMocks())
+
+  it('returns deduped tasks from LLM response', async () => {
+    createMock.mockResolvedValue({
+      content: [{
+        type: 'text',
+        text: JSON.stringify({
+          security: [{ id: 'sec-key', label: 'Remove hardcoded secret', done: false }],
+          tests: [],
+          docker: [],
+        }),
+      }],
+    })
+
     const input = new Map<BuildingId, Task[]>([
-      ['security', [{ id: 'sec-key', label: 'Remove hardcoded secret from code', done: false }]],
-      ['tests', [{ id: 'tests-key', label: 'Remove hardcoded secret key in index.ts', done: false }]],
+      ['security', [{ id: 'sec-key', label: 'Remove hardcoded secret', done: false }]],
+      ['tests', [{ id: 'tests-key', label: 'Remove hardcoded secret from code', done: false }]],
       ['docker', [{ id: 'docker-key', label: 'Hardcoded API key found', done: false }]],
     ])
 
-    const result = deduplicateAcrossBuildings(input)
-
-    expect(result.get('security')).toHaveLength(1) // keeps it
-    expect(result.get('tests')).toHaveLength(0) // removed — secret belongs to security
-    expect(result.get('docker')).toHaveLength(0) // removed
-  })
-
-  it('moves validation tasks to security building only', () => {
-    const input = new Map<BuildingId, Task[]>([
-      ['security', [{ id: 'sec-val', label: 'Add input validation on POST route', done: false }]],
-      ['cicd', [{ id: 'cicd-val', label: 'No input validation on endpoints', done: false }]],
-    ])
-
-    const result = deduplicateAcrossBuildings(input)
+    const result = await deduplicateAcrossBuildings(input)
 
     expect(result.get('security')).toHaveLength(1)
-    expect(result.get('cicd')).toHaveLength(0)
-  })
-
-  it('keeps domain-specific tasks untouched', () => {
-    const input = new Map<BuildingId, Task[]>([
-      ['tests', [
-        { id: 'tests-coverage', label: 'Add tests for GET route', done: false },
-        { id: 'tests-mock', label: 'Add mock for external API calls in tests', done: false },
-      ]],
-      ['cicd', [
-        { id: 'cicd-cache', label: 'Add npm caching to CI workflow', done: false },
-      ]],
-    ])
-
-    const result = deduplicateAcrossBuildings(input)
-
-    expect(result.get('tests')).toHaveLength(2)
-    expect(result.get('cicd')).toHaveLength(1)
-  })
-
-  it('moves error handling tasks to logging', () => {
-    const input = new Map<BuildingId, Task[]>([
-      ['logging', [{ id: 'log-err', label: 'Add error handling middleware', done: false }]],
-      ['docker', [{ id: 'docker-err', label: 'No error middleware found', done: false }]],
-    ])
-
-    const result = deduplicateAcrossBuildings(input)
-
-    expect(result.get('logging')).toHaveLength(1)
+    expect(result.get('tests')).toHaveLength(0)
     expect(result.get('docker')).toHaveLength(0)
   })
 
-  it('handles empty maps', () => {
-    const result = deduplicateAcrossBuildings(new Map())
+  it('returns original tasks when LLM fails', async () => {
+    createMock.mockRejectedValue(new Error('API error'))
+
+    const input = new Map<BuildingId, Task[]>([
+      ['tests', [{ id: 't1', label: 'Test task', done: false }]],
+      ['cicd', [{ id: 'c1', label: 'CI task', done: false }]],
+    ])
+
+    const result = await deduplicateAcrossBuildings(input)
+
+    // Falls back to undeduped
+    expect(result.get('tests')).toHaveLength(1)
+    expect(result.get('cicd')).toHaveLength(1)
+  })
+
+  it('handles empty map', async () => {
+    const result = await deduplicateAcrossBuildings(new Map())
     expect(result.size).toBe(0)
+    expect(createMock).not.toHaveBeenCalled()
+  })
+
+  it('handles markdown-wrapped JSON response', async () => {
+    createMock.mockResolvedValue({
+      content: [{
+        type: 'text',
+        text: '```json\n{"tests": [{"id": "t1", "label": "Test", "done": false}], "cicd": []}\n```',
+      }],
+    })
+
+    const input = new Map<BuildingId, Task[]>([
+      ['tests', [{ id: 't1', label: 'Test', done: false }]],
+      ['cicd', [{ id: 'c1', label: 'Same as test', done: false }]],
+    ])
+
+    const result = await deduplicateAcrossBuildings(input)
+
+    expect(result.get('tests')).toHaveLength(1)
+    expect(result.get('cicd')).toHaveLength(0)
+  })
+
+  it('preserves buildings not in LLM response', async () => {
+    // LLM only returns tests, doesn't mention cicd
+    createMock.mockResolvedValue({
+      content: [{
+        type: 'text',
+        text: JSON.stringify({
+          tests: [{ id: 't1', label: 'Test', done: false }],
+        }),
+      }],
+    })
+
+    const input = new Map<BuildingId, Task[]>([
+      ['tests', [{ id: 't1', label: 'Test', done: false }]],
+      ['cicd', [{ id: 'c1', label: 'CI task', done: false }]],
+    ])
+
+    const result = await deduplicateAcrossBuildings(input)
+
+    expect(result.get('tests')).toHaveLength(1)
+    // cicd falls back to original since LLM didn't include it
+    expect(result.get('cicd')).toHaveLength(1)
   })
 })
