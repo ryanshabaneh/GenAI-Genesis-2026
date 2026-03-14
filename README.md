@@ -14,14 +14,14 @@ ShipCity analyzes a GitHub repository and visualizes its production readiness as
 
 | Building | Category | What it checks |
 |---|---|---|
-| 🏫 School | Tests | Test framework, test files, test script, coverage ratio |
-| 🏭 Factory | CI/CD | GitHub Actions workflows, test step, build/deploy step |
-| 🚢 Shipping Dock | Docker | Dockerfile, .dockerignore, multi-stage build, docker-compose |
-| 🏛️ Town Hall | Documentation | README exists, description, setup instructions, usage section |
-| ⚡ Power Plant | Env Vars | .env.example, .env in .gitignore, no hardcoded secrets, process.env usage |
-| 🏦 Vault | Security | No exposed keys, .gitignore coverage, secret pattern detection |
-| 🗼 Watchtower | Logging | Logging library installed, imported, no raw console.log, structured logs |
-| 🚀 Launch Pad | Deployment | Deploy config, build script, start script, configurable PORT |
+| School | Tests | Test framework, test files, test script, coverage ratio |
+| Factory | CI/CD | GitHub Actions workflows, test step, build/deploy step |
+| Shipping Dock | Docker | Dockerfile, .dockerignore, multi-stage build, docker-compose |
+| Town Hall | Documentation | README exists, description, setup instructions, usage section |
+| Power Plant | Env Vars | .env.example, .env in .gitignore, no hardcoded secrets, process.env usage |
+| Vault | Security | No exposed keys, .gitignore coverage, secret pattern detection |
+| Watchtower | Logging | Logging library installed, imported, no raw console.log, structured logs |
+| Launch Pad | Deployment | Deploy config, build script, start script, configurable PORT |
 
 ## Structure
 
