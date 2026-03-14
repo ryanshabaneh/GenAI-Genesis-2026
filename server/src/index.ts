@@ -16,6 +16,7 @@ import chatRouter from './routes/chat'
 import acceptRouter from './routes/accept'
 import exportRouter from './routes/export'
 import implementRouter from './routes/implement'
+import authRouter from './routes/auth'
 
 const PORT = process.env['PORT'] ? parseInt(process.env['PORT'], 10) : 3001
 const FRONTEND_URL = process.env['FRONTEND_URL'] ?? 'http://localhost:3000'

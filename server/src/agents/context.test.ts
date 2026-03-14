@@ -20,20 +20,20 @@ describe('buildAgentContext', () => {
     expect(result).toBe('No relevant files were found in the repository for this area.')
   })
 
-  it('reads package.json for scripts building', async () => {
+  it('reads package.json for logging building', async () => {
     fs.writeFileSync(path.join(tmpDir, 'package.json'), JSON.stringify({ name: 'my-app', scripts: { dev: 'nodemon' } }))
 
-    const result = await buildAgentContext('scripts', tmpDir)
+    const result = await buildAgentContext('logging', tmpDir)
     expect(result).toContain('package.json')
     expect(result).toContain('my-app')
     expect(result).toContain('nodemon')
   })
 
-  it('reads README.md for readme building', async () => {
+  it('reads README.md for documentation building', async () => {
     fs.writeFileSync(path.join(tmpDir, 'README.md'), '# My Project\nThis is a cool project.')
     fs.writeFileSync(path.join(tmpDir, 'package.json'), '{"name":"test"}')
 
-    const result = await buildAgentContext('readme', tmpDir)
+    const result = await buildAgentContext('documentation', tmpDir)
     expect(result).toContain('README.md')
     expect(result).toContain('My Project')
     expect(result).toContain('package.json')
@@ -85,7 +85,7 @@ describe('buildAgentContext', () => {
     const bigContent = 'x'.repeat(10_000)
     fs.writeFileSync(path.join(tmpDir, 'package.json'), bigContent)
 
-    const result = await buildAgentContext('scripts', tmpDir)
+    const result = await buildAgentContext('logging', tmpDir)
     expect(result).toContain('... (truncated)')
     expect(result.length).toBeLessThan(bigContent.length)
   })

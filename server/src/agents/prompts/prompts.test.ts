@@ -3,9 +3,8 @@ import { AGENT_PROMPTS } from './index'
 import type { BuildingId } from '../../types'
 
 const ALL_BUILDING_IDS: BuildingId[] = [
-  'tests', 'cicd', 'docker', 'readme', 'errorHandling',
-  'envVars', 'logging', 'linting', 'license', 'security',
-  'healthCheck', 'scripts', 'deployment', 'hosting',
+  'tests', 'cicd', 'docker', 'documentation',
+  'envVars', 'security', 'logging', 'deployment',
 ]
 
 describe('AGENT_PROMPTS', () => {
@@ -34,17 +33,11 @@ describe('AGENT_PROMPTS', () => {
     expect(AGENT_PROMPTS.tests).toContain('School Builder')
     expect(AGENT_PROMPTS.cicd).toContain('Factory Builder')
     expect(AGENT_PROMPTS.docker).toContain('Shipping Dock Builder')
-    expect(AGENT_PROMPTS.readme).toContain('Town Hall Builder')
+    expect(AGENT_PROMPTS.documentation).toContain('Town Hall Builder')
     expect(AGENT_PROMPTS.envVars).toContain('Power Plant Builder')
     expect(AGENT_PROMPTS.security).toContain('Vault Builder')
     expect(AGENT_PROMPTS.logging).toContain('Watchtower Builder')
     expect(AGENT_PROMPTS.deployment).toContain('Launch Pad Builder')
-    expect(AGENT_PROMPTS.errorHandling).toContain('Hospital Builder')
-    expect(AGENT_PROMPTS.linting).toContain('Police Station Builder')
-    expect(AGENT_PROMPTS.license).toContain('Courthouse Builder')
-    expect(AGENT_PROMPTS.healthCheck).toContain('Pharmacy Builder')
-    expect(AGENT_PROMPTS.scripts).toContain('Roads Builder')
-    expect(AGENT_PROMPTS.hosting).toContain('Server Room Builder')
   })
 
   it('tests prompt mentions testing frameworks', () => {

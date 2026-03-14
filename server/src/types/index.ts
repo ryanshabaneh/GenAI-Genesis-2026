@@ -69,6 +69,13 @@ export interface EvaluatorResult {
   feedback: string
 }
 
+// GitHubUser stores the minimal GitHub profile info saved in the session.
+export interface GitHubUser {
+  login: string
+  name: string | null
+  avatarUrl: string
+}
+
 // WebSocket event shapes emitted to the session room during and after a scan.
 export type WsEvent =
   | { type: 'scanning'; building: BuildingId }

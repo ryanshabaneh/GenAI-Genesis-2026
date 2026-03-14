@@ -11,9 +11,8 @@ const CONTEXT_FILES: Record<BuildingId, string[]> = {
   documentation: ['README.md', 'package.json'],
   envVars: ['.env.example', 'package.json', 'src'],
   security: ['.gitignore', '.env.example', 'package.json'],
-  healthCheck: ['src', 'package.json'],
+  logging: ['src', 'package.json'],
   deployment: ['vercel.json', 'fly.toml', 'railway.toml', 'render.yaml', 'Procfile', 'Dockerfile', 'package.json', 'netlify.toml', 'wrangler.toml'],
-  hosting: ['src/index.ts', 'src/index.js', 'src/app.ts', 'src/app.js', 'src/server.ts', 'src/server.js', 'package.json'],
 }
 
 const MAX_FILE_SIZE = 8_000 // ~8KB per file to stay within context limits
