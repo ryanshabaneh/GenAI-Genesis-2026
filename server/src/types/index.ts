@@ -40,6 +40,8 @@ export interface Session {
   repoPath: string
   results: Partial<Record<BuildingId, AnalyzerResult>>
   changes: AcceptedChange[]
+  conversations: Partial<Record<BuildingId, Message[]>>
+  changeLog: ChangeLogEntry[]
   createdAt: number
 }
 
@@ -63,10 +65,21 @@ export interface AgentReply extends Message {
   codeBlocks?: Array<{ path: string; content: string; language: string }>
 }
 
+// ChangeLogEntry records what was done for a task — used for cross-building awareness.
+export interface ChangeLogEntry {
+  taskId: string
+  taskLabel: string
+  buildingId: BuildingId
+  summary: string        // 1-2 sentence description of what was done
+  filesChanged: string[] // just paths
+  completedAt: number
+}
+
 // EvaluatorResult is the output of the quality-check evaluator subagent.
 export interface EvaluatorResult {
   pass: boolean
   feedback: string
+  summary: string  // 1-2 sentence summary of what was accomplished
 }
 
 // GitHubUser stores the minimal GitHub profile info saved in the session.
@@ -86,4 +99,7 @@ export type WsEvent =
   | { type: 'agent:iteration'; building: BuildingId; iteration: number; maxIterations: number; feedback: string }
   | { type: 'agent:complete'; building: BuildingId; percent: number; files: string[] }
   | { type: 'agent:error'; building: BuildingId; error: string }
+  | { type: 'task:start'; building: BuildingId; taskId: string; taskLabel: string }
+  | { type: 'task:complete'; building: BuildingId; taskId: string; success: boolean; summary: string }
+  | { type: 'eval:result'; building: BuildingId; taskId: string; pass: boolean; feedback: string }
   | { type: 'orchestrator:complete'; score: number }

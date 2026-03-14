@@ -1,195 +1,185 @@
 // server/src/orchestrator/index.ts
-// Autonomous orchestrator: after a scan completes, iterates over every building
-// below 100% and uses aider (via CLI) + evaluator subagent to fix issues.
-// Aider handles repo mapping (tree-sitter) and file editing directly on disk.
-// The evaluator gates quality — if aider's output fails evaluation,
-// feedback is fed back for up to MAX_ITERATIONS attempts.
-// After accepting code, the session's results are updated (percent bumped,
-// tasks marked done) so the final score reflects actual fixes.
+// User-driven task implementation: runs aider + evaluator for selected tasks
+// on a specific building. Progress streams via Socket.IO. A session-level mutex
+// prevents concurrent aider runs on the same repo.
 
 import type { Server as SocketIOServer } from 'socket.io'
 import { v4 as uuid } from 'uuid'
 import { getSession, updateSession } from '../session/store'
 import { callAider, resetAiderChanges } from '../agents/aider'
 import { callEvaluator } from '../agents/evaluator'
+import { buildScannerPreprompt, buildChangeLogContext, calculatePercent } from '../agents/scanner-context'
 import { addChange } from '../changes/queue'
-import type { AnalyzerResult, BuildingId } from '../types'
+import type { BuildingId, ChangeLogEntry } from '../types'
 
 const MAX_ITERATIONS = 3
 
-/**
- * Build the task description from analyzer results so aider knows
- * exactly which tasks to fix.
- */
-function craftTaskDescription(result: AnalyzerResult): string {
-  const incomplete = result.tasks.filter((t) => !t.done)
-  const lines = incomplete.map((t) => `- [ ] ${t.label}`)
-
-  return `The "${result.buildingId}" building scored ${result.percent}%. The following tasks are incomplete and need to be fixed:\n\n${lines.join('\n')}\n\nPlease implement ALL of these tasks. Edit existing files or create new ones as needed.`
-}
+// Session-level mutex: prevents two buildings from running aider simultaneously
+const activeSessions = new Set<string>()
 
 /**
- * After auto-accepting code for a building, update the session results
- * to reflect the fix — bump percent to 100 and mark all tasks done.
+ * Run aider + evaluator loop for selected tasks on a building.
+ * Called by /api/implement. Emits task:start and task:complete events.
  */
-function markBuildingFixed(sessionId: string, buildingId: BuildingId): void {
-  const session = getSession(sessionId)
-  if (!session) return
-
-  const current = session.results[buildingId]
-  if (!current) return
-
-  updateSession(sessionId, {
-    results: {
-      ...session.results,
-      [buildingId]: {
-        ...current,
-        percent: 100,
-        tasks: current.tasks.map((t) => ({ ...t, done: true })),
-      },
-    },
-  })
-}
-
-/**
- * Main orchestrator loop — called after runScan completes.
- * Processes buildings sequentially; each building gets up to MAX_ITERATIONS
- * of aider→evaluator feedback before auto-accepting.
- */
-export async function runOrchestrator(
-  sessionId: string,
+export async function runTaskImplementation(params: {
+  sessionId: string
+  buildingId: BuildingId
+  taskIds: string[]
+  userMessage?: string
   io: SocketIOServer
-): Promise<void> {
+}): Promise<{ success: boolean; completedTaskIds: string[] }> {
+  const { sessionId, buildingId, taskIds, userMessage, io } = params
+
   const session = getSession(sessionId)
-  if (!session) return
+  if (!session) throw new Error('Session not found')
 
-  const results = session.results
-  const buildingsToFix = Object.values(results).filter(
-    (r): r is AnalyzerResult => r !== undefined && r.percent < 100
-  )
-
-  if (buildingsToFix.length === 0) {
-    io.to(sessionId).emit('message', { type: 'orchestrator:complete', score: 100 })
-    return
+  // Concurrency guard
+  if (activeSessions.has(sessionId)) {
+    throw new Error('Another implementation is already running for this session')
   }
+  activeSessions.add(sessionId)
 
-  for (const result of buildingsToFix) {
-    const building = result.buildingId
+  const completedTaskIds: string[] = []
 
-    try {
-      io.to(sessionId).emit('message', { type: 'agent:start', building })
+  try {
+    const buildingResult = session.results[buildingId]
+    if (!buildingResult) throw new Error(`No scan results for building: ${buildingId}`)
 
-      const taskDescription = craftTaskDescription(result)
-      let accepted = false
-      let lastFeedback: string | undefined
+    const selectedTasks = buildingResult.tasks.filter((t) => taskIds.includes(t.id))
+    if (selectedTasks.length === 0) throw new Error('No matching tasks found')
 
-      for (let iteration = 1; iteration <= MAX_ITERATIONS; iteration++) {
-        // Call aider — it reads the repo via tree-sitter map and edits files on disk
-        const aiderResult = await callAider({
-          buildingId: building,
-          repoPath: session.repoPath,
-          taskDescription,
-          feedback: lastFeedback,
-        })
+    // Build context
+    const scannerPreprompt = buildScannerPreprompt(buildingResult)
+    const changeLogContext = buildChangeLogContext(session, buildingId)
 
-        if (!aiderResult.success || aiderResult.changedFiles.length === 0) {
-          // Aider failed or made no changes — skip evaluator
-          if (iteration === MAX_ITERATIONS) break
-          lastFeedback = aiderResult.error ?? 'No changes were produced. Please try again.'
-          continue
-        }
+    const taskLines = selectedTasks.map((t) => `- [ ] ${t.label}`).join('\n')
+    let taskDescription = `${scannerPreprompt}\n\n---\n\n`
+    if (changeLogContext) {
+      taskDescription += `${changeLogContext}\n\n---\n\n`
+    }
+    taskDescription += `Please implement ALL of these tasks:\n\n${taskLines}\n\nEdit existing files or create new ones as needed.`
+    if (userMessage) {
+      taskDescription += `\n\nAdditional instructions from the user:\n${userMessage}`
+    }
 
-        // Call the evaluator on what aider actually wrote
-        const evalResult = await callEvaluator({
-          buildingId: building,
-          repoPath: session.repoPath,
-          tasks: result.tasks,
-          builderResponse: aiderResult.diff,
-          codeBlocks: aiderResult.changedFiles.map((f) => ({
-            path: f.path,
-            content: f.content,
-            language: f.path.split('.').pop() ?? 'text',
-          })),
-        })
-
-        if (evalResult.pass || iteration === MAX_ITERATIONS) {
-          // Accept: save changed files as an AcceptedChange
-          addChange(sessionId, {
-            id: uuid(),
-            buildingId: building,
-            files: aiderResult.changedFiles.map((f) => ({
-              path: f.path,
-              content: f.content,
-              isNew: true,
-            })),
-            acceptedAt: Date.now(),
-          })
-
-          markBuildingFixed(sessionId, building)
-
-          io.to(sessionId).emit('message', {
-            type: 'agent:complete',
-            building,
-            percent: 100,
-            files: aiderResult.changedFiles.map((f) => f.path),
-          })
-
-          accepted = true
-          // Reset repo for next building
-          await resetAiderChanges(session.repoPath)
-          break
-        }
-
-        // Evaluation failed — reset files and retry with feedback
-        io.to(sessionId).emit('message', {
-          type: 'agent:iteration',
-          building,
-          iteration,
-          maxIterations: MAX_ITERATIONS,
-          feedback: evalResult.feedback,
-        })
-
-        lastFeedback = evalResult.feedback
-
-        // Reset aider's changes so the next iteration starts clean
-        await resetAiderChanges(session.repoPath)
-      }
-
-      if (!accepted) {
-        // Clean up any leftover changes
-        await resetAiderChanges(session.repoPath)
-
-        io.to(sessionId).emit('message', {
-          type: 'agent:error',
-          building,
-          error: 'Max iterations reached without passing evaluation',
-        })
-      }
-    } catch (err) {
-      console.error(`Orchestrator error for ${building}:`, err)
-      // Clean up on error
-      await resetAiderChanges(session.repoPath).catch(() => {})
-
+    // Emit task:start for each task
+    for (const task of selectedTasks) {
       io.to(sessionId).emit('message', {
-        type: 'agent:error',
-        building,
-        error: err instanceof Error ? err.message : 'Unknown agent error',
+        type: 'task:start',
+        building: buildingId,
+        taskId: task.id,
+        taskLabel: task.label,
       })
     }
+
+    let lastFeedback: string | undefined
+
+    for (let iteration = 1; iteration <= MAX_ITERATIONS; iteration++) {
+      const aiderResult = await callAider({
+        buildingId,
+        repoPath: session.repoPath,
+        taskDescription,
+        feedback: lastFeedback,
+      })
+
+      if (!aiderResult.success || aiderResult.changedFiles.length === 0) {
+        if (iteration === MAX_ITERATIONS) break
+        lastFeedback = aiderResult.error ?? 'No changes were produced. Please try again.'
+        continue
+      }
+
+      // Evaluate
+      const evalResult = await callEvaluator({
+        buildingId,
+        repoPath: session.repoPath,
+        tasks: selectedTasks,
+        builderResponse: aiderResult.diff,
+        codeBlocks: aiderResult.changedFiles.map((f) => ({
+          path: f.path,
+          content: f.content,
+          language: f.path.split('.').pop() ?? 'text',
+        })),
+      })
+
+      if (evalResult.pass || iteration === MAX_ITERATIONS) {
+        // Accept: save changed files
+        addChange(sessionId, {
+          id: uuid(),
+          buildingId,
+          files: aiderResult.changedFiles.map((f) => ({
+            path: f.path,
+            content: f.content,
+            isNew: true,
+          })),
+          acceptedAt: Date.now(),
+        })
+
+        // Mark tasks done and create change log entries
+        const freshSession = getSession(sessionId)!
+        const current = freshSession.results[buildingId]!
+        const updatedTasks = current.tasks.map((t) =>
+          taskIds.includes(t.id) ? { ...t, done: true } : t
+        )
+
+        const newLogEntries: ChangeLogEntry[] = selectedTasks.map((t) => ({
+          taskId: t.id,
+          taskLabel: t.label,
+          buildingId,
+          summary: evalResult.summary || `Implemented ${t.label}`,
+          filesChanged: aiderResult.changedFiles.map((f) => f.path),
+          completedAt: Date.now(),
+        }))
+
+        updateSession(sessionId, {
+          results: {
+            ...freshSession.results,
+            [buildingId]: {
+              ...current,
+              percent: calculatePercent(updatedTasks),
+              tasks: updatedTasks,
+            },
+          },
+          changeLog: [...freshSession.changeLog, ...newLogEntries],
+        })
+
+        completedTaskIds.push(...selectedTasks.map((t) => t.id))
+
+        // Emit task:complete for each task
+        for (const task of selectedTasks) {
+          io.to(sessionId).emit('message', {
+            type: 'task:complete',
+            building: buildingId,
+            taskId: task.id,
+            success: true,
+            summary: evalResult.summary || `Implemented ${task.label}`,
+          })
+        }
+
+        await resetAiderChanges(session.repoPath)
+        break
+      }
+
+      // Evaluation failed — retry with feedback
+      lastFeedback = evalResult.feedback
+      await resetAiderChanges(session.repoPath)
+    }
+
+    // If nothing was completed, emit failure
+    if (completedTaskIds.length === 0) {
+      await resetAiderChanges(session.repoPath).catch(() => {})
+      for (const task of selectedTasks) {
+        io.to(sessionId).emit('message', {
+          type: 'task:complete',
+          building: buildingId,
+          taskId: task.id,
+          success: false,
+          summary: 'Max iterations reached without passing evaluation',
+        })
+      }
+    }
+  } finally {
+    activeSessions.delete(sessionId)
   }
 
-  // Calculate final score from updated session state
-  const updatedSession = getSession(sessionId)
-  const allResults = Object.values(updatedSession?.results ?? {})
-  const totalScore =
-    allResults.length > 0
-      ? Math.round(
-          allResults.reduce((sum, r) => sum + (r?.percent ?? 0), 0) / allResults.length
-        )
-      : 0
-
-  io.to(sessionId).emit('message', {
-    type: 'orchestrator:complete',
-    score: totalScore,
-  })
+  return { success: completedTaskIds.length > 0, completedTaskIds }
 }

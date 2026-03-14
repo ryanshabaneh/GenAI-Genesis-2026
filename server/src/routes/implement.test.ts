@@ -2,15 +2,13 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import express from 'express'
 import request from 'supertest'
 
-const { mockCallAider, mockResetAider, mockGetSession } = vi.hoisted(() => ({
-  mockCallAider: vi.fn(),
-  mockResetAider: vi.fn(),
+const { mockRunTaskImpl, mockGetSession } = vi.hoisted(() => ({
+  mockRunTaskImpl: vi.fn(),
   mockGetSession: vi.fn(),
 }))
 
-vi.mock('../agents/aider', () => ({
-  callAider: mockCallAider,
-  resetAiderChanges: mockResetAider,
+vi.mock('../orchestrator', () => ({
+  runTaskImplementation: mockRunTaskImpl,
 }))
 vi.mock('../session/store', () => ({
   getSession: mockGetSession,
@@ -21,6 +19,9 @@ import implementRouter from './implement'
 function createApp() {
   const app = express()
   app.use(express.json())
+  // Provide a mock io so the route can access it
+  const mockIo = { to: vi.fn().mockReturnValue({ emit: vi.fn() }) }
+  app.locals['io'] = mockIo
   app.use('/api/implement', implementRouter)
   return app
 }
@@ -43,13 +44,14 @@ const baseSession = {
     },
   },
   changes: [],
+  conversations: {},
+  changeLog: [],
   createdAt: Date.now(),
 }
 
 describe('POST /api/implement', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    mockResetAider.mockResolvedValue(undefined)
   })
 
   it('returns 400 if sessionId, buildingId, or taskIds missing', async () => {
@@ -80,23 +82,11 @@ describe('POST /api/implement', () => {
     expect(res.status).toBe(404)
   })
 
-  it('returns 400 if taskIds dont match any tasks', async () => {
+  it('calls runTaskImplementation and returns result on success', async () => {
     mockGetSession.mockReturnValue(baseSession)
-    const app = createApp()
-    const res = await request(app).post('/api/implement').send({
-      sessionId: 'sess-1',
-      buildingId: 'tests',
-      taskIds: ['nonexistent'],
-    })
-    expect(res.status).toBe(400)
-  })
-
-  it('calls aider with selected tasks and returns preview', async () => {
-    mockGetSession.mockReturnValue(baseSession)
-    mockCallAider.mockResolvedValue({
+    mockRunTaskImpl.mockResolvedValue({
       success: true,
-      diff: '+test code',
-      changedFiles: [{ path: 'tests/routes.test.ts', content: 'test code' }],
+      completedTaskIds: ['t2', 't3'],
     })
 
     const app = createApp()
@@ -107,24 +97,16 @@ describe('POST /api/implement', () => {
     })
 
     expect(res.status).toBe(200)
-    expect(res.body.files).toHaveLength(1)
-    expect(res.body.files[0].path).toBe('tests/routes.test.ts')
-    expect(res.body.diff).toBe('+test code')
-    expect(res.body.taskIds).toEqual(['t2', 't3'])
-
-    // Verify aider was called with the right task labels
-    const aiderCall = mockCallAider.mock.calls[0][0]
-    expect(aiderCall.buildingId).toBe('tests')
-    expect(aiderCall.taskDescription).toContain('Add unit tests for routes')
-    expect(aiderCall.taskDescription).toContain('Add test script to package.json')
+    expect(res.body.success).toBe(true)
+    expect(res.body.completedTaskIds).toEqual(['t2', 't3'])
+    expect(mockRunTaskImpl).toHaveBeenCalledTimes(1)
   })
 
-  it('includes user message in aider call', async () => {
+  it('passes user message to runTaskImplementation', async () => {
     mockGetSession.mockReturnValue(baseSession)
-    mockCallAider.mockResolvedValue({
+    mockRunTaskImpl.mockResolvedValue({
       success: true,
-      diff: '+code',
-      changedFiles: [{ path: 'test.ts', content: 'code' }],
+      completedTaskIds: ['t2'],
     })
 
     const app = createApp()
@@ -135,36 +117,15 @@ describe('POST /api/implement', () => {
       message: 'Use vitest not jest',
     })
 
-    const aiderCall = mockCallAider.mock.calls[0][0]
-    expect(aiderCall.taskDescription).toContain('Use vitest not jest')
+    const callArgs = mockRunTaskImpl.mock.calls[0][0]
+    expect(callArgs.userMessage).toBe('Use vitest not jest')
+    expect(callArgs.buildingId).toBe('tests')
+    expect(callArgs.taskIds).toEqual(['t2'])
   })
 
-  it('resets repo after returning preview', async () => {
+  it('returns 500 when runTaskImplementation throws', async () => {
     mockGetSession.mockReturnValue(baseSession)
-    mockCallAider.mockResolvedValue({
-      success: true,
-      diff: '+code',
-      changedFiles: [{ path: 'test.ts', content: 'code' }],
-    })
-
-    const app = createApp()
-    await request(app).post('/api/implement').send({
-      sessionId: 'sess-1',
-      buildingId: 'tests',
-      taskIds: ['t2'],
-    })
-
-    expect(mockResetAider).toHaveBeenCalledWith('/tmp/repo')
-  })
-
-  it('returns 500 and resets when aider fails', async () => {
-    mockGetSession.mockReturnValue(baseSession)
-    mockCallAider.mockResolvedValue({
-      success: false,
-      diff: '',
-      changedFiles: [],
-      error: 'aider timeout',
-    })
+    mockRunTaskImpl.mockRejectedValue(new Error('Another implementation is already running'))
 
     const app = createApp()
     const res = await request(app).post('/api/implement').send({
@@ -174,7 +135,6 @@ describe('POST /api/implement', () => {
     })
 
     expect(res.status).toBe(500)
-    expect(res.body.error).toContain('aider')
-    expect(mockResetAider).toHaveBeenCalled()
+    expect(res.body.error).toContain('already running')
   })
 })

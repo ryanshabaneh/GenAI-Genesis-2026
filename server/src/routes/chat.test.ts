@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import express from 'express'
 import request from 'supertest'
-import { createSession } from '../session/store'
+import { createSession, getSession } from '../session/store'
 
 // Mock the agent call so we don't hit Claude API
 vi.mock('../agents/base', () => ({
@@ -12,6 +12,11 @@ vi.mock('../agents/base', () => ({
       { path: 'tests/auth.test.ts', content: 'test("auth", () => {})', language: 'typescript' },
     ],
   }),
+}))
+
+// Mock the client to avoid summarization LLM calls
+vi.mock('../agents/client', () => ({
+  client: { messages: { create: vi.fn() } },
 }))
 
 import chatRouter from './chat'
@@ -83,32 +88,54 @@ describe('POST /api/chat', () => {
     expect(res.body.reply.codeBlocks).toHaveLength(1)
   })
 
-  it('passes correct params to callAgent', async () => {
+  it('passes correct params to callAgent (server-side history)', async () => {
     await request(app)
       .post('/api/chat')
       .send({
         sessionId,
         buildingId: 'docker',
         message: 'Add Dockerfile',
-        history: [{ role: 'user', content: 'prior msg' }],
       })
 
-    expect(callAgent).toHaveBeenCalledWith({
-      buildingId: 'docker',
-      repoPath: '/tmp/repo',
-      message: 'Add Dockerfile',
-      history: [{ role: 'user', content: 'prior msg' }],
-    })
+    // Server owns history — starts empty, no client-provided history
+    expect(callAgent).toHaveBeenCalledWith(
+      expect.objectContaining({
+        buildingId: 'docker',
+        repoPath: '/tmp/repo',
+        message: 'Add Dockerfile',
+        history: [],
+      })
+    )
   })
 
-  it('defaults history to empty array when not provided', async () => {
+  it('persists conversation history in session', async () => {
     await request(app)
       .post('/api/chat')
-      .send({ sessionId, buildingId: 'tests', message: 'Help' })
+      .send({ sessionId, buildingId: 'tests', message: 'First message' })
 
-    expect(callAgent).toHaveBeenCalledWith(
-      expect.objectContaining({ history: [] })
-    )
+    const session = getSession(sessionId)!
+    const history = session.conversations['tests']
+    expect(history).toHaveLength(2) // user + assistant
+    expect(history![0].role).toBe('user')
+    expect(history![0].content).toBe('First message')
+    expect(history![1].role).toBe('assistant')
+  })
+
+  it('uses server-side history on subsequent calls', async () => {
+    // First call
+    await request(app)
+      .post('/api/chat')
+      .send({ sessionId, buildingId: 'tests', message: 'First' })
+
+    // Second call
+    await request(app)
+      .post('/api/chat')
+      .send({ sessionId, buildingId: 'tests', message: 'Second' })
+
+    // Second call should have received history from first call
+    const secondCallArgs = vi.mocked(callAgent).mock.calls[1][0]
+    expect(secondCallArgs.history).toHaveLength(2) // user + assistant from first call
+    expect(secondCallArgs.history[0].content).toBe('First')
   })
 
   it('returns 500 when agent throws', async () => {
