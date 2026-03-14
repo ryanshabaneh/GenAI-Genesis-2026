@@ -5,12 +5,9 @@ const { createMock } = vi.hoisted(() => ({
   createMock: vi.fn(),
 }))
 
-vi.mock('@anthropic-ai/sdk', () => {
-  class MockAnthropic {
-    messages = { create: createMock }
-  }
-  return { default: MockAnthropic }
-})
+vi.mock('./client', () => ({
+  client: { messages: { create: createMock } },
+}))
 
 // Mock context builder — we don't want real file reads
 vi.mock('./context', () => ({

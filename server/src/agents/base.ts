@@ -1,11 +1,8 @@
 import Anthropic from '@anthropic-ai/sdk'
-import type { BuildingId, Message } from '../types'
+import type { AgentReply, BuildingId, Message } from '../types'
 import { AGENT_PROMPTS } from './prompts'
 import { buildAgentContext } from './context'
-
-const client = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY,
-})
+import { client } from './client'
 
 // Parse code blocks from assistant response text
 // Looks for patterns like:
@@ -13,7 +10,7 @@ const client = new Anthropic({
 // ```language
 // ...content...
 // ```
-function parseCodeBlocks(
+export function parseCodeBlocks(
   text: string
 ): Array<{ path: string; content: string; language: string }> {
   const blocks: Array<{ path: string; content: string; language: string }> = []
@@ -37,7 +34,7 @@ export async function callAgent(params: {
   repoPath: string
   message: string
   history: Message[]
-}): Promise<Message> {
+}): Promise<AgentReply> {
   const { buildingId, repoPath, message, history } = params
 
   const systemPrompt = AGENT_PROMPTS[buildingId]
@@ -69,7 +66,7 @@ export async function callAgent(params: {
 
   const codeBlocks = parseCodeBlocks(assistantText)
 
-  const reply: Message & { codeBlocks?: typeof codeBlocks } = {
+  const reply: AgentReply = {
     role: 'assistant',
     content: assistantText,
     ...(codeBlocks.length > 0 ? { codeBlocks } : {}),

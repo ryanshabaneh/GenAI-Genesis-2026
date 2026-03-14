@@ -4,6 +4,8 @@
 // the WebSocket room, then runs the actual scan in the background via setImmediate.
 // This fire-and-forget pattern keeps the HTTP response fast while the scan
 // (clone + 14 analyzers) runs asynchronously and streams results over Socket.IO.
+// After the scan completes, the autonomous orchestrator kicks in to fix all
+// buildings below 100% using builder + evaluator agents.
 
 import { Router } from 'express'
 import type { Request, Response } from 'express'
@@ -12,6 +14,7 @@ import path from 'path'
 import { createSession } from '../session/store'
 import { cloneRepo } from '../scanner/clone'
 import { runScan } from '../scanner'
+import { runOrchestrator } from '../orchestrator'
 
 const router = Router()
 
@@ -45,6 +48,9 @@ router.post('/', async (req: Request, res: Response): Promise<void> => {
         updateSession(session.id, { repoPath })
 
         await runScan(session.id, repoPath, io)
+
+        // After scan completes, run the autonomous orchestrator to fix buildings
+        await runOrchestrator(session.id, io)
       } catch (err) {
         console.error('Scan error:', err)
         io.to(session.id).emit('message', {

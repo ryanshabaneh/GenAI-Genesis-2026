@@ -19,6 +19,16 @@
 
 ## Setup
 
+### 0. External dependencies (not in package.json)
+
+The agent orchestrator uses [aider](https://aider.chat) via CLI for code generation. It requires Python 3.9+ and must be installed separately:
+
+```bash
+pip install aider-chat
+```
+
+Git must also be available on PATH (used by both the scanner and aider).
+
 ### 1. Server
 
 ```bash

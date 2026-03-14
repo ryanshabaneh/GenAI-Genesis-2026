@@ -64,9 +64,25 @@ export interface Message {
   content: string
 }
 
+// AgentReply extends Message with optional parsed code blocks from the assistant.
+export interface AgentReply extends Message {
+  codeBlocks?: Array<{ path: string; content: string; language: string }>
+}
+
+// EvaluatorResult is the output of the quality-check evaluator subagent.
+export interface EvaluatorResult {
+  pass: boolean
+  feedback: string
+}
+
 // WebSocket event shapes emitted to the session room during and after a scan.
 export type WsEvent =
   | { type: 'scanning'; building: BuildingId }
   | { type: 'result'; building: BuildingId; percent: number; tasks: Task[] }
   | { type: 'complete'; score: number }
   | { type: 'error'; message: string }
+  | { type: 'agent:start'; building: BuildingId }
+  | { type: 'agent:iteration'; building: BuildingId; iteration: number; maxIterations: number; feedback: string }
+  | { type: 'agent:complete'; building: BuildingId; percent: number; files: string[] }
+  | { type: 'agent:error'; building: BuildingId; error: string }
+  | { type: 'orchestrator:complete'; score: number }
