@@ -26,6 +26,8 @@ cd server
 npm install
 cp .env.example .env
 # Fill in ANTHROPIC_API_KEY in .env
+# Fill in GITHUB_CLIENT_ID= GITHUB_CLIENT_SECRET= in .env
+
 npm run dev
 ```
 
