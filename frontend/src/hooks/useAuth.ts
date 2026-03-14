@@ -14,6 +14,11 @@ export function useAuth() {
   const setGithubUser = useStore((s) => s.setGithubUser)
 
   useEffect(() => {
+    // NEXT_PUBLIC_DEV_AUTH=true in .env.local skips auth and mocks a user
+    if (process.env.NEXT_PUBLIC_DEV_AUTH === 'true') {
+      setGithubUser({ login: 'dev-preview', name: 'Dev Preview', avatarUrl: '' })
+      return
+    }
     fetch(`${API_URL}/api/auth/me`, { credentials: 'include' })
       .then((r) => r.json())
       .then(({ user }) => setGithubUser(user ?? null))
