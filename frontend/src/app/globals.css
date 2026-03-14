@@ -1,5 +1,5 @@
-@import url('https://fonts.googleapis.com/css2?family=Iosevka+Charon+Mono:ital,wght@0,300;0,400;0,500;0,700;1,300;1,400;1,500;1,700&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Bungee&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Gabarito:wght@400..900&family=Iosevka+Charon+Mono:ital,wght@0,300;0,400;0,500;0,700;1,300;1,400;1,500;1,700&family=Righteous&family=Ubuntu+Sans+Mono:ital,wght@0,400..700;1,400..700&display=swap');
+
 @import '../styles/tokens.css';
 @import '../styles/button-effects.css';
 
@@ -59,7 +59,7 @@
     background-clip: text;
   }
 
-  /* animated shifting gradient — teal → cyan → deep navy (3-stop) */
+  /* animated shifting gradient — teal > cyan -> deep navy (3-stop) */
   .gradient-shift-text {
     background: linear-gradient(90deg, var(--teal), var(--cyan), #00141f, var(--teal));
     background-size: 300% auto;
@@ -102,12 +102,26 @@
   background-color: var(--bubbly-color, var(--amber));
   border-radius: 999px; border: none; cursor: pointer;
   position: relative;
-  transition: transform 0.1s ease-in, box-shadow 0.25s ease-in;
+  transition: box-shadow 0.25s ease, letter-spacing 0.25s ease, filter 0.25s ease;
   box-shadow: 0 2px 24px color-mix(in srgb, var(--bubbly-color, var(--amber)) 50%, transparent);
+}
+.bubbly-btn:hover {
+  letter-spacing: 3px;
+  filter: brightness(1.15) saturate(1.2);
+  box-shadow:
+    0 2px 12px color-mix(in srgb, var(--bubbly-color, var(--amber)) 70%, transparent),
+    0 0 32px color-mix(in srgb, var(--bubbly-color, var(--amber)) 45%, transparent),
+    0 0 64px color-mix(in srgb, var(--bubbly-color, var(--amber)) 20%, transparent);
 }
 .bubbly-btn:active {
   transform: scale(0.93);
   box-shadow: 0 1px 12px color-mix(in srgb, var(--bubbly-color, var(--amber)) 25%, transparent);
+}
+/* animated gradient variant — used for the github auth CTA */
+.bubbly-btn.bubbly-gradient {
+  background: linear-gradient(90deg, var(--amber), var(--teal), var(--cyan), var(--amber));
+  background-size: 300% auto;
+  animation: gradient-shift 4s ease infinite;
 }
 .bubbly-btn::before, .bubbly-btn::after {
   position: absolute; content: ''; display: none;
@@ -258,7 +272,7 @@
 }
 .water-btn span {
   position: relative; z-index: 2;
-  font-family: 'Bungee', 'SFTSchriftedRound', sans-serif;
+  font-family: 'Righteous', 'SFTSchriftedRound', sans-serif;
   font-weight: 400; font-size: 15px;
   letter-spacing: 3px; text-transform: uppercase;
   color: var(--white);
