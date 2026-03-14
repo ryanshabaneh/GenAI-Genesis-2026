@@ -2,11 +2,12 @@
 
 import { useStore } from '@/store/useStore'
 import { exportChanges } from '@/lib/api'
-import clsx from 'clsx'
 
 export default function ScoreBar() {
   const score = useStore((s) => s.score)
   const changesQueue = useStore((s) => s.changesQueue)
+
+  const isComplete = score >= 100
 
   async function handleExport() {
     const sessionId = sessionStorage.getItem('shipcity_session_id') ?? ''
@@ -19,15 +20,16 @@ export default function ScoreBar() {
     URL.revokeObjectURL(url)
   }
 
-  // Color encodes urgency: red = needs work, yellow = halfway there, green = ship it
-  function scoreColor(pct: number): string {
-    if (pct >= 80) return 'bg-green-500'
-    if (pct >= 50) return 'bg-yellow-500'
-    return 'bg-red-500'
+  // Gradient shifts from red → amber → teal → cyan as score climbs
+  function barGradient(pct: number): string {
+    if (pct >= 100) return 'linear-gradient(90deg, #06b6d4, #14b8a6)'
+    if (pct >= 75)  return 'linear-gradient(90deg, #f59e0b, #14b8a6)'
+    if (pct >= 50)  return 'linear-gradient(90deg, #f59e0b, #84cc16)'
+    return 'linear-gradient(90deg, #ef4444, #f59e0b)'
   }
 
   return (
-    <div className="bg-gray-900 bg-opacity-90 rounded-xl px-4 py-3 backdrop-blur-sm">
+    <div className="absolute top-4 left-1/2 -translate-x-1/2 z-10 bg-gray-900 bg-opacity-90 rounded-xl px-4 py-3 backdrop-blur-sm min-w-[240px]">
       <div className="flex items-center justify-between mb-1">
         <span className="text-sm font-semibold text-gray-300">Production Readiness</span>
         <div className="flex items-center gap-3">
@@ -39,13 +41,13 @@ export default function ScoreBar() {
               Export ZIP ({changesQueue.length})
             </button>
           )}
-          <span className="text-sm font-bold text-white">{score}%</span>
+          <span className={`text-sm font-bold ${isComplete ? 'text-teal-400' : 'text-white'}`}>{score}%</span>
         </div>
       </div>
-      <div className="w-full bg-surface3 rounded-full h-1">
+      <div className="w-full bg-gray-700 rounded-full h-1">
         <div
-          className={`h-1 rounded-full transition-all duration-[380ms] ease-in-out ${isComplete ? 'bg-teal' : 'bg-blue'}`}
-          style={{ width: `${score}%` }}
+          className="h-1 rounded-full transition-all duration-[380ms] ease-in-out"
+          style={{ width: `${score}%`, background: barGradient(score) }}
         />
       </div>
     </div>
