@@ -1,0 +1,219 @@
+/*
+  button-effects.css
+  reusable hover/state effects — apply as extra class on any button element
+  all colors use design tokens, no hardcoded hex
+
+  PRIMARY GROUP — high-impact, for main CTAs
+    .btn-fx-shimmer     light sweep on hover
+    .btn-fx-fill-center fill expands from center
+    .btn-fx-fill-sides  fill collapses from both sides
+
+  SECONDARY GROUP — refined, for ghost/support actions
+    .btn-fx-lift        translateY + drop shadow
+    .btn-fx-glow        box-shadow glow on hover
+    .btn-fx-offset      offset box-shadow shift
+    .btn-fx-border-draw animated border lines draw in
+    .btn-fx-corners     corner brackets converge on hover
+*/
+
+/* ── PRIMARY ─────────────────────────────────────────────── */
+
+/* gradient-shift — amber idle slides to teal→cyan on hover via background-position */
+/* works with or without bg-amber — background-image layers above background-color */
+.btn-fx-gradient-shift {
+  background-image: linear-gradient(
+    90deg,
+    var(--amber)  0%,
+    var(--amber)  15%,
+    var(--teal)   50%,
+    var(--cyan)   80%,
+    var(--amber) 100%
+  );
+  background-size: 260% auto;
+  background-position: 0% center;
+  transition:
+    background-position 0.55s ease,
+    color 0.35s ease,
+    box-shadow 0.35s ease,
+    border-color 0.35s ease;
+}
+.btn-fx-gradient-shift:hover {
+  background-position: 100% center;
+  color: #090C12;
+  box-shadow: 0 0 16px rgba(62,207,178,0.35), 0 0 32px rgba(0,212,255,0.15);
+  border-color: rgba(62,207,178,0.45);
+}
+.btn-fx-gradient-shift:active { background-position: 75% center; }
+
+/* shimmer — light sweep passes left-to-right on hover */
+.btn-fx-shimmer {
+  position: relative;
+  overflow: hidden;
+}
+.btn-fx-shimmer::before,
+.btn-fx-shimmer::after {
+  height: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform: translateX(-120px) skewX(-15deg);
+  content: '';
+  pointer-events: none;
+  z-index: 1;
+}
+.btn-fx-shimmer::before {
+  width: 60px;
+  background: rgba(255,255,255,0.35);
+  filter: blur(28px);
+  opacity: 0.5;
+}
+.btn-fx-shimmer::after {
+  width: 30px;
+  left: 30px;
+  background: rgba(255,255,255,0.18);
+  filter: blur(5px);
+}
+.btn-fx-shimmer:hover::before,
+.btn-fx-shimmer:hover::after {
+  transform: translateX(320px) skewX(-15deg);
+  transition: all 0.85s ease;
+}
+
+/* fill-center — background expands from center on hover */
+.btn-fx-fill-center {
+  transition: box-shadow 0.35s, color 0.35s;
+}
+.btn-fx-fill-center:hover {
+  box-shadow: inset 0 0 0 2.5em var(--amber);
+  color: #090C12;
+}
+
+/* fill-sides — fill sweeps in from left + right simultaneously */
+.btn-fx-fill-sides {
+  transition: box-shadow 0.45s, border-color 0.45s, color 0.45s;
+}
+.btn-fx-fill-sides:hover {
+  box-shadow: inset 6em 0 0 0 var(--amber), inset -6em 0 0 0 var(--amber);
+  border-color: var(--amber);
+  color: #090C12;
+}
+
+/* ── SECONDARY ───────────────────────────────────────────── */
+
+/* lift — translateY up + radial drop shadow appears */
+.btn-fx-lift {
+  position: relative;
+  transition: transform 0.45s, border-color 0.45s;
+}
+.btn-fx-lift::before {
+  width: 100%;
+  height: 1em;
+  position: absolute;
+  left: 0;
+  bottom: -1.3em;
+  background: radial-gradient(ellipse at center, rgba(0,0,0,0.4) 0%, transparent 75%);
+  opacity: 0;
+  transition: opacity 0.55s;
+  content: '';
+  pointer-events: none;
+}
+.btn-fx-lift:hover {
+  transform: translateY(-0.3em);
+  border-color: var(--white);
+}
+.btn-fx-lift:hover::before {
+  opacity: 1;
+}
+
+/* glow — box-shadow glow radiates on hover */
+.btn-fx-glow {
+  transition: box-shadow 0.35s, transform 0.35s, border-color 0.35s;
+}
+.btn-fx-glow:hover {
+  transform: translateY(-0.2em);
+  box-shadow: 0 0 0.4em 0.1em var(--teal-border), 0 0 1.2em 0.2em var(--teal-dim);
+  border-color: var(--teal);
+  color: var(--teal);
+}
+
+/* offset — box-shadow shifts diagonally away on hover */
+.btn-fx-offset {
+  box-shadow: 0.3em 0.3em 0 var(--teal);
+  transition: box-shadow 0.3s, background-color 0.3s, border-color 0.3s, color 0.3s;
+}
+.btn-fx-offset:hover {
+  box-shadow: -0.3em -0.3em 0 var(--fog);
+  background-color: var(--teal);
+  border-color: var(--teal);
+  color: #090C12;
+}
+
+/* border-draw — four border segments draw in from center on hover */
+.btn-fx-border-draw {
+  position: relative;
+}
+.btn-fx-border-draw::before,
+.btn-fx-border-draw::after {
+  position: absolute;
+  top: 0;
+  left: 0;
+  border-color: var(--teal);
+  border-radius: 999px;
+  border-style: solid;
+  transition: all 0.3s;
+  content: '';
+  pointer-events: none;
+}
+.btn-fx-border-draw::before {
+  width: 0;
+  height: 100%;
+  border-width: 1px 0 1px 0;
+}
+.btn-fx-border-draw::after {
+  width: 100%;
+  height: 0;
+  border-width: 0 1px 0 1px;
+}
+.btn-fx-border-draw:hover {
+  border-color: var(--teal);
+  color: var(--teal);
+}
+.btn-fx-border-draw:hover::before {
+  width: 100%;
+}
+.btn-fx-border-draw:hover::after {
+  height: 100%;
+}
+
+/* corners — bracket corners converge from outside on hover */
+.btn-fx-corners {
+  position: relative;
+  border: none;
+}
+.btn-fx-corners::before,
+.btn-fx-corners::after,
+.btn-fx-corners span::before,
+.btn-fx-corners span::after {
+  width: 8px;
+  height: 8px;
+  position: absolute;
+  transition: all 0.45s;
+  border: 2px solid var(--amber);
+  opacity: 0;
+  content: '';
+  pointer-events: none;
+}
+.btn-fx-corners::before { top: 0;    left: 0;  border-right: none; border-bottom: none; transform: translate(-50%,-50%); }
+.btn-fx-corners::after  { bottom: 0; left: 0;  border-right: none; border-top: none;    transform: translate(-50%, 50%); }
+.btn-fx-corners span::before { top: 0;    right: 0; border-left: none; border-bottom: none; transform: translate(50%,-50%); }
+.btn-fx-corners span::after  { bottom: 0; right: 0; border-left: none; border-top: none;    transform: translate(50%, 50%); }
+.btn-fx-corners:hover {
+  color: var(--amber);
+}
+.btn-fx-corners:hover::before,
+.btn-fx-corners:hover::after,
+.btn-fx-corners:hover span::before,
+.btn-fx-corners:hover span::after {
+  opacity: 1;
+  transform: translate(0,0);
+}

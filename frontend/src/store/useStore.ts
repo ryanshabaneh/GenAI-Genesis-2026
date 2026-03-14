@@ -14,6 +14,7 @@ import type {
   Message,
   ScanStatus,
 } from '@/types'
+import { BUILDINGS } from '@/lib/buildings'
 
 // Keep this list in sync with BuildingId in types/index.ts.
 // It's the source of truth for initializing buildings on store creation.

@@ -1,44 +1,26 @@
 'use client'
 
-// components/ui/TaskChecklist.tsx
-// Pure display component — renders the list of pass/fail tasks returned by a
-// building's analyzer. No logic here; all task state comes from the store via
-// BuildingPanel. Completed tasks get a strikethrough so progress is glanceable.
-
 import type { Task } from '@/types'
-import clsx from 'clsx'
 
-interface TaskChecklistProps {
-  tasks: Task[]
-}
-
-export default function TaskChecklist({ tasks }: TaskChecklistProps) {
+export default function TaskChecklist({ tasks }: { tasks: Task[] }) {
   if (tasks.length === 0) {
-    return <p className="text-sm text-gray-500 italic">No tasks found for this building.</p>
+    return (
+      <p className="text-fog text-xs italic">Nothing here yet — this lot is empty.</p>
+    )
   }
 
   return (
-    <ul className="space-y-2">
+    <ul className="flex flex-col gap-1.5">
       {tasks.map((task) => (
         <li key={task.id} className="flex items-center gap-2">
-          {/* Custom checkbox — green fill when done, gray border when pending */}
-          <span
-            className={clsx(
-              'flex-shrink-0 w-4 h-4 rounded border flex items-center justify-center text-xs',
-              task.done
-                ? 'bg-green-600 border-green-600 text-white'
-                : 'bg-gray-800 border-gray-600'
-            )}
-          >
+          <span className={`shrink-0 w-4 h-4 rounded border flex items-center justify-center text-[10px] transition-colors duration-[120ms] ${
+            task.done
+              ? 'bg-teal-dim border-teal-border text-teal'
+              : 'bg-surface3 border-white/10'
+          }`}>
             {task.done && '✓'}
           </span>
-          <span
-            className={clsx(
-              'text-sm',
-              // Strikethrough + dimmed text signals "already handled" without removing the row
-              task.done ? 'text-gray-300 line-through' : 'text-gray-100'
-            )}
-          >
+          <span className={`text-xs font-ui leading-snug ${task.done ? 'text-fog' : 'text-white'}`}>
             {task.label}
           </span>
         </li>

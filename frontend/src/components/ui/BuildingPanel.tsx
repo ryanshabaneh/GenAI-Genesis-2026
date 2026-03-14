@@ -1,18 +1,8 @@
 'use client'
 
-// components/ui/BuildingPanel.tsx
-// Right-column panel that appears when a building is selected in the 3D scene.
-// Composed of three sections stacked vertically:
-//   1. Header — building name, emoji, description, close button
-//   2. Progress row — current percent and stage label
-//   3. Task checklist — per-building pass/fail tasks from the analyzer
-//   4. ChatWindow — agent chat fills remaining flex height
-//
-// When no building is active it shows an empty-state prompt instead.
-
 import { useStore } from '@/store/useStore'
 import { BUILDINGS } from '@/lib/buildings'
-import { STAGE_CONFIG, percentToStage } from '@/lib/stages'
+import { percentToStage } from '@/lib/stages'
 import TaskChecklist from './TaskChecklist'
 import ChatWindow from './ChatWindow'
 
@@ -21,70 +11,70 @@ export default function BuildingPanel() {
   const buildings = useStore((s) => s.buildings)
   const setActiveBuilding = useStore((s) => s.setActiveBuilding)
 
-  // Empty state — nothing selected yet
-  if (!activeBuilding) {
-    return (
-      <div className="flex flex-col items-center justify-center h-full p-8 text-center">
-        <p className="text-5xl mb-4">🏙️</p>
-        <p className="text-gray-400 text-sm">
-          Click on any building in the village to open its agent and task checklist.
-        </p>
-      </div>
-    )
-  }
+  if (!activeBuilding) return null
 
   const state = buildings[activeBuilding]
   const config = BUILDINGS.find((b) => b.id === activeBuilding)
   const stage = percentToStage(state.percent)
-  const stageDesc = STAGE_CONFIG[stage].description
+  const isComplete = stage === 'complete'
+
+  const progressColor = isComplete ? 'bg-teal' : 'bg-amber'
+  const percentColor  = isComplete ? 'text-teal' : 'text-amber'
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="absolute right-4 top-4 bottom-4 w-80 flex flex-col overlay rounded-[18px] animate-slide-in-right overflow-hidden">
+
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-gray-800">
-        <div>
-          <div className="flex items-center gap-2">
-            <span className="text-2xl">{config?.emoji}</span>
-            <span className="font-bold text-lg">{config?.name}</span>
-          </div>
-          <p className="text-xs text-gray-400 mt-0.5">{config?.description}</p>
+      <div className="flex items-start justify-between px-5 py-4 border-b border-white/[0.06]">
+        <div className="min-w-0 pr-3">
+          <p className="text-fog text-[10px] font-display font-black uppercase tracking-[1.5px]">
+            {config?.category}
+          </p>
+          <h2 className="text-white font-display font-black text-lg leading-tight mt-0.5">
+            {config?.name}
+          </h2>
+          <p className="text-fog-light text-xs mt-1 leading-relaxed line-clamp-2">
+            {config?.description}
+          </p>
         </div>
-        {/* Deselects the building, returning the panel to empty state */}
         <button
           onClick={() => setActiveBuilding(null)}
-          className="text-gray-500 hover:text-white text-xl leading-none"
           aria-label="Close panel"
+          className="text-fog hover:text-white text-lg leading-none transition-colors duration-[120ms] shrink-0 mt-0.5"
         >
           ✕
         </button>
       </div>
 
-      {/* Progress row */}
-      <div className="px-4 py-3 border-b border-gray-800">
-        <div className="flex items-center justify-between mb-1">
-          <span className="text-xs text-gray-400">{stageDesc}</span>
-          <span className="text-sm font-bold">{state.percent}%</span>
+      {/* Progress */}
+      <div className="px-5 py-3 border-b border-white/[0.06]">
+        <div className="flex items-center justify-between mb-2">
+          <span className="text-fog text-xs font-ui">Production readiness</span>
+          <span className={`text-sm font-display font-black ${percentColor}`}>
+            {state.percent}%
+          </span>
         </div>
-        <div className="w-full bg-gray-700 rounded-full h-1.5">
+        <div className="w-full bg-surface3 rounded-full h-1">
           <div
-            className="h-1.5 rounded-full bg-blue-500 transition-all duration-700"
+            className={`h-1 rounded-full ${progressColor} transition-all duration-[380ms] ease-in-out`}
             style={{ width: `${state.percent}%` }}
           />
         </div>
       </div>
 
       {/* Tasks */}
-      <div className="px-4 py-3 border-b border-gray-800">
-        <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2">
+      <div className="px-5 py-3 border-b border-white/[0.06]">
+        <p className="text-fog text-[10px] font-display font-black uppercase tracking-[1.5px] mb-2">
           Checklist
-        </h3>
+        </p>
         <TaskChecklist tasks={state.tasks} />
       </div>
 
-      {/* Chat — takes remaining height via flex-1 */}
+      {/* Chat — fills remaining height */}
       <div className="flex-1 overflow-hidden">
         <ChatWindow buildingId={activeBuilding} />
       </div>
+
     </div>
   )
 }

@@ -1,47 +1,25 @@
 'use client'
 
-// components/ui/ChatWindow.tsx
-// Per-building agent chat UI. Renders message history and an input box.
-// Each building has its own isolated chat thread (stored in the building's
-// chatHistory slice) so conversations don't bleed across buildings.
-// Code blocks returned by the agent are rendered inline as CodePreview cards.
-
 import { useState, useRef, useEffect } from 'react'
 import { useAgent } from '@/hooks/useAgent'
 import CodePreview from './CodePreview'
 import type { BuildingId, Message } from '@/types'
-import clsx from 'clsx'
 
-interface ChatWindowProps {
-  buildingId: BuildingId
-}
-
-// Renders a single message bubble. User messages are right-aligned blue;
-// assistant messages are left-aligned gray. Any code blocks in the response
-// are rendered below the text bubble as interactive CodePreview cards.
 function MessageBubble({ message, buildingId }: { message: Message; buildingId: BuildingId }) {
   const isUser = message.role === 'user'
   return (
-    <div className={clsx('flex flex-col gap-1', isUser ? 'items-end' : 'items-start')}>
-      <div
-        className={clsx(
-          'px-3 py-2 rounded-xl text-sm max-w-[85%] whitespace-pre-wrap',
-          isUser
-            ? 'bg-blue-600 text-white'
-            : 'bg-gray-800 text-gray-100'
-        )}
-      >
+    <div className={`flex flex-col gap-1 ${isUser ? 'items-end' : 'items-start'}`}>
+      <div className={`px-3 py-2 rounded-[10px] text-xs max-w-[88%] whitespace-pre-wrap leading-relaxed font-ui ${
+        isUser
+          ? 'bg-surface3 text-white'
+          : 'bg-cyan-dim border border-cyan-border text-white'
+      }`}>
         {message.content}
       </div>
-      {/* Render any file suggestions the agent returned as accept/reject cards */}
       {message.codeBlocks && message.codeBlocks.length > 0 && (
         <div className="w-full">
           {message.codeBlocks.map((block) => (
-            <CodePreview
-              key={block.path}
-              codeBlock={block}
-              buildingId={buildingId}
-            />
+            <CodePreview key={block.path} codeBlock={block} buildingId={buildingId} />
           ))}
         </div>
       )}
@@ -49,12 +27,27 @@ function MessageBubble({ message, buildingId }: { message: Message; buildingId: 
   )
 }
 
-export default function ChatWindow({ buildingId }: ChatWindowProps) {
+function TypingIndicator() {
+  return (
+    <div className="flex items-start">
+      <div className="bg-cyan-dim border border-cyan-border px-3 py-2 rounded-[10px] flex gap-1 items-center">
+        {[0, 1, 2].map((i) => (
+          <span
+            key={i}
+            className="w-1 h-1 rounded-full bg-cyan animate-scan-pulse"
+            style={{ animationDelay: `${i * 0.2}s` }}
+          />
+        ))}
+      </div>
+    </div>
+  )
+}
+
+export default function ChatWindow({ buildingId }: { buildingId: BuildingId }) {
   const [input, setInput] = useState('')
   const { sendMessage, isLoading, chatHistory } = useAgent(buildingId)
   const bottomRef = useRef<HTMLDivElement>(null)
 
-  // Auto-scroll to newest message whenever history grows
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [chatHistory])
@@ -66,7 +59,6 @@ export default function ChatWindow({ buildingId }: ChatWindowProps) {
     await sendMessage(text)
   }
 
-  // Enter sends; Shift+Enter inserts a newline (standard chat convention)
   function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault()
@@ -76,48 +68,35 @@ export default function ChatWindow({ buildingId }: ChatWindowProps) {
 
   return (
     <div className="flex flex-col h-full">
-      {/* Message list */}
-      <div className="flex-1 overflow-y-auto p-3 space-y-3">
+      {/* Messages */}
+      <div className="flex-1 overflow-y-auto px-4 py-3 flex flex-col gap-2.5">
         {chatHistory.length === 0 && (
-          <p className="text-gray-500 text-sm text-center mt-8">
+          <p className="text-fog text-xs text-center mt-8 leading-relaxed">
             Ask the agent anything about improving this area.
           </p>
         )}
         {chatHistory.map((msg) => (
           <MessageBubble key={msg.id} message={msg} buildingId={buildingId} />
         ))}
-        {/* Pulsing "Thinking…" indicator while waiting for the agent response */}
-        {isLoading && (
-          <div className="flex items-start">
-            <div className="bg-gray-800 px-3 py-2 rounded-xl text-sm text-gray-400 animate-pulse">
-              Thinking…
-            </div>
-          </div>
-        )}
-        {/* Invisible anchor div — scrollIntoView targets this to snap to bottom */}
+        {isLoading && <TypingIndicator />}
         <div ref={bottomRef} />
       </div>
 
       {/* Input */}
-      <div className="border-t border-gray-800 p-3 flex gap-2">
+      <div className="border-t border-white/[0.06] p-3 flex gap-2">
         <textarea
           rows={2}
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder="Ask for help improving this area…"
+          placeholder="Ask the agent…"
           disabled={isLoading}
-          className="flex-1 bg-gray-800 text-white text-sm rounded-lg px-3 py-2 resize-none border border-gray-700 focus:outline-none focus:ring-1 focus:ring-blue-500"
+          className="flex-1 bg-surface2 text-white text-xs font-ui rounded-[10px] px-3 py-2 resize-none border border-white/10 focus:outline-none focus:border-amber/40 placeholder:text-fog transition-colors duration-[120ms]"
         />
         <button
           onClick={() => void handleSend()}
-          disabled={isLoading || input.trim() === ''}
-          className={clsx(
-            'self-end px-4 py-2 rounded-lg text-sm font-semibold transition-colors',
-            isLoading || input.trim() === ''
-              ? 'bg-gray-700 text-gray-500 cursor-not-allowed'
-              : 'bg-blue-600 hover:bg-blue-500 text-white'
-          )}
+          disabled={isLoading || !input.trim()}
+          className="self-end px-3 py-2 rounded-[999px] bg-amber text-ink text-xs font-display font-black transition-all duration-[120ms] active:scale-[0.97] disabled:opacity-40 disabled:pointer-events-none btn-fx-shimmer"
         >
           Send
         </button>
