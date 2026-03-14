@@ -40,6 +40,7 @@ When a version is released, rename `[Unreleased]` to the version number and date
 - Initial project scaffold: frontend (Next.js) and server directories — `main`
 - CHANGELOG with contribution requirements for branch and merge tracking — `main`
 - Per-entry branch attribution format added to CHANGELOG — `main`
+- Per-entry branch attribution format added to CHANGELOG — `main`
 - Express + Socket.IO server with CORS, JSON parsing, and global error handling — `infra-branch`
 - `POST /api/scan` endpoint: accepts a GitHub URL, creates a session, returns sessionId immediately, runs clone + scan in background — `infra-branch`
 - `POST /api/chat` endpoint: routes messages to the specialist AI agent for a given building — `infra-branch`
