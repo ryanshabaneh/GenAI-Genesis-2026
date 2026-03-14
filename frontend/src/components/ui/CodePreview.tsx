@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import Editor from '@monaco-editor/react'
 import { acceptChange } from '@/lib/api'
+import { useStore } from '@/store/useStore'
 import type { CodeBlock } from '@/types'
 
 interface CodePreviewProps {
@@ -14,16 +15,23 @@ interface CodePreviewProps {
 
 export default function CodePreview({ codeBlock, buildingId, onAccepted, onRejected }: CodePreviewProps) {
   const [status, setStatus] = useState<'idle' | 'accepting' | 'accepted' | 'rejected'>('idle')
+  const setBuildingStatus = useStore((s) => s.setBuildingStatus)
+  const setScore = useStore((s) => s.setScore)
+  const addChange = useStore((s) => s.addChange)
 
   async function handleAccept() {
     setStatus('accepting')
     const sessionId = sessionStorage.getItem('shipcity_session_id') ?? ''
     try {
-      await acceptChange({
+      const { percent, tasks, score } = await acceptChange({
         sessionId,
         buildingId: buildingId as Parameters<typeof acceptChange>[0]['buildingId'],
-        files: [{ path: codeBlock.path, content: codeBlock.content }],
+        files: [{ path: codeBlock.path, content: codeBlock.content, isNew: true }],
       })
+      const bid = buildingId as Parameters<typeof acceptChange>[0]['buildingId']
+      setBuildingStatus(bid, { percent, tasks })
+      setScore(score)
+      addChange({ id: `change-${Date.now()}`, buildingId: bid, files: [{ path: codeBlock.path, content: codeBlock.content, isNew: true }], acceptedAt: Date.now() })
       setStatus('accepted')
       onAccepted?.(codeBlock.path)
     } catch {

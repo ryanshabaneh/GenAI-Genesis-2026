@@ -9,17 +9,11 @@ export type BuildingId =
   | 'tests'
   | 'cicd'
   | 'docker'
-  | 'readme'
-  | 'errorHandling'
+  | 'documentation'
   | 'envVars'
-  | 'logging'
-  | 'linting'
-  | 'license'
   | 'security'
-  | 'healthCheck'
-  | 'scripts'
+  | 'logging'
   | 'deployment'
-  | 'hosting'
 
 export interface Task {
   id: string
@@ -64,11 +58,21 @@ export interface Message {
   content: string
 }
 
-// GitHubUser is the subset of GitHub profile data stored in the server-side session.
-// The access token itself is never sent to the frontend — only this user summary is.
+// AgentReply extends Message with optional parsed code blocks from the assistant.
+export interface AgentReply extends Message {
+  codeBlocks?: Array<{ path: string; content: string; language: string }>
+}
+
+// EvaluatorResult is the output of the quality-check evaluator subagent.
+export interface EvaluatorResult {
+  pass: boolean
+  feedback: string
+}
+
+// GitHubUser stores the minimal GitHub profile info saved in the session.
 export interface GitHubUser {
-  login: string       // GitHub username
-  name: string | null // Display name (may be null if not set)
+  login: string
+  name: string | null
   avatarUrl: string
 }
 
@@ -78,3 +82,8 @@ export type WsEvent =
   | { type: 'result'; building: BuildingId; percent: number; tasks: Task[] }
   | { type: 'complete'; score: number }
   | { type: 'error'; message: string }
+  | { type: 'agent:start'; building: BuildingId }
+  | { type: 'agent:iteration'; building: BuildingId; iteration: number; maxIterations: number; feedback: string }
+  | { type: 'agent:complete'; building: BuildingId; percent: number; files: string[] }
+  | { type: 'agent:error'; building: BuildingId; error: string }
+  | { type: 'orchestrator:complete'; score: number }

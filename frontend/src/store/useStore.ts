@@ -16,8 +16,18 @@ import type {
 } from '@/types'
 import { BUILDINGS } from '@/lib/buildings'
 
-// Derived from BUILDINGS config — buildings.ts is the single source of truth
-const ALL_BUILDING_IDS: BuildingId[] = BUILDINGS.map((b) => b.id)
+// Keep this list in sync with BuildingId in types/index.ts.
+// It's the source of truth for initializing buildings on store creation.
+const ALL_BUILDING_IDS: BuildingId[] = [
+  'tests',
+  'cicd',
+  'docker',
+  'documentation',
+  'envVars',
+  'security',
+  'logging',
+  'deployment',
+]
 
 // Creates a fresh idle BuildingState for every known building.
 // Called once at store init so each building starts with a clean slate.
