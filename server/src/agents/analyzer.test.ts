@@ -12,8 +12,8 @@ vi.mock('./context', () => ({
   buildAgentContext: vi.fn().mockResolvedValue('mock context'),
 }))
 
-import { analyzeForTasks, mergeTasks } from './analyzer'
-import type { AnalyzerResult, Task } from '../types'
+import { analyzeForTasks, mergeTasks, deduplicateAcrossBuildings } from './analyzer'
+import type { AnalyzerResult, BuildingId, Task } from '../types'
 
 const baseScanResult: AnalyzerResult = {
   buildingId: 'tests',
@@ -155,5 +155,67 @@ describe('mergeTasks', () => {
   it('handles empty agent tasks', () => {
     const merged = mergeTasks(scannerTasks, [])
     expect(merged).toHaveLength(2)
+  })
+})
+
+describe('deduplicateAcrossBuildings', () => {
+  it('moves secret-related tasks to security building only', () => {
+    const input = new Map<BuildingId, Task[]>([
+      ['security', [{ id: 'sec-key', label: 'Remove hardcoded secret from code', done: false }]],
+      ['tests', [{ id: 'tests-key', label: 'Remove hardcoded secret key in index.ts', done: false }]],
+      ['docker', [{ id: 'docker-key', label: 'Hardcoded API key found', done: false }]],
+    ])
+
+    const result = deduplicateAcrossBuildings(input)
+
+    expect(result.get('security')).toHaveLength(1) // keeps it
+    expect(result.get('tests')).toHaveLength(0) // removed — secret belongs to security
+    expect(result.get('docker')).toHaveLength(0) // removed
+  })
+
+  it('moves validation tasks to security building only', () => {
+    const input = new Map<BuildingId, Task[]>([
+      ['security', [{ id: 'sec-val', label: 'Add input validation on POST route', done: false }]],
+      ['cicd', [{ id: 'cicd-val', label: 'No input validation on endpoints', done: false }]],
+    ])
+
+    const result = deduplicateAcrossBuildings(input)
+
+    expect(result.get('security')).toHaveLength(1)
+    expect(result.get('cicd')).toHaveLength(0)
+  })
+
+  it('keeps domain-specific tasks untouched', () => {
+    const input = new Map<BuildingId, Task[]>([
+      ['tests', [
+        { id: 'tests-coverage', label: 'Add tests for GET route', done: false },
+        { id: 'tests-mock', label: 'Add mock for external API calls in tests', done: false },
+      ]],
+      ['cicd', [
+        { id: 'cicd-cache', label: 'Add npm caching to CI workflow', done: false },
+      ]],
+    ])
+
+    const result = deduplicateAcrossBuildings(input)
+
+    expect(result.get('tests')).toHaveLength(2)
+    expect(result.get('cicd')).toHaveLength(1)
+  })
+
+  it('moves error handling tasks to logging', () => {
+    const input = new Map<BuildingId, Task[]>([
+      ['logging', [{ id: 'log-err', label: 'Add error handling middleware', done: false }]],
+      ['docker', [{ id: 'docker-err', label: 'No error middleware found', done: false }]],
+    ])
+
+    const result = deduplicateAcrossBuildings(input)
+
+    expect(result.get('logging')).toHaveLength(1)
+    expect(result.get('docker')).toHaveLength(0)
+  })
+
+  it('handles empty maps', () => {
+    const result = deduplicateAcrossBuildings(new Map())
+    expect(result.size).toBe(0)
   })
 })

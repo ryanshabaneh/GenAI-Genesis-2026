@@ -2,7 +2,7 @@ import fs from 'fs'
 import path from 'path'
 import type { Server as SocketIOServer } from 'socket.io'
 import type { AnalyzerContext } from './analyzers/base'
-import type { AnalyzerResult } from '../types'
+import type { AnalyzerResult, Task } from '../types'
 import { testsAnalyzer } from './analyzers/tests'
 import { cicdAnalyzer } from './analyzers/cicd'
 import { dockerAnalyzer } from './analyzers/docker'
@@ -12,7 +12,8 @@ import { securityAnalyzer } from './analyzers/security'
 import { loggingAnalyzer } from './analyzers/logging'
 import { deploymentAnalyzer } from './analyzers/deployment'
 import { getSession, updateSession } from '../session/store'
-import { analyzeForTasks, mergeTasks } from '../agents/analyzer'
+import { analyzeForTasks, mergeTasks, deduplicateAcrossBuildings } from '../agents/analyzer'
+import type { BuildingId } from '../types'
 import { calculatePercent } from '../agents/scanner-context'
 
 // The 8 buildings from the execution plan
@@ -86,6 +87,8 @@ export async function runScan(
 
   // Phase 2: deep analysis (LLM, reads actual code, adds tasks)
   // Runs after all heuristic results are in so the frontend isn't blocked
+  const allAgentTasks = new Map<BuildingId, Task[]>()
+
   for (const result of results) {
     try {
       const agentTasks = await analyzeForTasks({
@@ -93,39 +96,45 @@ export async function runScan(
         repoPath,
         scanResult: result,
       })
-
-      if (agentTasks.length > 0) {
-        const mergedTasks = mergeTasks(result.tasks, agentTasks)
-        const percent = calculatePercent(mergedTasks)
-
-        // Update session with enriched task list
-        const session = getSession(sessionId)
-        if (session) {
-          const enrichedResult: AnalyzerResult = {
-            ...result,
-            tasks: mergedTasks,
-            percent,
-          }
-
-          updateSession(sessionId, {
-            results: {
-              ...session.results,
-              [result.buildingId]: enrichedResult,
-            },
-          })
-
-          // Notify frontend of updated tasks
-          io.to(sessionId).emit('message', {
-            type: 'result',
-            building: result.buildingId,
-            percent,
-            tasks: mergedTasks,
-          })
-        }
-      }
+      allAgentTasks.set(result.buildingId, agentTasks)
     } catch (err) {
-      // Non-fatal — heuristic tasks are still there
       console.error(`Analysis agent for ${result.buildingId} failed:`, err)
+      allAgentTasks.set(result.buildingId, [])
+    }
+  }
+
+  // Dedup cross-building overlap (e.g. "hardcoded secret" → keep in security only)
+  const dedupedTasks = deduplicateAcrossBuildings(allAgentTasks)
+
+  // Merge deduped agent tasks into scanner results and notify frontend
+  for (const result of results) {
+    const agentTasks = dedupedTasks.get(result.buildingId) ?? []
+    if (agentTasks.length === 0) continue
+
+    const mergedTasks = mergeTasks(result.tasks, agentTasks)
+    const percent = calculatePercent(mergedTasks)
+
+    const session = getSession(sessionId)
+    if (session) {
+      const enrichedResult: AnalyzerResult = {
+        ...result,
+        tasks: mergedTasks,
+        percent,
+      }
+
+      updateSession(sessionId, {
+        results: {
+          ...session.results,
+          [result.buildingId]: enrichedResult,
+        },
+      })
+
+      io.to(sessionId).emit('message', {
+        type: 'result',
+        building: result.buildingId,
+        percent,
+        tasks: mergedTasks,
+      })
     }
   }
 
