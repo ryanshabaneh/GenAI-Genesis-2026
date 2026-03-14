@@ -26,7 +26,7 @@ As each category finishes analyzing, its building plot updates in real time:
 [Scanning CI/CD...]     → Factory foundation appears, stuck at 0%
 [Scanning Tests...]     → School foundation appears, jumps to 25% (1 test file found)
 [Scanning Docker...]    → Shipping Dock appears, 0% (nothing found)
-[Scanning README...]    → Town Hall appears, 50% (README exists but incomplete)
+[Scanning Env Vars...]  → Power Plant appears, 0% (no .env.example found)
 [Scanning Security...]  → Vault appears, 0% (hardcoded secrets found)
 ...continues for all buildings...
 ```
@@ -49,7 +49,7 @@ Clicking opens that building's **detail panel** showing:
 
 ### Step 4: Building Agents — The Multi-Agent Chat
 Each building has its own **specialized AI agent** (the "Builder" NPC
-for that building). When you open chat for the School (Tests):
+for that building). When you open chat for the School (Tests + Error Handling):
 
 > 🤖 **Test Builder:** "Your School is at 25%. Here's what we need
 > to get to 100%:
@@ -99,7 +99,7 @@ When the user has built up their village, they can:
 
 Each building has **4 tasks** (roughly). Each completed task = 25%.
 
-Example — School (Tests):
+Example — School (Tests + Error Handling):
 ```
 0%   = No test framework, no tests
 25%  = Test framework installed
@@ -185,7 +185,7 @@ Frontend                    Backend
    │       tasks: [...]}       │
    │ ◄════════════════════════ │
    │                           │
-   │  ... continues for all 14 │
+   │  ... continues for all 8  │
    │                           │
    │  ws: {type: "complete",   │
    │       score: 34}          │
@@ -194,20 +194,14 @@ Frontend                    Backend
 
 ### Scan Order (intentional — most dramatic first)
 
-1. **Roads** (package scripts) — quick check, shows if project even runs
-2. **Town Hall** (README) — everyone has one, sets the baseline
-3. **Police Station** (linting) — quick file check
-4. **Courthouse** (license) — instant check
-5. **School** (tests) — important, usually partially there
-6. **Power Plant** (env vars) — needs code scanning
-7. **Vault** (security) — needs code scanning
-8. **Hospital** (error handling) — needs AST analysis
-9. **Watchtower** (logging) — needs code scanning
-10. **Factory** (CI/CD) — checks .github/workflows
-11. **Shipping Dock** (Docker) — checks for Dockerfile
-12. **Pharmacy** (health checks) — needs route analysis
-13. **Launch Pad** (deployment) — checks for deploy configs
-14. **Server Room** (hosting) — checks server config
+1. **Factory** (CI/CD) — quick check for .github/workflows
+2. **Shipping Dock** (Docker) — quick check for Dockerfile
+3. **Power Plant** (env vars) — check .env files, scan for hardcoded configs
+4. **Vault** (security) — scan for secrets in code
+5. **School** (tests + error handling) — check test framework, test files, error patterns
+6. **Watchtower** (logging) — check for logging library, console.log usage
+7. **Launch Pad** (deployment) — check for deploy configs
+8. **Server Room** (hosting) — check server config, port binding, CORS
 
 Fast checks first (buildings appear quickly, feels alive),
 deep analysis later (user already engaged by then).
@@ -246,14 +240,14 @@ Agents CANNOT:
 User: "Write tests for my auth routes"
            │
            ▼
-┌─────────────────────────────┐
-│  School Agent (Test Builder) │
-│                              │
-│  1. Read src/routes/auth.ts  │
-│  2. Understand the endpoints │
-│  3. Generate test file       │
-│  4. Present to user          │
-└─────────────────────────────┘
+┌──────────────────────────────────┐
+│  School Agent (Tests + Errors)   │
+│                                  │
+│  1. Read src/routes/auth.ts      │
+│  2. Understand the endpoints     │
+│  3. Generate test file           │
+│  4. Present to user              │
+└──────────────────────────────────┘
            │
            ▼
 ┌─────────────────────────────┐
@@ -279,23 +273,24 @@ User: "Write tests for my auth routes"
 
 ### Agent System Prompts (simplified examples)
 
-**School Agent (Tests):**
+**School Agent (Tests + Error Handling):**
 ```
-You are the Test Builder for ShipCity. You specialize in writing
-tests for JavaScript/TypeScript projects. You have access to the
-user's codebase. When asked to write tests, read the actual source
-files and write real, working tests specific to their code.
-Use the testing framework already in their project, or recommend
-jest/vitest if none exists. Always explain what you're testing and why.
+You are the Test & Error Handling Builder for ShipCity. You specialize
+in writing tests and adding robust error handling to JavaScript/TypeScript
+projects. You have access to the user's codebase. When asked to write
+tests, read the actual source files and write real, working tests specific
+to their code. When asked about error handling, add proper try/catch blocks,
+error middleware, and error boundaries. Use the testing framework already
+in their project, or recommend jest/vitest if none exists.
 ```
 
-**Hospital Agent (Error Handling):**
+**Vault Agent (Security):**
 ```
-You are the Error Handler for ShipCity. You specialize in adding
-robust error handling to JavaScript/TypeScript projects. When asked
-to add error handling, read their actual route handlers and middleware,
-then generate proper try/catch blocks, error middleware, and error
-response formatting specific to their code.
+You are the Security Guardian for ShipCity. You specialize in
+securing JavaScript/TypeScript projects. When asked to fix security
+issues, scan their actual codebase for hardcoded secrets, insecure
+dependencies, and missing HTTPS configuration, then generate fixes
+specific to their code.
 ```
 
 ---
@@ -530,18 +525,12 @@ shipcity/
 │   │   │   ├── clone.ts               # Clone repo from GitHub URL
 │   │   │   ├── analyzers/
 │   │   │   │   ├── base.ts            # Base analyzer interface
-│   │   │   │   ├── tests.ts           # School — test detection
+│   │   │   │   ├── tests.ts           # School — tests + error handling
 │   │   │   │   ├── cicd.ts            # Factory — CI/CD detection
 │   │   │   │   ├── docker.ts          # Shipping Dock — Docker detection
-│   │   │   │   ├── readme.ts          # Town Hall — docs quality
-│   │   │   │   ├── errorHandling.ts   # Hospital — error handling
 │   │   │   │   ├── envVars.ts         # Power Plant — env management
 │   │   │   │   ├── logging.ts         # Watchtower — logging
-│   │   │   │   ├── linting.ts         # Police Station — linting config
-│   │   │   │   ├── license.ts         # Courthouse — license
 │   │   │   │   ├── security.ts        # Vault — secrets detection
-│   │   │   │   ├── healthCheck.ts     # Pharmacy — health endpoints
-│   │   │   │   ├── scripts.ts         # Roads — package scripts
 │   │   │   │   ├── deployment.ts      # Launch Pad — deploy config
 │   │   │   │   └── hosting.ts         # Server Room — server config
 │   │   │   │
@@ -554,15 +543,9 @@ shipcity/
 │   │   │   │   ├── tests.ts           # School agent system prompt
 │   │   │   │   ├── cicd.ts            # Factory agent system prompt
 │   │   │   │   ├── docker.ts
-│   │   │   │   ├── readme.ts
-│   │   │   │   ├── errorHandling.ts
 │   │   │   │   ├── envVars.ts
 │   │   │   │   ├── logging.ts
-│   │   │   │   ├── linting.ts
-│   │   │   │   ├── license.ts
 │   │   │   │   ├── security.ts
-│   │   │   │   ├── healthCheck.ts
-│   │   │   │   ├── scripts.ts
 │   │   │   │   ├── deployment.ts
 │   │   │   │   └── hosting.ts
 │   │   │   │
@@ -604,7 +587,7 @@ shipcity/
 ┌──────────────────────────────────────────────────────────┐
 │ 3. PROGRESSIVE SCAN (runs analyzers one by one)           │
 │                                                           │
-│    For each of 14 analyzers:                              │
+│    For each of 8 analyzers:                              │
 │      a) Emit ws: { status: "scanning", building: "X" }   │
 │         → Frontend shows scanning indicator on that plot  │
 │                                                           │
@@ -619,7 +602,7 @@ shipcity/
 │         → Frontend builds/updates that building in 3D     │
 │         → Scout NPC reacts                                │
 │                                                           │
-│    After all 14:                                          │
+│    After all 8:                                          │
 │      Emit ws: { status: "complete", score: 34 }           │
 │      → Scout starts tutorial walkthrough                  │
 └──────────────────────────────────────────────────────────┘
@@ -725,7 +708,7 @@ Does NOT own: Any UI panels, chat, or backend logic.
 
 Owns:
 - clone.ts — clone repo from GitHub URL to temp dir
-- All 14 analyzer files (tests.ts, cicd.ts, docker.ts, etc.)
+- All 8 analyzer files (tests.ts, cicd.ts, docker.ts, etc.)
 - scoring.ts — calculate percentage per building
 - Task generation — what specific tasks are needed per building
 - Socket.IO emission — progressive results to frontend
@@ -744,7 +727,7 @@ Does NOT own: Agent chat, code generation, or frontend.
 **The builders inside each building.**
 
 Owns:
-- All 14 agent system prompts
+- All 8 agent system prompts
 - context.ts — reads the RIGHT files from repo to give agent context
   (e.g., test agent gets route files, Docker agent gets package.json)
 - Base agent class — manages conversation, sends to Claude, parses response
@@ -822,8 +805,8 @@ Does NOT own: Core code. Owns everything around the code.
 
 ### Hour 8 Checkpoint
 - [ ] Person 1: Buildings load based on percentage, click detection works
-- [ ] Person 2: All 14 analyzers running, WebSocket streaming results
-- [ ] Person 3: 5+ agents producing good code
+- [ ] Person 2: All 8 analyzers running, WebSocket streaming results
+- [ ] Person 3: All 8 agents producing good code
 - [ ] Person 4: Full UI panels working with mock data
 - [ ] Person 5: Frontend deployed to Vercel, backend to Railway
 
@@ -848,18 +831,18 @@ Does NOT own: Core code. Owns everything around the code.
 
 ## 3D MODEL STRATEGY
 
-You need ~14 buildings × 5 states = 70 model variations.
-That's impossible to make from scratch. Here's the plan:
+You need ~8 buildings × 5 states = 40 model variations.
+That's a lot to make from scratch. Here's the plan:
 
 ### Option A: Smart Model Reuse (Recommended)
-1. Get 14 unique low-poly building models from Kenney.nl (free, CC0)
+1. Get 8 unique low-poly building models from Kenney.nl (free, CC0)
 2. For construction stages, DON'T make separate models:
    - 0% = flat foundation pad (one shared model)
    - 25% = building model at 30% opacity + scaffolding prop
    - 50% = building model, bottom half solid, top half transparent
    - 75% = full model but desaturated/dark
    - 100% = full model with glow, particles, lights
-3. This means you need: 14 building models + 1 foundation + 1 scaffolding = 16 models total
+3. This means you need: 8 building models + 1 foundation + 1 scaffolding = 10 models total
 4. Construction stages handled by shader/material/opacity changes in code
 
 ### Option B: Voxel Models (If you have a fast artist)
@@ -896,20 +879,20 @@ Don't let 3D art block your core functionality.
 > "34% production ready. It's a ghost town."
 
 **[0:35-0:55] Scout Tutorial**
-> *Scout walks to the empty Hospital*
-> *"This town has no Hospital! Your API routes have zero
-> error handling."*
+> *Scout walks to the empty Vault*
+> *"The Vault is wide open! I found hardcoded secrets
+> in your code."*
 > "Let's fix it."
-> *Click on Hospital*
+> *Click on Vault*
 
 **[0:55-1:25] Agent Interaction**
-> *Chat opens. Type: "Add error handling to my routes"*
-> *Agent reads the actual code, generates real error middleware*
-> *Code appears in Monaco editor*
+> *Chat opens. Type: "Fix the hardcoded secrets in my code"*
+> *Agent reads the actual code, identifies exposed API keys*
+> *Code appears in Monaco editor with .env setup*
 > *Click Accept*
-> *Hospital rises from foundation to 25% — scaffolding appears*
-> "The agent just read their actual Express routes and wrote
-> real error handling. Not a template. Real code."
+> *Vault rises from foundation to 25% — scaffolding appears*
+> "The agent just read their actual codebase and found real
+> secrets. Not a generic scan. Real code analysis."
 
 **[1:25-1:45] Speed Round**
 > *Quick: ask School agent for tests → Accept → School builds*
@@ -932,7 +915,6 @@ Don't let 3D art block your core functionality.
 | 3D rendering takes too long to build | HIGH | Start with colored boxes. Upgrade art later. Never block on art. |
 | Agent generates bad code during demo | MEDIUM | Pre-test demo repos. Cache agent responses for demo. Have backup video. |
 | Repo cloning is slow on stage | HIGH | Pre-clone and cache demo repos. Scan results stored in DB/memory. |
-| 14 analyzers is too many | MEDIUM | Prioritize 8 most impactful. Mark others as "coming soon." |
 | WebSocket connection drops | LOW | Fallback: poll endpoint every 2 seconds instead. |
 | Team runs out of time on polish | HIGH | Hour 14 is the cut — if core flow doesn't work by then, cut features. |
 | 3D models look terrible | MEDIUM | Low-poly/voxel style is forgiving. Lighting and glow hide a lot of sins. |
@@ -946,8 +928,7 @@ Cut in this order (last resort first):
 1. **Cut: Export as GitHub PR** → just do ZIP download
 2. **Cut: Scout tutorial** → just let users click around
 3. **Cut: Building animations** → buildings just appear at final state
-4. **Cut: 14 buildings → 8 buildings** → drop the less critical ones
-5. **Cut: AI-powered analysis** → all deterministic checks only
-6. **NEVER CUT: Agent chat + code generation** → this is the product
-7. **NEVER CUT: Progressive scan** → this is the wow moment
-8. **NEVER CUT: 3D village** → this is what judges remember
+4. **Cut: AI-powered analysis** → all deterministic checks only
+5. **NEVER CUT: Agent chat + code generation** → this is the product
+6. **NEVER CUT: Progressive scan** → this is the wow moment
+7. **NEVER CUT: 3D village** → this is what judges remember

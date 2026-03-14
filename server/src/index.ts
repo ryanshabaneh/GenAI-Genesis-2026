@@ -13,6 +13,7 @@ import session from 'express-session'
 import { Server as SocketIOServer } from 'socket.io'
 import scanRouter from './routes/scan'
 import chatRouter from './routes/chat'
+import acceptRouter from './routes/accept'
 import exportRouter from './routes/export'
 import authRouter from './routes/auth'
 
@@ -62,6 +63,7 @@ app.locals['io'] = io
 app.use('/api/auth', authRouter)
 app.use('/api/scan', scanRouter)
 app.use('/api/chat', chatRouter)
+app.use('/api/accept', acceptRouter)
 app.use('/api/export', exportRouter)
 
 // Health check — used by hosting platforms (Railway, Fly.io) to verify the process is alive
