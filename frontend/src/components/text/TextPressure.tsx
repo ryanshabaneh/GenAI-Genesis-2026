@@ -40,7 +40,7 @@ export default function TextPressure({
   flex = true,
   useGradient = false,
   textColor = 'var(--white)',
-  strokeColor = 'var(--amber)',
+  strokeColor = 'var(--blue)',
   className = '',
   minFontSize = 24,
 }: TextPressureProps) {

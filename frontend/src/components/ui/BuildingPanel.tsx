@@ -18,8 +18,8 @@ export default function BuildingPanel() {
   const stage = percentToStage(state.percent)
   const isComplete = stage === 'complete'
 
-  const progressColor = isComplete ? 'bg-teal' : 'bg-amber'
-  const percentColor  = isComplete ? 'text-teal' : 'text-amber'
+  const progressColor = isComplete ? 'bg-teal' : 'bg-blue'
+  const percentColor  = isComplete ? 'text-teal' : 'text-blue'
 
   return (
     <div className="absolute right-4 top-4 bottom-4 w-80 flex flex-col overlay rounded-[18px] animate-slide-in-right overflow-hidden">

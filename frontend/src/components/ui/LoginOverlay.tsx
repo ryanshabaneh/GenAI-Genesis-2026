@@ -61,7 +61,7 @@ export default function LoginOverlay() {
           </div>
 
           <div style={{ marginBottom: '0.75rem' }}>
-            <SplitHeader left="Ship" right="Crossing" />
+            <SplitHeader left="Ship" right="Yard" />
           </div>
 
           <p

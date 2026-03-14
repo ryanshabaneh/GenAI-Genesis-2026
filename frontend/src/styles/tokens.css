@@ -8,9 +8,9 @@
   --surface3: #202C44;
 
   /* primary/CTA/in-progress — mid blue, modern game UI */
-  --amber:        #4A78D4;
-  --amber-border: rgba(74,120,212,0.28);
-  --amber-dim:    rgba(74,120,212,0.11);
+  --blue:        #4A78D4;
+  --blue-border: rgba(74,120,212,0.28);
+  --blue-dim:    rgba(74,120,212,0.11);
 
   /* teal — complete/success */
   --teal:        #3ECFB2;

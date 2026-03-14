@@ -23,11 +23,11 @@
 .btn-fx-gradient-shift {
   background-image: linear-gradient(
     90deg,
-    var(--amber)  0%,
-    var(--amber)  15%,
+    var(--blue)  0%,
+    var(--blue)  15%,
     var(--teal)   50%,
     var(--cyan)   80%,
-    var(--amber) 100%
+    var(--blue) 100%
   );
   background-size: 260% auto;
   background-position: 0% center;
@@ -84,7 +84,7 @@
   transition: box-shadow 0.35s, color 0.35s;
 }
 .btn-fx-fill-center:hover {
-  box-shadow: inset 0 0 0 2.5em var(--amber);
+  box-shadow: inset 0 0 0 2.5em var(--blue);
   color: #090C12;
 }
 
@@ -93,8 +93,8 @@
   transition: box-shadow 0.45s, border-color 0.45s, color 0.45s;
 }
 .btn-fx-fill-sides:hover {
-  box-shadow: inset 6em 0 0 0 var(--amber), inset -6em 0 0 0 var(--amber);
-  border-color: var(--amber);
+  box-shadow: inset 6em 0 0 0 var(--blue), inset -6em 0 0 0 var(--blue);
+  border-color: var(--blue);
   color: #090C12;
 }
 
@@ -198,7 +198,7 @@
   height: 8px;
   position: absolute;
   transition: all 0.45s;
-  border: 2px solid var(--amber);
+  border: 2px solid var(--blue);
   opacity: 0;
   content: '';
   pointer-events: none;
@@ -208,7 +208,7 @@
 .btn-fx-corners span::before { top: 0;    right: 0; border-left: none; border-bottom: none; transform: translate(50%,-50%); }
 .btn-fx-corners span::after  { bottom: 0; right: 0; border-left: none; border-top: none;    transform: translate(50%, 50%); }
 .btn-fx-corners:hover {
-  color: var(--amber);
+  color: var(--blue);
 }
 .btn-fx-corners:hover::before,
 .btn-fx-corners:hover::after,

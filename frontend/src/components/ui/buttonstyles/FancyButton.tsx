@@ -17,7 +17,7 @@ export default function FancyButton({
   label,
   onClick,
   href,
-  outerColor = 'var(--amber)',
+  outerColor = 'var(--blue)',
   innerColor = 'var(--teal)',
   className = '',
 }: FancyButtonProps) {
