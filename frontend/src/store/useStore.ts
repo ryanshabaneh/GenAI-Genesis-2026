@@ -10,6 +10,7 @@ import type {
   BuildingState,
   BuildingStatus,
   CodeChange,
+  GitHubUser,
   Message,
   ScanStatus,
 } from '@/types'
@@ -63,6 +64,8 @@ interface ShipCityStore {
   changesQueue: CodeChange[]
   // Text currently shown in the Scout dialogue bubble
   scoutDialogue: string
+  // Authenticated GitHub user — null if not signed in
+  githubUser: GitHubUser | null
 
   // Actions
   setRepoUrl: (url: string) => void
@@ -73,6 +76,7 @@ interface ShipCityStore {
   addMessage: (buildingId: BuildingId, message: Message) => void
   addChange: (change: CodeChange) => void
   setScoutDialogue: (text: string) => void
+  setGithubUser: (user: GitHubUser | null) => void
 }
 
 export const useStore = create<ShipCityStore>((set) => ({
@@ -83,6 +87,7 @@ export const useStore = create<ShipCityStore>((set) => ({
   activeBuilding: null,
   changesQueue: [],
   scoutDialogue: '',
+  githubUser: null,
 
   setRepoUrl: (url) => set({ repoUrl: url }),
 
@@ -124,4 +129,6 @@ export const useStore = create<ShipCityStore>((set) => ({
     })),
 
   setScoutDialogue: (text) => set({ scoutDialogue: text }),
+
+  setGithubUser: (user) => set({ githubUser: user }),
 }))

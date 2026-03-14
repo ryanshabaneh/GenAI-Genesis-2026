@@ -74,6 +74,14 @@ export interface CodeChange {
 
 export type ScanStatus = 'idle' | 'scanning' | 'complete' | 'error'
 
+// GitHubUser is the public user summary returned by GET /api/auth/me.
+// The access token never leaves the server — this is all the frontend needs.
+export interface GitHubUser {
+  login: string
+  name: string | null
+  avatarUrl: string
+}
+
 // WebSocket message shapes from server — discriminated union keyed on `type`.
 // useSocket.ts switches on these to drive store updates in real time.
 export type WsMessage =

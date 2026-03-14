@@ -64,6 +64,14 @@ export interface Message {
   content: string
 }
 
+// GitHubUser is the subset of GitHub profile data stored in the server-side session.
+// The access token itself is never sent to the frontend — only this user summary is.
+export interface GitHubUser {
+  login: string       // GitHub username
+  name: string | null // Display name (may be null if not set)
+  avatarUrl: string
+}
+
 // WebSocket event shapes emitted to the session room during and after a scan.
 export type WsEvent =
   | { type: 'scanning'; building: BuildingId }

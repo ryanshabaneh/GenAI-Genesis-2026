@@ -9,10 +9,13 @@ import 'dotenv/config'
 import http from 'http'
 import express from 'express'
 import cors from 'cors'
+import session from 'express-session'
 import { Server as SocketIOServer } from 'socket.io'
 import scanRouter from './routes/scan'
 import chatRouter from './routes/chat'
+import acceptRouter from './routes/accept'
 import exportRouter from './routes/export'
+import authRouter from './routes/auth'
 
 const PORT = process.env['PORT'] ? parseInt(process.env['PORT'], 10) : 3001
 const FRONTEND_URL = process.env['FRONTEND_URL'] ?? 'http://localhost:3000'
@@ -23,6 +26,22 @@ const app = express()
 // CORS is locked to FRONTEND_URL — don't open this up in production
 app.use(cors({ origin: FRONTEND_URL, credentials: true }))
 app.use(express.json())
+
+// Session middleware — stores GitHub token and user server-side.
+// httpOnly cookie keeps the session ID out of JS; secure flag is on in production.
+app.use(
+  session({
+    secret: process.env['SESSION_SECRET'] ?? 'dev-secret-change-in-production',
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+      httpOnly: true,
+      secure: process.env['NODE_ENV'] === 'production',
+      sameSite: 'lax',
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    },
+  })
+)
 
 // Create HTTP server and attach Socket.IO
 // We wrap Express in an http.Server so Socket.IO and Express share the same port
@@ -41,8 +60,10 @@ const io = new SocketIOServer(httpServer, {
 app.locals['io'] = io
 
 // Mount API routes
+app.use('/api/auth', authRouter)
 app.use('/api/scan', scanRouter)
 app.use('/api/chat', chatRouter)
+app.use('/api/accept', acceptRouter)
 app.use('/api/export', exportRouter)
 
 // Health check — used by hosting platforms (Railway, Fly.io) to verify the process is alive
