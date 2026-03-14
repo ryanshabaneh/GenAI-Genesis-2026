@@ -14,25 +14,10 @@ import type {
   Message,
   ScanStatus,
 } from '@/types'
+import { BUILDINGS } from '@/lib/buildings'
 
-// Keep this list in sync with BuildingId in types/index.ts.
-// It's the source of truth for initializing buildings on store creation.
-const ALL_BUILDING_IDS: BuildingId[] = [
-  'tests',
-  'cicd',
-  'docker',
-  'readme',
-  'errorHandling',
-  'envVars',
-  'logging',
-  'linting',
-  'license',
-  'security',
-  'healthCheck',
-  'scripts',
-  'deployment',
-  'hosting',
-]
+// Derived from BUILDINGS config — buildings.ts is the single source of truth
+const ALL_BUILDING_IDS: BuildingId[] = BUILDINGS.map((b) => b.id)
 
 // Creates a fresh idle BuildingState for every known building.
 // Called once at store init so each building starts with a clean slate.
@@ -48,7 +33,7 @@ function makeInitialBuildings(): Record<BuildingId, BuildingState> {
         chatHistory: [],
       },
     ])
-  ) as Record<BuildingId, BuildingState>
+  ) as unknown as Record<BuildingId, BuildingState>
 }
 
 // --- Store shape ---

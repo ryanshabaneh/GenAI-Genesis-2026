@@ -14,6 +14,7 @@ declare module 'express-session' {
 
 const router = Router()
 
+// handles handshake, replace later
 const GITHUB_CLIENT_ID = process.env['GITHUB_CLIENT_ID']
 const GITHUB_CLIENT_SECRET = process.env['GITHUB_CLIENT_SECRET']
 const BACKEND_URL = process.env['BACKEND_URL'] ?? 'http://localhost:3001'
@@ -99,7 +100,7 @@ router.get('/github/callback', async (req: Request, res: Response): Promise<void
     avatar_url: string
   }
 
-  // Persist token and user summary in the session
+  // persist token and user session
   req.session.githubToken = tokenData.access_token
   req.session.githubUser = {
     login: userData.login,
@@ -117,6 +118,27 @@ router.get('/me', (req: Request, res: Response) => {
     return
   }
   res.json({ user: req.session.githubUser })
+})
+
+// GET /api/auth/repos — returns the authed user's repos, sorted by last push
+router.get('/repos', async (req: Request, res: Response): Promise<void> => {
+  if (!req.session.githubToken) {
+    res.status(401).json({ error: 'Not authenticated' })
+    return
+  }
+
+  const reposRes = await fetch(
+    'https://api.github.com/user/repos?sort=pushed&per_page=30&affiliation=owner',
+    {
+      headers: {
+        Authorization: `Bearer ${req.session.githubToken}`,
+        Accept: 'application/vnd.github.v3+json',
+      },
+    }
+  )
+
+  const data = (await reposRes.json()) as { full_name: string; private: boolean; description: string | null }[]
+  res.json({ repos: data.map((r) => ({ fullName: r.full_name, private: r.private, description: r.description })) })
 })
 
 // POST /api/auth/logout
