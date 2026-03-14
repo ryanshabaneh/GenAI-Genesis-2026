@@ -34,6 +34,8 @@ export interface BuildingState {
   percent: number // 0 | 25 | 50 | 75 | 100
   tasks: Task[]
   chatHistory: Message[]
+  implementStatus: 'idle' | 'running'
+  taskFeedback: Record<string, string>
 }
 
 export type MessageRole = 'user' | 'assistant'
@@ -83,3 +85,11 @@ export type WsMessage =
   | { type: 'result'; building: BuildingId; percent: number; tasks: Task[] }
   | { type: 'complete'; score: number }
   | { type: 'error'; message: string }
+  | { type: 'agent:start'; building: BuildingId }
+  | { type: 'agent:iteration'; building: BuildingId; iteration: number; maxIterations: number; feedback: string }
+  | { type: 'agent:complete'; building: BuildingId; percent: number; files: string[] }
+  | { type: 'agent:error'; building: BuildingId; error: string }
+  | { type: 'task:start'; building: BuildingId; taskId: string; taskLabel: string }
+  | { type: 'task:complete'; building: BuildingId; taskId: string; success: boolean; summary: string }
+  | { type: 'eval:result'; building: BuildingId; taskId: string; pass: boolean; feedback: string }
+  | { type: 'orchestrator:complete'; score: number }
