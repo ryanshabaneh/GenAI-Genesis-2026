@@ -12,10 +12,10 @@ const config: Config = {
       surface: 'var(--surface)',
       surface2: 'var(--surface2)',
       surface3: 'var(--surface3)',
-      amber: {
-        DEFAULT: 'var(--amber)',
-        border: 'var(--amber-border)',
-        dim: 'var(--amber-dim)',
+      blue: {
+        DEFAULT: 'var(--blue)',
+        border: 'var(--blue-border)',
+        dim: 'var(--blue-dim)',
       },
       teal: {
         DEFAULT: 'var(--teal)',
