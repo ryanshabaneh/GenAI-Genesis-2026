@@ -38,8 +38,8 @@
   --t-slow: 380ms ease;
 
   /* fonts */
-  --font-display: 'Nunito', sans-serif;
-  --font-ui:      'Nunito', sans-serif;
-  --font-mono:    'JetBrains Mono', monospace;
+  --font-display: var(--font-nunito), 'Nunito', sans-serif;
+  --font-ui:      var(--font-nunito), 'Nunito', sans-serif;
+  --font-mono:    var(--font-mono-jb), 'JetBrains Mono', monospace;
 
 }

@@ -31,7 +31,7 @@ app.use(express.json())
 // httpOnly cookie keeps the session ID out of JS; secure flag is on in production.
 app.use(
   session({
-    secret: process.env['SESSION_SECRET'] ?? 'dev-secret-change-in-production',
+    secret: process.env['SESSION_SECRET'] || 'dev-secret-change-in-production',
     resave: false,
     saveUninitialized: false,
     cookie: {

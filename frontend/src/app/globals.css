@@ -1,3 +1,63 @@
+@import '../styles/tokens.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* base resets */
+@layer base {
+  html, body { background: var(--ink); color: var(--white); }
+  * { box-sizing: border-box; }
+  ::selection { background: var(--amber-dim); color: var(--white); }
+}
+
+/* overlay — 88% ink + blur(12px), used for all game popups/panels */
+@layer utilities {
+  .overlay {
+    background: rgba(9,12,18,0.88);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255,255,255,0.08);
+  }
+}
+
+/* keyframes */
+@keyframes fade-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slide-up {
+  from { opacity: 0; transform: translateY(20px) scale(0.98); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes slide-in-right {
+  from { opacity: 0; transform: translateX(24px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes scan-pulse {
+  0%, 100% { opacity: 0.4; }
+  50%       { opacity: 1; }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes drift {
+  0%, 100% { transform: translate(0,0) scale(1); }
+  33%       { transform: translate(20px,-14px) scale(1.04); }
+  66%       { transform: translate(-14px,10px) scale(0.97); }
+}
+
+/* animation classes */
+.animate-fade-in        { animation: fade-in 0.22s ease-out both; }
+.animate-slide-up       { animation: slide-up 0.38s cubic-bezier(0.16,1,0.3,1) both; }
+.animate-slide-in-right { animation: slide-in-right 0.22s cubic-bezier(0.16,1,0.3,1) both; }
+.animate-scan-pulse     { animation: scan-pulse 1.4s ease-in-out infinite; }
+.animate-spin           { animation: spin 0.8s linear infinite; }
+.blob-drift-a           { animation: drift 12s ease-in-out infinite; }
+.blob-drift-b           { animation: drift  9s ease-in-out infinite 2s reverse; }
+.blob-drift-c           { animation: drift 15s ease-in-out infinite 4s; }
