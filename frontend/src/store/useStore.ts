@@ -41,6 +41,8 @@ function makeInitialBuildings(): Record<BuildingId, BuildingState> {
         percent: 0,
         tasks: [],
         chatHistory: [],
+        implementStatus: 'idle' as const,
+        taskFeedback: {},
       },
     ])
   ) as unknown as Record<BuildingId, BuildingState>
@@ -72,6 +74,8 @@ interface ShipCityStore {
   addChange: (change: CodeChange) => void
   setScoutDialogue: (text: string) => void
   setGithubUser: (user: GitHubUser | null) => void
+  setImplementStatus: (id: BuildingId, status: 'idle' | 'running') => void
+  setTaskFeedback: (id: BuildingId, taskId: string, feedback: string) => void
 }
 
 export const useStore = create<ShipCityStore>((set) => ({
@@ -126,4 +130,23 @@ export const useStore = create<ShipCityStore>((set) => ({
   setScoutDialogue: (text) => set({ scoutDialogue: text }),
 
   setGithubUser: (user) => set({ githubUser: user }),
+
+  setImplementStatus: (id, status) =>
+    set((state) => ({
+      buildings: {
+        ...state.buildings,
+        [id]: { ...state.buildings[id], implementStatus: status },
+      },
+    })),
+
+  setTaskFeedback: (id, taskId, feedback) =>
+    set((state) => ({
+      buildings: {
+        ...state.buildings,
+        [id]: {
+          ...state.buildings[id],
+          taskFeedback: { ...state.buildings[id].taskFeedback, [taskId]: feedback },
+        },
+      },
+    })),
 }))
