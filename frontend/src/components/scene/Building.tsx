@@ -14,14 +14,15 @@ import { BUILDINGS } from '@/lib/buildings'
 import { percentToStage, STAGE_CONFIG } from '@/lib/stages'
 import type { BuildingId } from '@/types'
 
-// Color palette that maps to each construction stage.
-// Using distinct hues (not just opacity) so colorblind users can still read the scene.
+// Maps stages to design token hex values.
+// foundation = fog (empty), frame/halfBuilt/almostDone = amber (in-progress), complete = teal.
+// Scanning overrides all of these with cyan — checked before this lookup.
 const STAGE_COLORS: Record<string, string> = {
-  foundation: '#4b5563', // gray
-  frame: '#92400e',      // brown
-  halfBuilt: '#1d4ed8',  // blue
-  almostDone: '#7c3aed', // purple
-  complete: '#16a34a',   // green
+  foundation: '#6B7A94', // --fog
+  frame:      '#F5A623', // --amber
+  halfBuilt:  '#F5A623', // --amber
+  almostDone: '#F5A623', // --amber
+  complete:   '#3ECFB2', // --teal
 }
 
 interface BuildingProps {
@@ -35,9 +36,11 @@ export default function Building({ buildingId }: BuildingProps) {
 
   if (!config) return null
 
+  const isScanning = buildingState.status === 'scanning'
   const stage = percentToStage(buildingState.percent)
   const stageConfig = STAGE_CONFIG[stage]
-  const color = STAGE_COLORS[stage]
+  // Cyan overrides all stage colors while a building is actively being scanned
+  const color = isScanning ? '#00D4FF' : STAGE_COLORS[stage]
 
   // Box height scales with stage — shrink the geometry itself rather than just
   // scaling the mesh so the base stays flush with the island surface
