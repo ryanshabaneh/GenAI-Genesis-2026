@@ -7,7 +7,7 @@ const CONTEXT_FILES: Record<BuildingId, string[]> = {
   tests: ['package.json', 'src', 'tests', '__tests__'],
   cicd: ['.github/workflows', 'package.json'],
   docker: ['Dockerfile', 'docker-compose.yml', 'docker-compose.yaml', '.dockerignore', 'package.json'],
-  readme: ['README.md', 'package.json'],
+  documentation: ['README.md', 'package.json'],
   envVars: ['.env.example', 'package.json', 'src'],
   security: ['.gitignore', '.env.example', 'package.json'],
   logging: ['src', 'package.json'],

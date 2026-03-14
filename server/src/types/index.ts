@@ -9,7 +9,7 @@ export type BuildingId =
   | 'tests'
   | 'cicd'
   | 'docker'
-  | 'readme'
+  | 'documentation'
   | 'envVars'
   | 'security'
   | 'logging'

@@ -6,7 +6,7 @@ import type { AnalyzerResult } from '../types'
 import { testsAnalyzer } from './analyzers/tests'
 import { cicdAnalyzer } from './analyzers/cicd'
 import { dockerAnalyzer } from './analyzers/docker'
-import { readmeAnalyzer } from './analyzers/readme'
+import { documentationAnalyzer } from './analyzers/documentation'
 import { envVarsAnalyzer } from './analyzers/envVars'
 import { securityAnalyzer } from './analyzers/security'
 import { loggingAnalyzer } from './analyzers/logging'
@@ -15,7 +15,7 @@ import { getSession, updateSession } from '../session/store'
 
 // The 8 buildings from the execution plan
 const ANALYZERS = [
-  readmeAnalyzer,
+  documentationAnalyzer,
   testsAnalyzer,
   envVarsAnalyzer,
   securityAnalyzer,

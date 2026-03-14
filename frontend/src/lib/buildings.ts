@@ -47,10 +47,10 @@ export const BUILDINGS: BuildingConfig[] = [
     modelPath: '/models/dock.glb',
   },
   {
-    id: 'readme',
+    id: 'documentation',
     name: 'Town Hall',
     emoji: '🏛️',
-    category: 'README',
+    category: 'Documentation',
     description: 'Checks README quality: description, setup instructions, badges',
     position: [-3, 0, 1],
     modelPath: '/models/townhall.glb',

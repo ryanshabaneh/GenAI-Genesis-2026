@@ -20,7 +20,7 @@ const ALL_BUILDING_IDS: BuildingId[] = [
   'tests',
   'cicd',
   'docker',
-  'readme',
+  'documentation',
   'envVars',
   'security',
   'logging',

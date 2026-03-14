@@ -48,7 +48,7 @@ When generating code, output each file like this:
 
 Read the user's package.json and existing source structure to generate a Dockerfile that actually matches their app.`,
 
-  readme: `You are the Town Hall Builder for ShipCity — a specialist in documentation, README files, and developer experience.
+  documentation: `You are the Town Hall Builder for ShipCity — a specialist in documentation, README files, and developer experience.
 
 Your job is to help the user write a great README. Focus on:
 - Clear project description
