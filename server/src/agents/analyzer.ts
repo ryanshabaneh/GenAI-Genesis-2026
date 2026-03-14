@@ -6,7 +6,7 @@
 
 import Anthropic from '@anthropic-ai/sdk'
 import type { AnalyzerResult, BuildingId, Task } from '../types'
-import { AGENT_PROMPTS } from './prompts'
+import { AGENT_PROMPTS, ANALYZER_FORMAT, DEDUP_FORMAT } from './prompts'
 import { buildAgentContext } from './context'
 import { buildScannerPreprompt } from './scanner-context'
 import { client } from './client'
@@ -47,11 +47,7 @@ You should check for deeper issues WITHIN YOUR DOMAIN ONLY.
 
 ${boundary}
 
-Return ONLY a JSON array of task objects. No markdown, no explanation, just the array:
-[
-  { "id": "unique-id", "label": "Human-readable task description", "done": false },
-  ...
-]
+${ANALYZER_FORMAT}
 
 Rules:
 - Each task ID must start with your building prefix (e.g., "${buildingId}-...")
@@ -169,14 +165,7 @@ Here are all ${taskList.length} tasks:
 
 ${JSON.stringify(taskList, null, 2)}
 
-Return ONLY a JSON object mapping each building to its deduplicated task array. No markdown, no explanation:
-{
-  "tests": [{"id": "...", "label": "...", "done": false}],
-  "cicd": [...],
-  ...
-}
-
-Every task must appear in exactly one building. Do not invent new tasks. Do not change labels.`
+${DEDUP_FORMAT}`
 
   try {
     const response = await client.messages.create({

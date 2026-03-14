@@ -6,7 +6,6 @@
 import { execFile } from 'child_process'
 import { promisify } from 'util'
 import type { BuildingId } from '../types'
-import { AGENT_PROMPTS } from './prompts'
 
 const execFileAsync = promisify(execFile)
 
@@ -25,23 +24,11 @@ export interface AiderResult {
 }
 
 /**
- * Build the aider --message string from building context + task description.
- * Includes the building-specific system prompt so aider knows its role.
+ * Build the aider --message string. Aider is now a pure executor — the agent
+ * has already processed the task into specific instructions.
  */
-function buildMessage(
-  buildingId: BuildingId,
-  taskDescription: string,
-  feedback?: string
-): string {
-  const systemPrompt = AGENT_PROMPTS[buildingId]
-
-  let message = `${systemPrompt}\n\n---\n\n${taskDescription}`
-
-  if (feedback) {
-    message += `\n\nThe quality inspector found issues with your previous attempt:\n${feedback}\n\nPlease fix these issues.`
-  }
-
-  return message
+function buildMessage(taskDescription: string): string {
+  return taskDescription
 }
 
 /**
@@ -54,18 +41,16 @@ export async function callAider(params: {
   buildingId: BuildingId
   repoPath: string
   taskDescription: string
-  feedback?: string
   model?: string
 }): Promise<AiderResult> {
   const {
     buildingId,
     repoPath,
     taskDescription,
-    feedback,
     model = 'anthropic/claude-sonnet-4-6',
   } = params
 
-  const message = buildMessage(buildingId, taskDescription, feedback)
+  const message = buildMessage(taskDescription)
 
   const args = [
     '--message', message,

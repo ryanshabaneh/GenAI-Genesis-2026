@@ -64,7 +64,7 @@ describe('callAider', () => {
     expect(result.changedFiles).toEqual([])
   })
 
-  it('includes feedback in the message when provided', async () => {
+  it('passes task description directly as the message (pure executor)', async () => {
     mockExecFile.mockResolvedValueOnce({ stdout: '', stderr: '' })
     mockExecFile.mockResolvedValueOnce({ stdout: '', stderr: '' })
     mockExecFile.mockResolvedValueOnce({ stdout: '', stderr: '' })
@@ -72,16 +72,14 @@ describe('callAider', () => {
     await callAider({
       buildingId: 'tests',
       repoPath: '/tmp/repo',
-      taskDescription: 'Add tests',
-      feedback: 'Tests are missing assertions',
+      taskDescription: 'Create a test file at src/__tests__/utils.test.ts that tests the add function',
     })
 
     const aiderCall = mockExecFile.mock.calls[0]
     const args = aiderCall[1] as string[]
     const messageIdx = args.indexOf('--message')
     const message = args[messageIdx + 1]
-    expect(message).toContain('Tests are missing assertions')
-    expect(message).toContain('quality inspector')
+    expect(message).toBe('Create a test file at src/__tests__/utils.test.ts that tests the add function')
   })
 
   it('uses custom model when provided', async () => {

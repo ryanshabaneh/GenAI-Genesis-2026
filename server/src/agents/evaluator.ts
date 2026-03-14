@@ -1,5 +1,6 @@
 import { client } from './client'
 import { buildAgentContext } from './context'
+import { EVALUATOR_FORMAT, REPO_EVALUATOR_FORMAT } from './prompts'
 import type { BuildingId, EvaluatorResult, Task } from '../types'
 
 const EVALUATOR_SYSTEM_PROMPT = `You are the Quality Inspector for ShipCity.
@@ -15,11 +16,7 @@ Your job is to evaluate whether the builder's output actually solves the tasks. 
 - Are there any stubs, TODOs, placeholder comments, or "implement me" markers?
 - Would the code actually work if applied to the project?
 
-Respond with ONLY a JSON object — no markdown fences, no explanation:
-{ "pass": true, "feedback": "", "summary": "Brief 1-2 sentence summary of what was accomplished" }
-
-If the code fails any check, set pass to false and explain what needs fixing in feedback:
-{ "pass": false, "feedback": "The test file imports a module that doesn't exist.", "summary": "Attempted to add unit tests but imports are broken" }`
+${EVALUATOR_FORMAT}`
 
 export async function callEvaluator(params: {
   buildingId: string
@@ -86,11 +83,7 @@ Your job is to evaluate whether the task has been completed in the actual codeba
 - Is the implementation complete (no stubs, TODOs, placeholders)?
 - Is the code syntactically valid and would work if run?
 
-Respond with ONLY a JSON object — no markdown fences, no explanation:
-{ "pass": true, "feedback": "", "summary": "Brief 1-2 sentence summary of what exists in the repo" }
-
-If the task is NOT fulfilled:
-{ "pass": false, "feedback": "Explain what's missing or incomplete", "summary": "" }`
+${REPO_EVALUATOR_FORMAT}`
 
 /**
  * Evaluate tasks against the actual repository state (not aider output).
