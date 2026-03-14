@@ -1,10 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
 // Mock dependencies before imports
-const { mockCallAider, mockResetAiderChanges, mockCallEvaluator, mockAddChange, mockGetSession, mockUpdateSession } = vi.hoisted(() => ({
+const { mockCallAider, mockResetAiderChanges, mockCallEvaluator, mockCallAgentForImplementation, mockAddChange, mockGetSession, mockUpdateSession } = vi.hoisted(() => ({
   mockCallAider: vi.fn(),
   mockResetAiderChanges: vi.fn(),
   mockCallEvaluator: vi.fn(),
+  mockCallAgentForImplementation: vi.fn(),
   mockAddChange: vi.fn(),
   mockGetSession: vi.fn(),
   mockUpdateSession: vi.fn(),
@@ -14,6 +15,7 @@ vi.mock('../agents/aider', () => ({
   callAider: mockCallAider,
   resetAiderChanges: mockResetAiderChanges,
 }))
+vi.mock('../agents/base', () => ({ callAgentForImplementation: mockCallAgentForImplementation }))
 vi.mock('../agents/evaluator', () => ({ callEvaluator: mockCallEvaluator }))
 vi.mock('../changes/queue', () => ({ addChange: mockAddChange }))
 vi.mock('../session/store', () => ({
@@ -64,6 +66,7 @@ describe('runTaskImplementation', () => {
   beforeEach(() => {
     vi.clearAllMocks()
     mockResetAiderChanges.mockResolvedValue(undefined)
+    mockCallAgentForImplementation.mockResolvedValue('Agent-generated implementation instructions')
   })
 
   it('runs aider + evaluator and returns completed task IDs on success', async () => {
@@ -224,7 +227,7 @@ describe('runTaskImplementation', () => {
     await first
   })
 
-  it('includes user message in task description', async () => {
+  it('includes user message in agent call', async () => {
     const session = makeSession()
     mockGetSession.mockReturnValue(session)
     mockCallAider.mockResolvedValue(makeAiderSuccess())
@@ -239,7 +242,7 @@ describe('runTaskImplementation', () => {
       io,
     })
 
-    const aiderCall = mockCallAider.mock.calls[0][0]
-    expect(aiderCall.taskDescription).toContain('Use Jest for testing')
+    const agentCall = mockCallAgentForImplementation.mock.calls[0][0]
+    expect(agentCall.message).toContain('Use Jest for testing')
   })
 })

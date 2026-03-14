@@ -7,8 +7,9 @@ import type { Server as SocketIOServer } from 'socket.io'
 import { v4 as uuid } from 'uuid'
 import { getSession, updateSession } from '../session/store'
 import { callAider, resetAiderChanges } from '../agents/aider'
+import { callAgentForImplementation } from '../agents/base'
 import { callEvaluator } from '../agents/evaluator'
-import { buildScannerPreprompt, buildChangeLogContext, calculatePercent } from '../agents/scanner-context'
+import { buildChangeLogContext, calculatePercent } from '../agents/scanner-context'
 import { addChange } from '../changes/queue'
 import type { BuildingId, ChangeLogEntry } from '../types'
 
@@ -49,17 +50,13 @@ export async function runTaskImplementation(params: {
     if (selectedTasks.length === 0) throw new Error('No matching tasks found')
 
     // Build context
-    const scannerPreprompt = buildScannerPreprompt(buildingResult)
     const changeLogContext = buildChangeLogContext(session, buildingId)
+    const conversationHistory = session.conversations[buildingId] ?? []
 
     const taskLines = selectedTasks.map((t) => `- [ ] ${t.label}`).join('\n')
-    let taskDescription = `${scannerPreprompt}\n\n---\n\n`
-    if (changeLogContext) {
-      taskDescription += `${changeLogContext}\n\n---\n\n`
-    }
-    taskDescription += `Please implement ALL of these tasks:\n\n${taskLines}\n\nEdit existing files or create new ones as needed.`
+    let taskMessage = `Please implement ALL of these tasks:\n\n${taskLines}\n\nEdit existing files or create new ones as needed.`
     if (userMessage) {
-      taskDescription += `\n\nAdditional instructions from the user:\n${userMessage}`
+      taskMessage += `\n\nAdditional instructions from the user:\n${userMessage}`
     }
 
     // Emit task:start for each task
@@ -72,14 +69,23 @@ export async function runTaskImplementation(params: {
       })
     }
 
+    // Ask the agent (brain) to produce specific implementation instructions
+    let agentInstructions = await callAgentForImplementation({
+      buildingId,
+      repoPath: session.repoPath,
+      message: taskMessage,
+      history: conversationHistory,
+      scanResult: buildingResult,
+      changeLogContext,
+    })
+
     let lastFeedback: string | undefined
 
     for (let iteration = 1; iteration <= MAX_ITERATIONS; iteration++) {
       const aiderResult = await callAider({
         buildingId,
         repoPath: session.repoPath,
-        taskDescription,
-        feedback: lastFeedback,
+        taskDescription: agentInstructions,
       })
 
       if (!aiderResult.success || aiderResult.changedFiles.length === 0) {
@@ -159,9 +165,22 @@ export async function runTaskImplementation(params: {
         break
       }
 
-      // Evaluation failed — retry with feedback
+      // Evaluation failed — ask the agent to refine instructions based on feedback
       lastFeedback = evalResult.feedback
       await resetAiderChanges(session.repoPath)
+
+      agentInstructions = await callAgentForImplementation({
+        buildingId,
+        repoPath: session.repoPath,
+        message: `The quality evaluator rejected the previous implementation attempt.\n\nEvaluator feedback:\n${lastFeedback}\n\nPlease provide refined implementation instructions that address these issues.`,
+        history: [
+          ...conversationHistory,
+          { role: 'user' as const, content: taskMessage },
+          { role: 'assistant' as const, content: agentInstructions },
+        ],
+        scanResult: buildingResult,
+        changeLogContext,
+      })
     }
 
     // If nothing was completed, emit failure

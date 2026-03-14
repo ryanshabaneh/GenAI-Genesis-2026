@@ -1,6 +1,6 @@
 import Anthropic from '@anthropic-ai/sdk'
 import type { AgentReply, AnalyzerResult, BuildingId, Message } from '../types'
-import { AGENT_PROMPTS } from './prompts'
+import { AGENT_PROMPTS, IMPLEMENTATION_FORMAT } from './prompts'
 import { buildAgentContext } from './context'
 import { buildScannerPreprompt } from './scanner-context'
 import { client } from './client'
@@ -78,4 +78,48 @@ export async function callAgent(params: {
   }
 
   return reply
+}
+
+// IMPLEMENTATION_FORMAT is imported from ./prompts/formats.ts (central format registry)
+
+/**
+ * Call the agent in implementation mode — produces specific instructions
+ * for aider to execute rather than conversational responses.
+ */
+export async function callAgentForImplementation(params: {
+  buildingId: BuildingId
+  repoPath: string
+  message: string
+  history: Message[]
+  scanResult?: AnalyzerResult
+  changeLogContext?: string
+}): Promise<string> {
+  const { buildingId, repoPath, message, history, scanResult, changeLogContext } = params
+
+  const systemPrompt = AGENT_PROMPTS[buildingId]
+  const context = await buildAgentContext(buildingId, repoPath)
+  const scannerPreprompt = buildScannerPreprompt(scanResult)
+
+  const changeLogBlock = changeLogContext ? changeLogContext + '\n\n---\n\n' : ''
+  const systemWithContext = `${systemPrompt}\n\n${IMPLEMENTATION_FORMAT}\n\n---\n\n${scannerPreprompt ? scannerPreprompt + '\n\n---\n\n' : ''}${changeLogBlock}${context}`
+
+  const messages: Anthropic.MessageParam[] = [
+    ...history.map((msg) => ({
+      role: msg.role as 'user' | 'assistant',
+      content: msg.content,
+    })),
+    { role: 'user' as const, content: message },
+  ]
+
+  const response = await client.messages.create({
+    model: 'claude-sonnet-4-6',
+    max_tokens: 4096,
+    system: systemWithContext,
+    messages,
+  })
+
+  return response.content
+    .filter((block): block is Anthropic.TextBlock => block.type === 'text')
+    .map((block) => block.text)
+    .join('')
 }
