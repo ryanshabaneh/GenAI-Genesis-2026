@@ -50,7 +50,8 @@ function PanelInner({ buildingId, onClose }: { buildingId: BuildingId; onClose: 
       animate={{ x: 0,  opacity: 1 }}
       exit={{ x: 40, opacity: 0 }}
       transition={{ type: 'spring', stiffness: 320, damping: 28 }}
-      className="absolute right-4 top-4 bottom-4 w-[22rem] flex flex-col overlay game-border rounded-[18px] overflow-hidden"
+      className="absolute right-4 top-4 w-[22rem] flex flex-col overlay game-border rounded-[18px] overflow-hidden"
+      style={{ maxHeight: 'calc(100% - 2rem)' }}
     >
       <PanelHeader config={config} step={flow.step} canGoBack={flow.canGoBack} onBack={flow.back} onClose={onClose} />
 
@@ -59,12 +60,12 @@ function PanelInner({ buildingId, onClose }: { buildingId: BuildingId; onClose: 
           <span className="text-fog text-[10px] font-display font-black uppercase tracking-[1.5px]">Readiness</span>
           <span className="text-xs font-display font-black gradient-progress-text tabular-nums">{state.percent}%</span>
         </div>
-        <PolyProgress value={state.percent} segments={12} height={10} animated={state.implementStatus === 'running'} />
+        <PolyProgress value={state.percent} segments={12} height={10} animated={state.implementStatus === 'running'} fromColor={config.theme.gradient.from} toColor={config.theme.gradient.to} />
       </div>
 
-      <div className="flex-1 overflow-hidden relative">
+      <div className="overflow-y-auto">
         <AnimatePresence mode="wait" custom={stepIdx}>
-          <motion.div key={flow.step} custom={stepIdx} variants={stepVariants} initial="enter" animate="center" exit="exit" className="absolute inset-0 overflow-y-auto">
+          <motion.div key={flow.step} custom={stepIdx} variants={stepVariants} initial="enter" animate="center" exit="exit" className="">
             {flow.step === 'OVERVIEW'  && <StepOverview buildingId={buildingId} config={config} isComplete={isComplete} pendingCount={pendingTasks.length} onInspect={flow.goTasklist} />}
             {flow.step === 'TASKLIST'  && <StepTasklist buildingId={buildingId} state={state} pendingTasks={pendingTasks} onChat={flow.goChat} />}
             {flow.step === 'CHAT'      && <StepChat buildingId={buildingId} onTasklist={flow.goTasklist} />}
@@ -241,13 +242,13 @@ function StepChat({ buildingId, onTasklist }: { buildingId: BuildingId; onTaskli
   const isDeployment = buildingId === 'deployment'
 
   return (
-    <div className="h-full flex flex-col" style={{ minHeight: '300px' }}>
+    <div className="flex flex-col" style={{ minHeight: '480px' }}>
       <div className="px-5 pt-3 pb-1">
         <p className="text-fog text-[10px] font-display font-black uppercase tracking-[1.5px]">
           Builder Agent — {BUILDINGS.find((b) => b.id === buildingId)?.category}
         </p>
       </div>
-      <div className="flex-1 overflow-hidden">
+      <div className="flex-1 overflow-hidden" style={{ minHeight: '320px' }}>
         <ChatWindow buildingId={buildingId} />
       </div>
       <div className="px-5 py-3 border-t border-white/[0.06] flex gap-2">

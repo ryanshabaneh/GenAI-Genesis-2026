@@ -4,9 +4,19 @@ import { useState } from 'react'
 import { motion } from 'framer-motion'
 import GameModal from './GameModal'
 
+const RailwayIcon = () => (
+  <svg width="16" height="18" viewBox="0 0 16 18" fill="currentColor">
+    <rect x="2" y="0" width="2" height="18" rx="1"/>
+    <rect x="12" y="0" width="2" height="18" rx="1"/>
+    <rect x="2" y="2" width="12" height="2" rx="1"/>
+    <rect x="2" y="8" width="12" height="2" rx="1"/>
+    <rect x="2" y="14" width="12" height="2" rx="1"/>
+  </svg>
+)
+
 const PLATFORMS = [
   { id: 'vercel',     name: 'Vercel',      desc: 'Next.js, static sites, serverless', icon: '▲' },
-  { id: 'railway',    name: 'Railway',     desc: 'Full-stack, databases, WebSockets',  icon: '🚂' },
+  { id: 'railway',    name: 'Railway',     desc: 'Full-stack, databases, WebSockets',  icon: <RailwayIcon /> },
   { id: 'netlify',    name: 'Netlify',     desc: 'Jamstack, static + functions',       icon: '◆' },
   { id: 'render',     name: 'Render',      desc: 'Free tier backends, managed DB',     icon: '◉' },
   { id: 'fly.io',     name: 'Fly.io',      desc: 'Edge/global, VMs, real-time',        icon: '✈' },
@@ -29,14 +39,25 @@ export default function PlatformPicker({ isOpen, recommended, onSelect, onClose 
   const [hovered, setHovered] = useState<string | null>(null)
 
   return (
-    <GameModal isOpen={isOpen} onClose={onClose} icon="🚀" align="center" panelClassName="max-w-sm">
-      <motion.h3 variants={itemVariants} className="text-white font-display font-black text-lg mb-1">
-        Choose Deploy Target
-      </motion.h3>
-      <motion.p variants={itemVariants} className="text-fog text-xs font-ui mb-4 leading-relaxed max-w-[260px]">
-        Pick a platform and your agent will generate a ready-to-run setup script.
-      </motion.p>
+    <GameModal isOpen={isOpen} onClose={onClose} align="center" panelClassName="max-w-sm">
+      {/* Header */}
+      <div className="w-full flex items-center justify-between mb-4">
+        <div>
+          <motion.h3 variants={itemVariants} className="text-white font-display font-black text-lg leading-tight">
+            Choose Deploy Target
+          </motion.h3>
+          <motion.p variants={itemVariants} className="text-fog text-xs font-ui mt-1 leading-relaxed">
+            Pick a platform and your agent will generate a ready-to-run setup script.
+          </motion.p>
+        </div>
+        <motion.button
+          variants={itemVariants}
+          onClick={onClose}
+          className="ml-4 shrink-0 text-fog hover:text-white text-lg leading-none transition-colors duration-[120ms]"
+        >✕</motion.button>
+      </div>
 
+      {/* Platform list */}
       <motion.div variants={itemVariants} className="w-full flex flex-col gap-2">
         {PLATFORMS.map((p) => {
           const isRecommended = p.id === recommended
@@ -48,14 +69,14 @@ export default function PlatformPicker({ isOpen, recommended, onSelect, onClose 
               onMouseLeave={() => setHovered(null)}
               onClick={() => onSelect(p.id)}
               className={`
-                w-full flex items-center gap-3 px-4 py-3 rounded-[12px] border text-left
+                w-full flex items-center gap-3 px-4 py-3 rounded-[10px] border text-left
                 transition-all duration-[150ms] active:scale-[0.98]
                 ${isRecommended
                   ? 'bg-blue/15 border-blue/40 hover:bg-blue/25 hover:border-blue/60'
                   : 'bg-surface2 border-white/10 hover:bg-white/10 hover:border-white/20'}
               `}
             >
-              <span className="text-xl w-8 text-center shrink-0">{p.icon}</span>
+              <span className="text-base w-6 text-center shrink-0 text-white/60 flex items-center justify-center">{p.icon}</span>
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2">
                   <span className={`text-sm font-display font-black ${isRecommended || isHover ? 'text-white' : 'text-white/80'}`}>
@@ -75,9 +96,16 @@ export default function PlatformPicker({ isOpen, recommended, onSelect, onClose 
         })}
       </motion.div>
 
-      <motion.p variants={itemVariants} className="text-fog/50 text-[10px] font-ui mt-3">
-        Generates setup.sh + setup.ps1 for your platform
-      </motion.p>
+      {/* Footer */}
+      <motion.div
+        variants={itemVariants}
+        className="w-full mt-4 pt-3 flex items-center justify-center"
+        style={{ borderTop: '1px solid rgba(255,255,255,0.07)' }}
+      >
+        <p className="text-fog/50 text-[10px] font-ui">
+          Generates setup.sh + setup.ps1 for your platform
+        </p>
+      </motion.div>
     </GameModal>
   )
 }

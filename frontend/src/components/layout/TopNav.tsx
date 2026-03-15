@@ -5,7 +5,6 @@ import { AnimatePresence, motion } from 'framer-motion'
 import type { CSSProperties } from 'react'
 import { useStore } from '@/store/useStore'
 import { getBuildingConfig, iconPath } from '@/lib/buildings'
-import CountUp from '@/components/text/CountUp'
 
 
 function UserAvatar({ url, login }: { url: string; login: string }) {
@@ -60,7 +59,7 @@ function ReadinessBlock() {
 
   const building = activeBuilding ? getBuildingConfig(activeBuilding) : null
   const value    = building ? buildings[activeBuilding!].percent : score
-  const label    = building ? building.category : 'Production Readiness'
+  const label    = building ? building.category + ' Progress' : 'Production Readiness'
   const key      = building ? activeBuilding! : 'global'
 
   const fromColor = building ? building.theme.gradient.from : '#4A78D4'
@@ -70,8 +69,8 @@ function ReadinessBlock() {
     ? { color: building.theme.primary, fontSize: '2rem', lineHeight: 1 }
     : { fontSize: '2rem', lineHeight: 1 }
   const numClass = building
-    ? 'font-action font-black tabular-nums'
-    : 'gradient-progress-text gradient-shift-text font-action font-black tabular-nums'
+    ? 'font-action font-light tabular-nums'
+    : 'gradient-progress-text gradient-shift-text font-action font-light tabular-nums'
 
   return (
     <div className="flex items-center gap-3 min-w-0">
@@ -85,9 +84,9 @@ function ReadinessBlock() {
           className="flex items-baseline gap-1 shrink-0"
         >
           <span className={numClass} style={numStyle}>
-            <CountUp to={value} duration={0.8} />
+            {value}
           </span>
-          <span className="font-action font-black text-lg" style={{ color: building ? building.theme.primary : undefined, opacity: 0.7 }}>%</span>
+          <span className={`font-action font-light ${!building ? 'gradient-progress-text gradient-shift-text' : ''}`} style={{ color: building ? building.theme.primary : undefined, opacity: 0.7, fontSize: '2rem', lineHeight: 1 }}>%</span>
         </motion.div>
       </AnimatePresence>
 
@@ -127,14 +126,14 @@ function AgentStatusBtn() {
   const isRunning = Object.values(buildings).some((b) => b.implementStatus === 'running')
 
   return (
-    <button className="glass-text-button">
+    <div className="glass-text-button pointer-events-none">
       <span style={{
-        width: '0.6em', height: '0.6em', borderRadius: '50%', flexShrink: 0,
+        width: '6px', height: '6px', borderRadius: '50%', flexShrink: 0,
         background: isRunning ? '#F59E0B' : '#6EE7B7',
         boxShadow: isRunning ? '0 0 8px #F59E0BAA' : '0 0 8px #6EE7B7AA',
       }} />
-      {isRunning ? 'agent running' : 'agent idle'}
-    </button>
+      {isRunning ? 'Agent Running' : 'Agent Active'}
+    </div>
   )
 }
 
@@ -148,7 +147,8 @@ function LogoutBtn() {
 
   return (
     <button className="glass-text-button" onClick={handleLogout}>
-      sign out
+      <span style={{ width: '6px', height: '6px', borderRadius: '50%', flexShrink: 0, background: '#EF4444', boxShadow: '0 0 8px #EF4444AA' }} />
+      Sign Out
     </button>
   )
 }
