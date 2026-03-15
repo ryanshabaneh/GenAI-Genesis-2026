@@ -125,6 +125,23 @@ export async function implementTasks(params: {
   return res.json() as Promise<{ success: boolean; completedTaskIds: string[]; percent: number; score: number }>
 }
 
+// POST /api/push — pushes local commits to the remote origin.
+export async function pushChanges(params: {
+  sessionId: string
+}): Promise<{ pushed: boolean }> {
+  const res = await fetch(`${API_BASE}/api/push`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify(params),
+  })
+  if (!res.ok) {
+    const text = await res.text()
+    throw new Error(`Push failed: ${text}`)
+  }
+  return res.json() as Promise<{ pushed: boolean }>
+}
+
 // POST /api/evaluate — checks which tasks are now fulfilled in the repo.
 // Returns per-task pass/fail with feedback and the updated percent + score.
 export async function evaluateTasks(params: {

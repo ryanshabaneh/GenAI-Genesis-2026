@@ -18,6 +18,7 @@ export default function CodePreview({ codeBlock, buildingId, onAccepted, onRejec
   const setBuildingStatus = useStore((s) => s.setBuildingStatus)
   const setScore = useStore((s) => s.setScore)
   const addChange = useStore((s) => s.addChange)
+  const setHasUnpushedCommits = useStore((s) => s.setHasUnpushedCommits)
 
   async function handleAccept() {
     setStatus('accepting')
@@ -32,6 +33,7 @@ export default function CodePreview({ codeBlock, buildingId, onAccepted, onRejec
       setBuildingStatus(bid, { percent, tasks })
       setScore(score)
       addChange({ id: `change-${Date.now()}`, buildingId: bid, files: [{ path: codeBlock.path, content: codeBlock.content, isNew: true }], acceptedAt: Date.now() })
+      setHasUnpushedCommits(true)
       setStatus('accepted')
       onAccepted?.(codeBlock.path)
     } catch {
