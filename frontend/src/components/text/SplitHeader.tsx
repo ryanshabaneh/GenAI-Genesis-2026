@@ -46,8 +46,8 @@ export default function SplitHeader({
         <VariableProximity
           label={left}
           containerRef={containerRef as React.RefObject<HTMLElement>}
-          fromFontVariationSettings="'wght' 500"
-          toFontVariationSettings="'wght' 700"
+          fromFontVariationSettings="'wght' 300"
+          toFontVariationSettings="'wght' 600"
           falloff="gaussian"
           radius={120}
         />

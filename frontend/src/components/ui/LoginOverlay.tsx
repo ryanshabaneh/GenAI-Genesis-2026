@@ -5,6 +5,7 @@ import { motion } from 'framer-motion'
 import { useSearchParams } from 'next/navigation'
 import { FiGithub } from 'react-icons/fi'
 import { SplitHeader } from '@/components/text'
+import CurvedLoop from '@/components/text/CurvedLoop'
 import LighthouseLogo from '@/components/landing/LighthouseLogo'
 import GameModal from './GameModal'
 import BubblyButton from './buttonstyles/BubblyButton'
@@ -27,10 +28,8 @@ export default function LoginOverlay() {
 
   return (
     <>
-      {/* landing — header + subheader + CTA, shifted up to reveal more land */}
       <div className="absolute inset-0 flex flex-col items-center justify-center px-6 -translate-y-32">
 
-        {/* glowing orbs rising from the bottom */}
         <div className="absolute inset-0 pointer-events-none overflow-hidden">
           {([
             { size: 7,  left: '12%', delay: '0s',   dur: '9s'  },
@@ -55,24 +54,23 @@ export default function LoginOverlay() {
           transition={{ duration: 0.4 }}
           className="flex flex-col items-center text-center"
         >
-          {/* logo mark */}
-          <div className="animate-bob" style={{ marginBottom: '2.5rem' }}>
+          <div className="animate-bob relative mb-10">
+            <div className="lighthouse-glow-halo" />
             <LighthouseLogo size={120} />
           </div>
 
-          <div style={{ marginBottom: '0.75rem' }}>
+          <div className="mb-3">
             <SplitHeader left="Ship" right="Yard" />
           </div>
 
           <p
-            className="text-white/60 leading-relaxed max-w-xs"
-            style={{ fontSize: 'clamp(1rem, 2.2vw, 1.25rem)', marginBottom: '3rem', fontFamily: "'Gabarito', sans-serif", fontWeight: 400 }}
+            className="font-ui text-white/60 leading-relaxed max-w-xs mb-12"
+            style={{ fontSize: 'clamp(1rem, 2.2vw, 1.25rem)' }}
           >
             Every codebase deserves to ship.<br />Fix what's broken, then set sail.
           </p>
         </motion.div>
 
-        {/* water CTA — triggers auth modal */}
         <motion.div
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
@@ -86,7 +84,16 @@ export default function LoginOverlay() {
         </motion.div>
       </div>
 
-      {/* auth modal — spring pop on button click */}
+      <div className="absolute bottom-0 left-0 right-0 pointer-events-none" style={{ opacity: 0.32 }}>
+        <CurvedLoop
+          marqueeText="a deep dive into your codebase ✦ bridge the gap ✦ "
+          speed={1.1}
+          curveAmount={-18}
+          direction="left"
+          interactive={false}
+        />
+      </div>
+
       <GameModal
         isOpen={isAuthOpen}
         onClose={() => setIsAuthOpen(false)}
@@ -105,7 +112,6 @@ export default function LoginOverlay() {
           </p>
         )}
 
-        {/* bubble burst plays for 400ms before navigating — feels intentional */}
         <BubblyButton
           label="Cast Off with GitHub"
           onClick={() => setTimeout(() => { window.location.href = `${API_URL}/api/auth/github` }, 400)}

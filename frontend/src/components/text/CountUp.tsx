@@ -1,10 +1,5 @@
 'use client'
 
-// spring-animated number counter — triggers when element enters viewport
-// useMotionValue: framer-motion's reactive value (like a ref that rerenders)
-// useSpring: wraps a motionValue with spring physics (damping/stiffness from duration)
-// useInView: fires when ref enters the viewport (once by default)
-
 import { useInView, useMotionValue, useSpring } from 'framer-motion'
 import { useCallback, useEffect, useRef } from 'react'
 

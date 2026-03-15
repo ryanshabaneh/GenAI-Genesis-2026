@@ -2,16 +2,17 @@
 
 import dynamic from 'next/dynamic'
 import { Suspense } from 'react'
+import { AnimatePresence, motion } from 'framer-motion'
 import { useAuth } from '@/hooks/useAuth'
 import { useStore } from '@/store/useStore'
 import LoginOverlay from '@/components/ui/LoginOverlay'
 import RepoPickerOverlay from '@/components/ui/RepoPickerOverlay'
-import { GitHubAuthButton } from '@/components/ui/AuthButton'
-import ScoreBar from '@/components/ui/ScoreBar'
-import BuildingPanel from '@/components/ui/BuildingPanel'
 import ScanProgress from '@/components/ui/ScanProgress'
-
+import HUDLayout from '@/components/layout/HUDLayout'
+import BuildingPanel from '@/components/ui/BuildingPanel'
+import CityOverview from '@/components/ui/CityOverview'
 import CityStub from '@/components/scene/CityStub'
+import { getBuildingConfig } from '@/lib/buildings'
 import { SocketProvider } from '@/contexts/SocketContext'
 
 const VillageScene = dynamic(() => import('@/components/scene/Village'), {
@@ -20,41 +21,70 @@ const VillageScene = dynamic(() => import('@/components/scene/Village'), {
 })
 
 export default function HomePage() {
-  useAuth() // hydrates githubUser into store on mount
+  useAuth()
 
-  const githubUser = useStore((s) => s.githubUser)
-  const scanStatus = useStore((s) => s.scanStatus)
+  const githubUser  = useStore((s) => s.githubUser)
+  const scanStatus  = useStore((s) => s.scanStatus)
+  const activeBuilding = useStore((s) => s.activeBuilding)
+
+  const isInSession = githubUser && scanStatus !== 'idle' && scanStatus !== 'error'
+
+  const buildingTheme = activeBuilding ? getBuildingConfig(activeBuilding).theme : null
+  const rightPanel = !isInSession ? null : activeBuilding ? (
+    <BuildingPanel />
+  ) : (
+    <CityOverview />
+  )
 
   return (
     <SocketProvider>
-    <main className="relative w-screen h-screen overflow-hidden bg-ink">
-      {/* City — always in background */}
-      <div className="absolute inset-0">
-        <VillageScene />
-      </div>
+      <main className="relative w-screen h-screen overflow-hidden bg-ink">
 
-      {/* Overlays — everything floats over the city */}
-      {!githubUser && (
-        <Suspense fallback={null}>
-          <LoginOverlay />
-        </Suspense>
-      )}
+        <div className="absolute inset-0">
+          <VillageScene />
+        </div>
 
-      {githubUser && (scanStatus === 'idle' || scanStatus === 'error') && (
-        <RepoPickerOverlay scanError={scanStatus === 'error'} />
-      )}
+        <AnimatePresence>
+          {!githubUser && (
+            <motion.div key="login" className="absolute inset-0"
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              transition={{ duration: 0.35 }}>
+              <Suspense fallback={null}><LoginOverlay /></Suspense>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
-      {githubUser && scanStatus !== 'idle' && scanStatus !== 'error' && (
-        <>
-          <div className="absolute top-4 right-4 z-10">
-            <GitHubAuthButton />
-          </div>
-          <ScoreBar />
-          <BuildingPanel />
-          {scanStatus === 'scanning' && <ScanProgress />}
-        </>
-      )}
-    </main>
+        <AnimatePresence>
+          {githubUser && (scanStatus === 'idle' || scanStatus === 'error') && (
+            <motion.div key="repo-picker" className="absolute inset-0"
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              transition={{ duration: 0.3 }}>
+              <RepoPickerOverlay scanError={scanStatus === 'error'} />
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        <AnimatePresence>
+          {isInSession && (
+            <motion.div key="hud" className="absolute inset-0"
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              transition={{ duration: 0.3 }}>
+              <HUDLayout rightPanel={rightPanel} />
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        <AnimatePresence>
+          {isInSession && scanStatus === 'scanning' && (
+            <motion.div key="scan" className="absolute inset-0 z-30 pointer-events-none"
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}>
+              <ScanProgress />
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+      </main>
     </SocketProvider>
   )
 }
