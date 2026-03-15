@@ -12,7 +12,7 @@ const CONTEXT_FILES: Record<BuildingId, string[]> = {
   envVars: ['.env.example', 'package.json', 'src'],
   security: ['.gitignore', '.env.example', 'package.json'],
   logging: ['src', 'package.json'],
-  deployment: ['vercel.json', 'fly.toml', 'railway.toml', 'render.yaml', 'Procfile', 'Dockerfile', 'package.json', 'netlify.toml', 'wrangler.toml'],
+  deployment: ['vercel.json', 'fly.toml', 'railway.toml', 'render.yaml', 'Procfile', 'Dockerfile', 'package.json', 'netlify.toml', 'wrangler.toml', '.env.example', 'next.config.js', 'next.config.ts', 'next.config.mjs', 'src'],
 }
 
 const MAX_FILE_SIZE = 8_000 // ~8KB per file to stay within context limits
@@ -178,12 +178,112 @@ function getProjectTree(repoPath: string, maxDepth = 3): string {
   return lines.join('\n')
 }
 
+/**
+ * Detect monorepo workspace subdirectories that contain their own package.json.
+ * Returns subdirectory names like ['server', 'frontend', 'packages/api'].
+ */
+function detectMonorepoSubdirs(repoPath: string): string[] {
+  const subdirs: string[] = []
+  const skip = new Set(['node_modules', '.git', 'dist', 'build', '.next', 'coverage', '.cache'])
+
+  try {
+    const entries = fs.readdirSync(repoPath, { withFileTypes: true })
+    for (const entry of entries) {
+      if (!entry.isDirectory() || skip.has(entry.name)) continue
+      // Check if subdir has its own package.json (or go.mod, pyproject.toml, etc.)
+      const subPath = path.join(repoPath, entry.name)
+      if (
+        fs.existsSync(path.join(subPath, 'package.json')) ||
+        fs.existsSync(path.join(subPath, 'go.mod')) ||
+        fs.existsSync(path.join(subPath, 'pyproject.toml')) ||
+        fs.existsSync(path.join(subPath, 'requirements.txt'))
+      ) {
+        subdirs.push(entry.name)
+      }
+    }
+  } catch { /* ignore */ }
+
+  return subdirs
+}
+
+/**
+ * Slim context for the analyzer agent — just project tree + package.json + key config files.
+ * No full source code. ~2-4KB instead of ~40KB. Used for task discovery, not implementation.
+ */
+export async function buildSlimContext(buildingId: BuildingId, repoPath: string): Promise<string> {
+  const sections: string[] = []
+
+  // Project tree (always included)
+  const tree = getProjectTree(repoPath, 4)
+  if (tree) sections.push(`### Project Structure\n\`\`\`\n${tree}\n\`\`\``)
+
+  // Package.json (root + monorepo subdirs)
+  const subdirs = detectMonorepoSubdirs(repoPath)
+  const pkgPaths = ['package.json', ...subdirs.map((s) => path.join(s, 'package.json'))]
+
+  for (const pkgRel of pkgPaths) {
+    const pkgPath = path.join(repoPath, pkgRel)
+    const content = await readFileIfExists(pkgPath)
+    if (content) sections.push(`### File: ${pkgRel}\n\`\`\`json\n${content}\n\`\`\``)
+  }
+
+  // Key config files (small, relevant to the building) — content only, no source code
+  const configFiles: Record<BuildingId, string[]> = {
+    tests: ['pytest.ini', 'jest.config.js', 'vitest.config.ts', 'setup.cfg'],
+    cicd: ['.github/workflows'],
+    docker: ['Dockerfile', 'docker-compose.yml', '.dockerignore'],
+    documentation: ['README.md'],
+    envVars: ['.env.example', '.env.template'],
+    security: ['.gitignore'],
+    logging: [],
+    deployment: ['vercel.json', 'fly.toml', 'railway.toml', 'render.yaml', 'netlify.toml', 'Procfile', 'wrangler.toml'],
+  }
+
+  for (const target of configFiles[buildingId] ?? []) {
+    // Check root and monorepo subdirs
+    const candidates = [target, ...subdirs.map((s) => path.join(s, target))]
+    for (const rel of candidates) {
+      const full = path.join(repoPath, rel)
+      if (!fs.existsSync(full)) continue
+      const stat = fs.statSync(full)
+      if (stat.isFile()) {
+        const content = await readFileIfExists(full)
+        if (content) sections.push(`### File: ${rel}\n\`\`\`\n${content}\n\`\`\``)
+      } else if (stat.isDirectory()) {
+        // List files in directory (e.g. .github/workflows/)
+        try {
+          const files = fs.readdirSync(full)
+          for (const f of files.slice(0, 3)) {
+            const fileContent = await readFileIfExists(path.join(full, f))
+            if (fileContent) sections.push(`### File: ${path.join(rel, f)}\n\`\`\`\n${fileContent}\n\`\`\``)
+          }
+        } catch {}
+      }
+    }
+  }
+
+  // Python: requirements.txt, go.mod
+  for (const f of ['requirements.txt', 'go.mod', 'pyproject.toml', 'Makefile']) {
+    const candidates = [f, ...subdirs.map((s) => path.join(s, f))]
+    for (const rel of candidates) {
+      const content = await readFileIfExists(path.join(repoPath, rel))
+      if (content) sections.push(`### File: ${rel}\n\`\`\`\n${content}\n\`\`\``)
+    }
+  }
+
+  if (sections.length === 0) return 'No relevant files were found in the repository.'
+  return `Here are the key files from the repository:\n\n${sections.join('\n\n')}`
+}
+
 export async function buildAgentContext(buildingId: BuildingId, repoPath: string): Promise<string> {
   const targets = CONTEXT_FILES[buildingId] ?? ['package.json']
   const sections: string[] = []
   let totalChars = 0
   const includedFiles = new Set<string>()
   const seedFiles: Array<{ file: string; content: string }> = []
+
+  // Detect monorepo subdirectories
+  const monorepoSubdirs = detectMonorepoSubdirs(repoPath)
 
   // Add project tree as first section (compact overview)
   const tree = getProjectTree(repoPath)
@@ -193,8 +293,20 @@ export async function buildAgentContext(buildingId: BuildingId, repoPath: string
     totalChars += treeSection.length
   }
 
-  // Read the primary context files
+  // Expand targets to include monorepo subdirectory variants
+  // e.g. 'package.json' → ['package.json', 'server/package.json', 'frontend/package.json']
+  const expandedTargets: string[] = []
   for (const target of targets) {
+    expandedTargets.push(target)
+    if (monorepoSubdirs.length > 0) {
+      for (const subdir of monorepoSubdirs) {
+        expandedTargets.push(path.join(subdir, target))
+      }
+    }
+  }
+
+  // Read the primary context files (including monorepo-expanded paths)
+  for (const target of expandedTargets) {
     if (totalChars >= MAX_TOTAL_CHARS) break
 
     const fullPath = path.join(repoPath, target)
@@ -203,6 +315,7 @@ export async function buildAgentContext(buildingId: BuildingId, repoPath: string
     if (!stat) continue
 
     if (stat.isFile()) {
+      if (includedFiles.has(fullPath)) continue
       const content = await readFileIfExists(fullPath)
       if (content) {
         const section = `### File: ${target}\n\`\`\`\n${content}\n\`\`\``
@@ -217,6 +330,7 @@ export async function buildAgentContext(buildingId: BuildingId, repoPath: string
       const files = await readDirFirstFiles(fullPath)
       for (const { file, content } of files) {
         if (totalChars >= MAX_TOTAL_CHARS) break
+        if (includedFiles.has(file)) continue
         const relPath = path.relative(repoPath, file)
         const section = `### File: ${relPath}\n\`\`\`\n${content}\n\`\`\``
         sections.push(section)

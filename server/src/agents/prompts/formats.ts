@@ -26,27 +26,13 @@ Focus on what to implement, not explaining concepts.
 Give clear, step-by-step implementation instructions that a code editor can follow mechanically.`
 
 /**
- * Analyzer agent: JSON array of tasks.
- * Used as part of the user message in analyzeForTasks().
+ * Analyzer agent: JSON array of tasks (per-building format, used in eval scripts).
  */
 export const ANALYZER_FORMAT = `Return ONLY a JSON array of task objects. No markdown, no explanation, just the array:
 [
   { "id": "unique-id", "label": "Human-readable task description", "done": false },
   ...
 ]`
-
-/**
- * Deduplicator agent: JSON map of building → tasks.
- * Used as part of the user message in deduplicateAcrossBuildings().
- */
-export const DEDUP_FORMAT = `Return ONLY a JSON object mapping each building to its deduplicated task array. No markdown, no explanation:
-{
-  "tests": [{"id": "...", "label": "...", "done": false}],
-  "cicd": [...],
-  ...
-}
-
-Every task must appear in exactly one building. Do not invent new tasks. Do not change labels.`
 
 /**
  * Evaluator agent: raw JSON object (no markdown fences).
