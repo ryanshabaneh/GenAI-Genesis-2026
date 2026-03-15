@@ -20,14 +20,6 @@ export default function ScoreBar() {
     URL.revokeObjectURL(url)
   }
 
-  // Gradient shifts from red → amber → teal → cyan as score climbs
-  function barGradient(pct: number): string {
-    if (pct >= 100) return 'linear-gradient(90deg, #06b6d4, #14b8a6)'
-    if (pct >= 75)  return 'linear-gradient(90deg, #f59e0b, #14b8a6)'
-    if (pct >= 50)  return 'linear-gradient(90deg, #f59e0b, #84cc16)'
-    return 'linear-gradient(90deg, #ef4444, #f59e0b)'
-  }
-
   return (
     <div className="absolute top-4 left-1/2 -translate-x-1/2 z-10 bg-gray-900 bg-opacity-90 rounded-xl px-4 py-3 backdrop-blur-sm min-w-[240px]">
       <div className="flex items-center justify-between mb-1">
@@ -44,12 +36,10 @@ export default function ScoreBar() {
           <span className={`text-sm font-bold ${isComplete ? 'text-teal-400' : 'text-white'}`}>{score}%</span>
         </div>
       </div>
-      <div className="w-full bg-gray-700 rounded-full h-1">
-        <div
-          className="h-1 rounded-full transition-all duration-[380ms] ease-in-out"
-          style={{ width: `${score}%`, background: barGradient(score) }}
-        />
-      </div>
+      <div
+        className="w-full rounded-full h-1.5 score-bar"
+        style={{ '--score-per': `${score}%` } as React.CSSProperties}
+      />
     </div>
   )
 }
