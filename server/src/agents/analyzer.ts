@@ -5,7 +5,7 @@
 // prompt, so it naturally avoids cross-building duplication.
 
 import Anthropic from '@anthropic-ai/sdk'
-import type { AnalyzerResult, BuildingId, Task } from '../types'
+import type { AnalyzerResult, BuildingId, DeploymentRecommendation, Task } from '../types'
 import { buildSlimContext } from './context'
 import { buildScannerPreprompt } from './scanner-context'
 import { client } from './client'
@@ -33,8 +33,9 @@ const BUILDING_DOMAINS: Record<BuildingId, string> = {
 export async function analyzeAllBuildings(params: {
   repoPath: string
   scanResults: AnalyzerResult[]
+  deploymentRecommendation?: DeploymentRecommendation
 }): Promise<Map<BuildingId, Task[]>> {
-  const { repoPath, scanResults } = params
+  const { repoPath, scanResults, deploymentRecommendation } = params
 
   // Build one slim context (shared across buildings — it's the same repo)
   // Use 'deployment' as the key since it reads the widest set of config files
@@ -59,23 +60,45 @@ ${domainList}
 ## Repository Context
 ${context}`
 
+  // Build deployment-specific context from the recommendation
+  const deployContext = deploymentRecommendation
+    ? `\n\n## Deployment Recommendation (pre-computed)
+**Recommended platform: ${deploymentRecommendation.platform}**
+Reason: ${deploymentRecommendation.reason}
+Framework: ${deploymentRecommendation.framework ?? 'unknown'}
+Detected services: ${deploymentRecommendation.services.length > 0 ? deploymentRecommendation.services.join(', ') : 'none'}
+
+Deployment steps the user needs to complete:
+${deploymentRecommendation.steps.map((s, i) => `${i + 1}. ${s}`).join('\n')}
+
+Use this recommendation to generate specific, actionable deployment tasks. Focus on things that would actually block a deploy:
+- Missing or invalid platform config files for ${deploymentRecommendation.platform}
+- Missing build/start scripts that the platform needs
+- Undocumented environment variables the platform needs set
+- Database connection setup (migrations, connection strings, provider config)
+- Health check endpoints (if backend)
+- CORS/domain configuration for production
+Do NOT generate generic tasks like "deploy to X" — each task should be a specific code change.`
+    : ''
+
   const userMessage = `## Scanner Results (all 8 buildings)
 
 ${scannerSummaries}
+${deployContext}
 
 ---
 
 For each building, generate additional tasks the scanner missed. Follow these rules:
 
-1. **Task dependency**: If the FOUNDATION for a domain doesn't exist (e.g., no Dockerfile, no CI config, no test framework), return an EMPTY array for that building. Only add refinement tasks for things that ALREADY EXIST but need improvement.
+1. **Task dependency**: For most buildings, if the FOUNDATION doesn't exist (e.g., no Dockerfile, no CI config, no test framework), return an EMPTY array. Only add refinement tasks for things that ALREADY EXIST but need improvement. **EXCEPTION: deployment** — always generate tasks for deployment even if no config exists yet. The deployment building should include tasks to GET the project ready to deploy (create config files, add scripts, set up the platform).
 
 2. **No cross-building duplication**: Each task belongs to exactly ONE building. You see all 8 buildings at once — assign each issue to the single most relevant building.
 
-3. **Be specific**: Reference actual files, functions, or patterns from the repo context. Not generic advice.
+3. **Be specific**: Reference actual files, functions, or patterns from the repo context. Not generic advice. For deployment, reference the recommended platform and the project's actual framework/services.
 
-4. **Max 4 tasks per building**. Return fewer if fewer are needed. Return [] if the scanner already covers everything.
+4. **Max 6 tasks for deployment, max 4 for other buildings**. Return fewer if fewer are needed. Return [] if the scanner already covers everything.
 
-5. Task IDs must start with the building prefix (e.g., "tests-...", "docker-...").
+5. Task IDs must start with the building prefix (e.g., "tests-...", "deployment-...").
 
 Return ONLY a JSON object mapping each building to its task array. No markdown fences, no explanation:
 {
@@ -86,7 +109,7 @@ Return ONLY a JSON object mapping each building to its task array. No markdown f
   "envVars": [],
   "security": [],
   "logging": [],
-  "deployment": []
+  "deployment": [{"id": "deployment-...", "label": "...", "done": false}]
 }`
 
   try {

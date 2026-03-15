@@ -9,7 +9,7 @@ import type { Server as SocketIOServer } from 'socket.io'
 import type { BuildingId, ChangeLogEntry, Message } from '../types'
 import { getSession, updateSession } from '../session/store'
 import { evaluateRepoState, computeRepoHash, buildEvalSummary } from '../agents/evaluator'
-import { calculatePercent } from '../agents/scanner-context'
+import { calculatePercent, formatDeploymentRecommendation } from '../agents/scanner-context'
 
 const router = Router()
 
@@ -106,6 +106,12 @@ router.post('/', async (req: Request, res: Response): Promise<void> => {
       ...chatHistory,
       { role: 'assistant', content: evalSummaryText },
     ]
+
+    // If deployment building just hit 100%, inject the deployment recommendation
+    if (buildingId === 'deployment' && percent === 100 && freshSession.deploymentRecommendation) {
+      const recMessage = formatDeploymentRecommendation(freshSession.deploymentRecommendation)
+      updatedHistory.push({ role: 'assistant', content: recMessage })
+    }
 
     updateSession(sessionId, {
       results: {

@@ -6,7 +6,7 @@
 // Progress events arrive via SocketContext during the HTTP call.
 
 import { useStore } from '@/store/useStore'
-import { implementTasks, evaluateTasks } from '@/lib/api'
+import { implementTasks, evaluateTasks, verifyBuild } from '@/lib/api'
 import type { BuildingId } from '@/types'
 
 export function useImplement(buildingId: BuildingId) {
@@ -85,5 +85,55 @@ export function useImplement(buildingId: BuildingId) {
     }
   }
 
-  return { runImplement, runEvaluate, isRunning }
+  async function runVerify() {
+    const sessionId = sessionStorage.getItem('shipcity_session_id') ?? ''
+    if (!sessionId || isRunning) return
+
+    setImplementStatus(buildingId, 'running')
+    try {
+      const result = await verifyBuild({ sessionId, buildingId })
+
+      const lines: string[] = []
+      if (result.build.success) {
+        lines.push(`**Build:** Passed (${result.build.durationMs}ms)`)
+      } else {
+        lines.push(`**Build:** Failed\n\n\`\`\`\n${result.build.stderr.slice(0, 800)}\n\`\`\``)
+      }
+      if (result.start) {
+        if (result.start.success) {
+          lines.push(`**Start:** App stayed alive for 5s`)
+          if (result.start.healthCheck) {
+            lines.push(`**Health:** HTTP ${result.start.healthCheck.status} ${result.start.healthCheck.ok ? '(OK)' : '(error)'}`)
+          }
+        } else {
+          lines.push(`**Start:** Crashed\n\n\`\`\`\n${result.start.stderr.slice(0, 800)}\n\`\`\``)
+        }
+      }
+
+      useStore.getState().addMessage(buildingId, {
+        id: `verify-${Date.now()}`,
+        role: 'assistant',
+        content: lines.join('\n\n'),
+        timestamp: Date.now(),
+      })
+
+      // Update tasks if verify passed
+      if (result.build.success || result.start?.success) {
+        const currentTasks = useStore.getState().buildings[buildingId].tasks
+        const updatedTasks = currentTasks.map((t) => ({
+          ...t,
+          done: t.done
+            || (t.id === 'deploy-build-verify' && result.build.success)
+            || (t.id === 'deploy-start-verify' && (result.start?.success ?? false)),
+        }))
+        setBuildingStatus(buildingId, { tasks: updatedTasks })
+      }
+    } catch (err) {
+      console.error('[useImplement] verify failed:', err)
+    } finally {
+      setImplementStatus(buildingId, 'idle')
+    }
+  }
+
+  return { runImplement, runEvaluate, runVerify, isRunning }
 }

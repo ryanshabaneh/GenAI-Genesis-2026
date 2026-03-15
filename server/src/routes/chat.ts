@@ -88,6 +88,7 @@ router.post('/', async (req: Request, res: Response): Promise<void> => {
       history,
       scanResult,
       changeLogContext: changeLogContext || undefined,
+      chosenPlatform: session.chosenPlatform,
     })
 
     // Append user message + agent reply to history

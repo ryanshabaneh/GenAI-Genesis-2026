@@ -13,7 +13,7 @@ import { loggingAnalyzer } from './analyzers/logging'
 import { deploymentAnalyzer } from './analyzers/deployment'
 import { getSession, updateSession } from '../session/store'
 import { analyzeAllBuildings, mergeTasks } from '../agents/analyzer'
-import type { BuildingId } from '../types'
+import type { BuildingId, DeploymentRecommendation } from '../types'
 import { calculatePercent } from '../agents/scanner-context'
 
 // The 8 buildings from the execution plan
@@ -99,12 +99,19 @@ export async function runScan(
       // Persist heuristic results immediately so buildings appear fast
       const session = getSession(sessionId)
       if (session) {
-        updateSession(sessionId, {
+        const update: Record<string, unknown> = {
           results: {
             ...session.results,
             [analyzer.buildingId]: result,
           },
-        })
+        }
+
+        // Store deployment recommendation in the session
+        if (analyzer.buildingId === 'deployment' && result.details?.['recommendation']) {
+          update['deploymentRecommendation'] = result.details['recommendation'] as DeploymentRecommendation
+        }
+
+        updateSession(sessionId, update)
       }
 
       io.to(sessionId).emit('message', {
@@ -113,6 +120,14 @@ export async function runScan(
         percent: result.percent,
         tasks: result.tasks,
       })
+
+      // Emit deployment recommendation so frontend can show it
+      if (analyzer.buildingId === 'deployment' && result.details?.['recommendation']) {
+        io.to(sessionId).emit('message', {
+          type: 'deploy:recommendation',
+          recommendation: result.details['recommendation'],
+        })
+      }
     } catch (err) {
       console.error(`Analyzer ${analyzer.buildingId} failed:`, err)
       io.to(sessionId).emit('message', {
@@ -127,7 +142,13 @@ export async function runScan(
   // Phase 2: deep analysis — ONE LLM call for all buildings
   // The model sees all scanner results + repo context at once, so it naturally
   // avoids cross-building duplication (no separate dedup call needed).
-  const allAgentTasks = await analyzeAllBuildings({ repoPath, scanResults: results })
+  // Pass the deployment recommendation so the LLM generates platform-specific tasks
+  const currentSession = getSession(sessionId)
+  const allAgentTasks = await analyzeAllBuildings({
+    repoPath,
+    scanResults: results,
+    deploymentRecommendation: currentSession?.deploymentRecommendation,
+  })
 
   // Merge agent tasks into scanner results and notify frontend
   for (const result of results) {

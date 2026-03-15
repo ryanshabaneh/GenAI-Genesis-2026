@@ -10,6 +10,7 @@ import type {
   BuildingState,
   BuildingStatus,
   CodeChange,
+  DeploymentRecommendation,
   GitHubUser,
   Message,
   ScanStatus,
@@ -64,6 +65,10 @@ interface ShipCityStore {
   scoutDialogue: string
   // Authenticated GitHub user — null if not signed in
   githubUser: GitHubUser | null
+  // Deployment recommendation from scanner
+  deploymentRecommendation: DeploymentRecommendation | null
+  // Platform the user chose to deploy to (from PlatformPicker)
+  chosenPlatform: string | null
 
   // Actions
   setRepoUrl: (url: string) => void
@@ -78,6 +83,8 @@ interface ShipCityStore {
   setImplementStatus: (id: BuildingId, status: 'idle' | 'running') => void
   setTaskFeedback: (id: BuildingId, taskId: string, feedback: string) => void
   toggleTaskSelected: (id: BuildingId, taskId: string) => void
+  setDeploymentRecommendation: (rec: DeploymentRecommendation) => void
+  setChosenPlatform: (platform: string) => void
 }
 
 export const useStore = create<ShipCityStore>((set) => ({
@@ -89,6 +96,8 @@ export const useStore = create<ShipCityStore>((set) => ({
   changesQueue: [],
   scoutDialogue: '',
   githubUser: null,
+  deploymentRecommendation: null,
+  chosenPlatform: null,
 
   setRepoUrl: (url) => set({ repoUrl: url }),
 
@@ -153,6 +162,10 @@ export const useStore = create<ShipCityStore>((set) => ({
         },
       },
     })),
+
+  setDeploymentRecommendation: (rec) => set({ deploymentRecommendation: rec }),
+
+  setChosenPlatform: (platform) => set({ chosenPlatform: platform }),
 
   toggleTaskSelected: (id, taskId) =>
     set((state) => {

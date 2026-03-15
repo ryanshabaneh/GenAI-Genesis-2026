@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useStore } from '@/store/useStore'
 import { BUILDINGS } from '@/lib/buildings'
@@ -8,8 +8,10 @@ import { percentToStage } from '@/lib/stages'
 import ChatWindow from './ChatWindow'
 import TaskChecklist from './TaskChecklist'
 import PolyProgress from './PolyProgress'
+import PlatformPicker from './PlatformPicker'
 import { useImplement } from '@/hooks/useImplement'
 import { useBuildingFlow } from '@/hooks/useBuildingFlow'
+import { setDeployPlatform } from '@/lib/api'
 import type { BuildingId } from '@/types'
 
 const stepVariants = {
@@ -63,11 +65,11 @@ function PanelInner({ buildingId, onClose }: { buildingId: BuildingId; onClose: 
       <div className="flex-1 overflow-hidden relative">
         <AnimatePresence mode="wait" custom={stepIdx}>
           <motion.div key={flow.step} custom={stepIdx} variants={stepVariants} initial="enter" animate="center" exit="exit" className="absolute inset-0 overflow-y-auto">
-            {flow.step === 'OVERVIEW'  && <StepOverview config={config} isComplete={isComplete} pendingCount={pendingTasks.length} onInspect={flow.goTasklist} />}
+            {flow.step === 'OVERVIEW'  && <StepOverview buildingId={buildingId} config={config} isComplete={isComplete} pendingCount={pendingTasks.length} onInspect={flow.goTasklist} />}
             {flow.step === 'TASKLIST'  && <StepTasklist buildingId={buildingId} state={state} pendingTasks={pendingTasks} onChat={flow.goChat} />}
             {flow.step === 'CHAT'      && <StepChat buildingId={buildingId} onTasklist={flow.goTasklist} />}
             {flow.step === 'REVIEW'    && <StepReview buildingId={buildingId} onDone={flow.goTasklist} />}
-            {flow.step === 'COMPLETE'  && <StepComplete config={config} percent={state.percent} onBack={flow.goTasklist} />}
+            {flow.step === 'COMPLETE'  && <StepComplete buildingId={buildingId} config={config} percent={state.percent} onBack={flow.goTasklist} onChat={flow.goChat} />}
           </motion.div>
         </AnimatePresence>
       </div>
@@ -104,12 +106,39 @@ function PanelHeader({ config, step, canGoBack, onBack, onClose }: {
   )
 }
 
-function StepOverview({ config, isComplete, pendingCount, onInspect }: {
+function StepOverview({ buildingId, config, isComplete, pendingCount, onInspect }: {
+  buildingId: BuildingId
   config: typeof BUILDINGS[0]
   isComplete: boolean
   pendingCount: number
   onInspect: () => void
 }) {
+  const [showPicker, setShowPicker] = useState(false)
+  const chosenPlatform = useStore((s) => s.chosenPlatform)
+  const setChosenPlatform = useStore((s) => s.setChosenPlatform)
+  const recommendation = useStore((s) => s.deploymentRecommendation)
+  const isDeployment = buildingId === 'deployment'
+
+  const handleInspect = () => {
+    // Show platform picker for deployment if no platform chosen yet
+    if (isDeployment && !chosenPlatform && !isComplete) {
+      setShowPicker(true)
+      return
+    }
+    onInspect()
+  }
+
+  const handlePlatformSelect = async (platform: string) => {
+    setChosenPlatform(platform)
+    setShowPicker(false)
+    // Persist to server
+    const sessionId = sessionStorage.getItem('shipcity_session_id') ?? ''
+    if (sessionId) {
+      try { await setDeployPlatform({ sessionId, platform }) } catch { /* best effort */ }
+    }
+    onInspect()
+  }
+
   return (
     <div className="px-5 py-5 flex flex-col gap-5">
       <motion.p initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}
@@ -129,13 +158,27 @@ function StepOverview({ config, isComplete, pendingCount, onInspect }: {
             <p className="text-fog text-[11px] font-ui">Your specialist agent is ready to help.</p>
           </>
         )}
+        {isDeployment && chosenPlatform && (
+          <p className="text-cyan text-[10px] font-display font-black uppercase tracking-[1px] mt-1">
+            Target: {chosenPlatform}
+          </p>
+        )}
       </motion.div>
 
       <motion.button initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
-        onClick={onInspect}
+        onClick={handleInspect}
         className="w-full py-3 rounded-[12px] bg-blue/20 border border-blue/30 text-blue font-display font-black text-sm uppercase tracking-[1.5px] hover:bg-blue/30 hover:border-blue/50 transition-all duration-[150ms] active:scale-[0.98]">
         {isComplete ? 'View Summary' : 'Inspect Building →'}
       </motion.button>
+
+      {isDeployment && (
+        <PlatformPicker
+          isOpen={showPicker}
+          recommended={recommendation?.platform ?? null}
+          onSelect={handlePlatformSelect}
+          onClose={() => setShowPicker(false)}
+        />
+      )}
     </div>
   )
 }
@@ -191,10 +234,11 @@ function StepTasklist({ buildingId, state, pendingTasks, onChat }: {
 
 function StepChat({ buildingId, onTasklist }: { buildingId: BuildingId; onTasklist: () => void }) {
   const state = useStore((s) => s.buildings[buildingId])
-  const { runEvaluate, isRunning } = useImplement(buildingId)
+  const { runEvaluate, runVerify, isRunning } = useImplement(buildingId)
   const pendingIds = state.tasks.filter((t) => !t.done).map((t) => t.id)
   const selectedIds = state.selectedTaskIds ?? []
   const taskIdsToEval = selectedIds.length > 0 ? pendingIds.filter((id) => selectedIds.includes(id)) : pendingIds
+  const isDeployment = buildingId === 'deployment'
 
   return (
     <div className="h-full flex flex-col" style={{ minHeight: '300px' }}>
@@ -211,6 +255,12 @@ function StepChat({ buildingId, onTasklist }: { buildingId: BuildingId; onTaskli
           className="flex-1 py-2.5 rounded-[10px] bg-surface3 border border-white/10 text-fog text-xs font-display font-black uppercase tracking-[1px] hover:bg-surface3/80 hover:text-white disabled:opacity-40 disabled:pointer-events-none transition-all duration-[150ms] active:scale-[0.98]">
           {isRunning ? 'Working…' : 'Evaluate'}
         </button>
+        {isDeployment && (
+          <button disabled={isRunning} onClick={runVerify}
+            className="flex-1 py-2.5 rounded-[10px] bg-teal/10 border border-teal/25 text-teal text-xs font-display font-black uppercase tracking-[1px] hover:bg-teal/20 hover:border-teal/40 disabled:opacity-40 disabled:pointer-events-none transition-all duration-[150ms] active:scale-[0.98]">
+            {isRunning ? 'Working…' : 'Verify Build'}
+          </button>
+        )}
         <button onClick={onTasklist}
           className="flex-1 py-2.5 rounded-[10px] bg-cyan/10 border border-cyan/25 text-cyan text-xs font-display font-black uppercase tracking-[1px] hover:bg-cyan/20 hover:border-cyan/40 transition-all duration-[150ms] active:scale-[0.98]">
           Task List
@@ -251,7 +301,16 @@ function StepReview({ buildingId, onDone }: { buildingId: BuildingId; onDone: ()
   )
 }
 
-function StepComplete({ config, percent, onBack }: { config: typeof BUILDINGS[0]; percent: number; onBack: () => void }) {
+function StepComplete({ buildingId, config, percent, onBack, onChat }: {
+  buildingId: BuildingId
+  config: typeof BUILDINGS[0]
+  percent: number
+  onBack: () => void
+  onChat: () => void
+}) {
+  const recommendation = useStore((s) => s.deploymentRecommendation)
+  const isDeployment = buildingId === 'deployment'
+
   return (
     <div className="px-5 py-8 flex flex-col items-center gap-5 text-center">
       <motion.div
@@ -268,6 +327,33 @@ function StepComplete({ config, percent, onBack }: { config: typeof BUILDINGS[0]
           {config.category} is fully operational and production-ready.
         </p>
       </motion.div>
+
+      {isDeployment && recommendation && (
+        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35 }}
+          className="w-full bg-surface2 rounded-[12px] px-4 py-3 text-left">
+          <p className="text-blue text-[10px] font-display font-black uppercase tracking-[1.5px] mb-2">
+            Recommended Platform
+          </p>
+          <p className="text-white text-sm font-display font-black capitalize">{recommendation.platform}</p>
+          <p className="text-fog text-[11px] font-ui mt-1 leading-relaxed">{recommendation.reason}</p>
+          {recommendation.services.length > 0 && (
+            <p className="text-fog text-[10px] font-ui mt-1.5">
+              Services: {recommendation.services.join(', ')}
+            </p>
+          )}
+          <div className="mt-3 flex flex-col gap-1">
+            {recommendation.steps.slice(0, 4).map((step, i) => (
+              <p key={i} className="text-white/70 text-[11px] font-ui leading-snug">
+                <span className="text-blue font-black mr-1.5">{i + 1}.</span>{step}
+              </p>
+            ))}
+          </div>
+          <button onClick={onChat}
+            className="w-full mt-3 py-2 rounded-[8px] bg-blue/20 border border-blue/30 text-blue text-[11px] font-display font-black uppercase tracking-[1px] hover:bg-blue/30 hover:border-blue/50 transition-all duration-[150ms] active:scale-[0.98]">
+            Talk to Agent About Deploying →
+          </button>
+        </motion.div>
+      )}
 
       <motion.button initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.4 }}
         onClick={onBack} className="text-fog text-xs font-ui hover:text-white transition-colors duration-[120ms]">

@@ -138,3 +138,44 @@ export async function evaluateTasks(params: {
     message?: string
   }>
 }
+
+// POST /api/verify — runs sandboxed build verification.
+export async function verifyBuild(params: {
+  sessionId: string
+  buildingId?: string
+  command?: string
+}): Promise<{
+  install?: { success: boolean; stderr: string; durationMs: number } | null
+  build: { success: boolean; command: string; stdout: string; stderr: string; durationMs: number }
+  start?: { success: boolean; stdout: string; stderr: string; durationMs: number; healthCheck?: { status: number; ok: boolean } | null } | null
+}> {
+  const res = await fetch(`${API_BASE}/api/verify`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify(params),
+  })
+  if (!res.ok) {
+    const text = await res.text()
+    throw new Error(`Verify failed: ${text}`)
+  }
+  return res.json()
+}
+
+// POST /api/platform — stores the user's chosen deployment platform.
+export async function setDeployPlatform(params: {
+  sessionId: string
+  platform: string
+}): Promise<{ ok: boolean }> {
+  const res = await fetch(`${API_BASE}/api/platform`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify(params),
+  })
+  if (!res.ok) {
+    const text = await res.text()
+    throw new Error(`Set platform failed: ${text}`)
+  }
+  return res.json() as Promise<{ ok: boolean }>
+}
