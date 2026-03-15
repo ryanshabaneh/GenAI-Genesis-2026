@@ -44,7 +44,10 @@ router.post('/', async (req: Request, res: Response): Promise<void> => {
     try {
       // Commit aider's on-disk changes
       await execFileAsync('git', ['add', '-A'], { cwd: session.repoPath })
-      await execFileAsync('git', ['commit', '-m', `feat(${buildingId}): ${pr.summary}`], { cwd: session.repoPath })
+      const { stdout: status } = await execFileAsync('git', ['status', '--porcelain'], { cwd: session.repoPath })
+      if (status.trim()) {
+        await execFileAsync('git', ['commit', '-m', `feat(${buildingId}): ${pr.summary}`], { cwd: session.repoPath })
+      }
     } catch (err) {
       console.error('[accept] git commit failed:', err)
       // Even if commit fails, continue with in-memory bookkeeping
@@ -125,20 +128,32 @@ router.post('/', async (req: Request, res: Response): Promise<void> => {
   }
 
   // Write accepted code blocks to disk so the agent sees them in follow-up context
+  console.log('[accept] repoPath:', session.repoPath)
+  console.log('[accept] files to write:', files.map(f => f.path))
   if (session.repoPath) {
     const { writeFile, mkdir } = await import('fs/promises')
     const { join, dirname } = await import('path')
     for (const file of files) {
       const fullPath = join(session.repoPath, file.path)
+      console.log('[accept] writing file:', fullPath, `(${file.content.length} bytes)`)
       await mkdir(dirname(fullPath), { recursive: true })
       await writeFile(fullPath, file.content, 'utf8')
     }
     try {
       await execFileAsync('git', ['add', '-A'], { cwd: session.repoPath })
-      await execFileAsync('git', ['commit', '-m', `feat(${buildingId}): apply chat suggestions`], { cwd: session.repoPath })
+      const { stdout: status } = await execFileAsync('git', ['status', '--porcelain'], { cwd: session.repoPath })
+      console.log('[accept] git status after write:', status || '(empty — no changes)')
+      if (status.trim()) {
+        await execFileAsync('git', ['commit', '-m', `feat(${buildingId}): apply chat suggestions`], { cwd: session.repoPath })
+        console.log('[accept] committed successfully')
+      } else {
+        console.warn('[accept] nothing to commit — files may be identical to what is already on disk')
+      }
     } catch (err) {
       console.error('[accept] git commit failed:', err)
     }
+  } else {
+    console.error('[accept] NO repoPath — files were NOT written to disk!')
   }
 
   // Append to the changes queue

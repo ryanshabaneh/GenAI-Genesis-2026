@@ -42,7 +42,7 @@ export default function CodePreview({ codeBlock, buildingId, onAccepted, onRejec
   }
 
   async function handleReject() {
-    const sessionId = sessionStorage.getItem('shipcity_session_id') ?? ''
+    const sessionId = sessionStorage.getItem('shipyard_session_id') ?? ''
     try {
       await rejectChange({
         sessionId,

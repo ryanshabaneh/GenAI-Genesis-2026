@@ -47,6 +47,17 @@ If the code fails any check, set pass to false and explain what needs fixing in 
 { "pass": false, "feedback": "The test file imports a module that doesn't exist.", "summary": "Attempted to add unit tests but imports are broken" }`
 
 /**
+ * Batch repo evaluator: JSON array of per-task results (one object per task).
+ */
+export const BATCH_REPO_EVALUATOR_FORMAT = `Respond with ONLY a JSON array — no markdown fences, no explanation. One object per task:
+[
+  { "id": "task-id", "pass": true, "feedback": "", "summary": "Brief summary" },
+  ...
+]
+
+If a task is NOT fulfilled: { "id": "task-id", "pass": false, "feedback": "What's missing", "summary": "" }`
+
+/**
  * Repo evaluator: same JSON shape as EVALUATOR_FORMAT but for checking repo state.
  */
 export const REPO_EVALUATOR_FORMAT = `Respond with ONLY a JSON object — no markdown fences, no explanation:
@@ -54,19 +65,3 @@ export const REPO_EVALUATOR_FORMAT = `Respond with ONLY a JSON object — no mar
 
 If the task is NOT fulfilled:
 { "pass": false, "feedback": "Explain what's missing or incomplete", "summary": "" }`
-
-/**
- * Batched repo evaluator: evaluates ALL tasks in one call, returns a JSON array.
- */
-export const BATCH_REPO_EVALUATOR_FORMAT = `Respond with ONLY a JSON array — no markdown fences, no explanation.
-One entry per task, in the same order as the tasks listed. Each entry has:
-- "id": the task id provided
-- "pass": true if the task is fulfilled in the codebase, false otherwise
-- "feedback": if pass is false, briefly explain what's missing (1 sentence max). Empty string if pass is true.
-- "summary": if pass is true, brief 1-sentence summary of what exists. Empty string if pass is false.
-
-Example:
-[
-  { "id": "task-1", "pass": true, "feedback": "", "summary": "Winston logger configured with JSON format" },
-  { "id": "task-2", "pass": false, "feedback": "No error tracking middleware found", "summary": "" }
-]`

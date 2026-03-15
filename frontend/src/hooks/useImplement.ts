@@ -100,7 +100,7 @@ export function useImplement(buildingId: BuildingId) {
   }
 
   async function runVerify() {
-    const sessionId = sessionStorage.getItem('shipcity_session_id') ?? ''
+    const sessionId = sessionStorage.getItem('shipyard_session_id') ?? ''
     if (!sessionId || isRunning) return
 
     setImplementStatus(buildingId, 'running')

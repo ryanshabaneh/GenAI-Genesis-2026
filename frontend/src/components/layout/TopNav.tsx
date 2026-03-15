@@ -148,7 +148,7 @@ function PushBtn() {
   if (!hasUnpushed) return null
 
   async function handlePush() {
-    const sessionId = sessionStorage.getItem('shipcity_session_id') ?? ''
+    const sessionId = sessionStorage.getItem('shipyard_session_id') ?? ''
     if (!sessionId || pushing) return
 
     console.log('[push] push button clicked, sessionId:', sessionId)
