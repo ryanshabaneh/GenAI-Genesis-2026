@@ -89,9 +89,11 @@ export async function analyzeForTasks(params: {
       .map((block) => block.text)
       .join('')
 
-    // Parse JSON from response — handle markdown fences if model wraps it
-    const cleaned = text.replace(/```json?\n?/g, '').replace(/```/g, '').trim()
-    const tasks = JSON.parse(cleaned) as Task[]
+    // Parse JSON from response — handle markdown fences or leading prose
+    const fenceStripped = text.replace(/```json?\n?/g, '').replace(/```/g, '').trim()
+    const arrayMatch = fenceStripped.match(/\[[\s\S]*\]/)
+    if (!arrayMatch) return []
+    const tasks = JSON.parse(arrayMatch[0]) as Task[]
 
     // Validate structure
     if (!Array.isArray(tasks)) return []
