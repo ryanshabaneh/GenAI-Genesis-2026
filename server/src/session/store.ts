@@ -14,7 +14,7 @@ const sessions = new Map<string, Session>()
 // Creates a new session with a generated UUID and empty results/changes arrays.
 // The caller provides repoUrl and repoPath (repoPath can be empty until cloneRepo resolves).
 export function createSession(
-  data: Omit<Session, 'id' | 'results' | 'changes' | 'conversations' | 'changeLog' | 'lastEvalHash' | 'createdAt'>
+  data: Omit<Session, 'id' | 'results' | 'changes' | 'conversations' | 'changeLog' | 'lastEvalHash' | 'pendingReview' | 'createdAt'>
 ): Session {
   const session: Session = {
     id: uuidv4(),
@@ -24,6 +24,7 @@ export function createSession(
     conversations: {},
     changeLog: [],
     lastEvalHash: {},
+    pendingReview: null,
     createdAt: Date.now(),
   }
   sessions.set(session.id, session)

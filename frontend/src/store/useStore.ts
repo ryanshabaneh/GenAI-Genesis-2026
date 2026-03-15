@@ -69,6 +69,8 @@ interface ShipyardStore {
   deploymentRecommendation: DeploymentRecommendation | null
   // Platform the user chose to deploy to (from PlatformPicker)
   chosenPlatform: string | null
+  // Whether there are local commits not yet pushed to remote
+  hasUnpushedCommits: boolean
 
   // Actions
   setRepoUrl: (url: string) => void
@@ -85,6 +87,7 @@ interface ShipyardStore {
   toggleTaskSelected: (id: BuildingId, taskId: string) => void
   setDeploymentRecommendation: (rec: DeploymentRecommendation) => void
   setChosenPlatform: (platform: string) => void
+  setHasUnpushedCommits: (v: boolean) => void
 }
 
 export const useStore = create<ShipyardStore>((set) => ({
@@ -98,6 +101,7 @@ export const useStore = create<ShipyardStore>((set) => ({
   githubUser: null,
   deploymentRecommendation: null,
   chosenPlatform: null,
+  hasUnpushedCommits: false,
 
   setRepoUrl: (url) => set({ repoUrl: url }),
 
@@ -166,6 +170,8 @@ export const useStore = create<ShipyardStore>((set) => ({
   setDeploymentRecommendation: (rec) => set({ deploymentRecommendation: rec }),
 
   setChosenPlatform: (platform) => set({ chosenPlatform: platform }),
+
+  setHasUnpushedCommits: (v) => set({ hasUnpushedCommits: v }),
 
   toggleTaskSelected: (id, taskId) =>
     set((state) => {

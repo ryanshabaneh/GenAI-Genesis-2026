@@ -67,6 +67,24 @@ export async function acceptChange(params: {
   return res.json() as Promise<{ percent: number; tasks: Task[]; score: number }>
 }
 
+// POST /api/reject — rejects pending aider changes, resetting repo to clean state.
+export async function rejectChange(params: {
+  sessionId: string
+  buildingId: BuildingId
+}): Promise<{ success: boolean }> {
+  const res = await fetch(`${API_BASE}/api/reject`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify(params),
+  })
+  if (!res.ok) {
+    const text = await res.text()
+    throw new Error(`Reject change failed: ${text}`)
+  }
+  return res.json() as Promise<{ success: boolean }>
+}
+
 // POST /api/export — downloads all accepted changes for this session as a zip.
 // Returns raw Blob so the caller can trigger a browser download.
 export async function exportChanges(params: {
@@ -105,6 +123,23 @@ export async function implementTasks(params: {
     throw new Error(`Implement failed: ${text}`)
   }
   return res.json() as Promise<{ success: boolean; completedTaskIds: string[]; percent: number; score: number }>
+}
+
+// POST /api/push — pushes local commits to the remote origin.
+export async function pushChanges(params: {
+  sessionId: string
+}): Promise<{ pushed: boolean }> {
+  const res = await fetch(`${API_BASE}/api/push`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify(params),
+  })
+  if (!res.ok) {
+    const text = await res.text()
+    throw new Error(`Push failed: ${text}`)
+  }
+  return res.json() as Promise<{ pushed: boolean }>
 }
 
 // POST /api/evaluate — checks which tasks are now fulfilled in the repo.

@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Editor from '@monaco-editor/react'
-import { acceptChange } from '@/lib/api'
+import { acceptChange, rejectChange } from '@/lib/api'
 import { useStore } from '@/store/useStore'
 import type { CodeBlock } from '@/types'
 
@@ -18,6 +18,7 @@ export default function CodePreview({ codeBlock, buildingId, onAccepted, onRejec
   const setBuildingStatus = useStore((s) => s.setBuildingStatus)
   const setScore = useStore((s) => s.setScore)
   const addChange = useStore((s) => s.addChange)
+  const setHasUnpushedCommits = useStore((s) => s.setHasUnpushedCommits)
 
   async function handleAccept() {
     setStatus('accepting')
@@ -32,6 +33,7 @@ export default function CodePreview({ codeBlock, buildingId, onAccepted, onRejec
       setBuildingStatus(bid, { percent, tasks })
       setScore(score)
       addChange({ id: `change-${Date.now()}`, buildingId: bid, files: [{ path: codeBlock.path, content: codeBlock.content, isNew: true }], acceptedAt: Date.now() })
+      setHasUnpushedCommits(true)
       setStatus('accepted')
       onAccepted?.(codeBlock.path)
     } catch {
@@ -39,7 +41,16 @@ export default function CodePreview({ codeBlock, buildingId, onAccepted, onRejec
     }
   }
 
-  function handleReject() {
+  async function handleReject() {
+    const sessionId = sessionStorage.getItem('shipyard_session_id') ?? ''
+    try {
+      await rejectChange({
+        sessionId,
+        buildingId: buildingId as Parameters<typeof rejectChange>[0]['buildingId'],
+      })
+    } catch {
+      // Reject API may fail if no pending review — still update UI
+    }
     setStatus('rejected')
     onRejected?.(codeBlock.path)
   }

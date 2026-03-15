@@ -133,7 +133,7 @@ function StepOverview({ buildingId, config, isComplete, pendingCount, onInspect 
     setChosenPlatform(platform)
     setShowPicker(false)
     // Persist to server
-    const sessionId = sessionStorage.getItem('shipcity_session_id') ?? ''
+    const sessionId = sessionStorage.getItem('shipyard_session_id') ?? ''
     if (sessionId) {
       try { await setDeployPlatform({ sessionId, platform }) } catch { /* best effort */ }
     }

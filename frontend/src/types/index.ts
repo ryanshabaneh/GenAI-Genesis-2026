@@ -106,4 +106,5 @@ export type WsMessage =
   | { type: 'verify:start'; building: BuildingId }
   | { type: 'verify:result'; command: string; success: boolean; output: string }
   | { type: 'verify:complete'; building: BuildingId; success: boolean; output: string }
+  | { type: 'review:pending'; building: BuildingId; files: string[]; summary: string }
   | { type: 'orchestrator:complete'; score: number }

@@ -109,6 +109,7 @@ export async function createTestApp(): Promise<TestApp> {
   const { default: exportRouter } = await import('../routes/export')
   const { default: implementRouter } = await import('../routes/implement')
   const { default: evaluateRouter } = await import('../routes/evaluate')
+  const { default: rejectRouter } = await import('../routes/reject')
 
   app.use('/api/scan', scanRouter)
   app.use('/api/chat', chatRouter)
@@ -116,6 +117,7 @@ export async function createTestApp(): Promise<TestApp> {
   app.use('/api/export', exportRouter)
   app.use('/api/implement', implementRouter)
   app.use('/api/evaluate', evaluateRouter)
+  app.use('/api/reject', rejectRouter)
 
   app.get('/health', (_req, res) => res.json({ status: 'ok' }))
 
