@@ -1,7 +1,6 @@
 'use client'
 import { AnimatePresence, motion } from 'framer-motion'
 import type { ReactNode } from 'react'
-import { WaveBlobs } from '@/components/ui/WaveCard'
 
 interface GameModalProps {
   isOpen: boolean
@@ -31,10 +30,8 @@ export default function GameModal({ isOpen, onClose, icon, panelClassName, align
             exit={{    scale: 0.93, y: 10, opacity: 0 }}
             transition={{ type: 'spring', stiffness: 340, damping: 28 }}
             onClick={(e: React.MouseEvent) => e.stopPropagation()}
-            className={`gradient-brand game-border rounded-[20px] p-6 w-full cursor-default relative overflow-hidden shadow-2xl ${panelClassName ?? 'max-w-md'}`}
+            className={`gradient-brand rounded-[20px] p-6 w-full cursor-default relative overflow-hidden shadow-2xl ${panelClassName ?? 'max-w-md'}`}
           >
-            <WaveBlobs />
-
             <div className={`relative z-10 flex flex-col ${align === 'center' ? 'items-center text-center' : 'items-start text-left'}`}>
               {icon && (
                 <motion.div

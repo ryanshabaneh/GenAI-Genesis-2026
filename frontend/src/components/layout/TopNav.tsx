@@ -2,16 +2,15 @@
 
 import Image from 'next/image'
 import { AnimatePresence, motion } from 'framer-motion'
-import { FiLogOut, FiCpu } from 'react-icons/fi'
+import type { CSSProperties } from 'react'
 import { useStore } from '@/store/useStore'
 import { getBuildingConfig, iconPath } from '@/lib/buildings'
-import { GlassIconBtn } from '@/components/ui/GlassIcons'
 import CubeProgress from '@/components/ui/CubeProgress'
 import CountUp from '@/components/text/CountUp'
 
 function UserAvatar({ url, login }: { url: string; login: string }) {
   return (
-    <div className="relative shrink-0" style={{ width: 36, height: 36 }}>
+    <div className="relative shrink-0" style={{ width: 42, height: 42 }}>
       <Image
         src={url}
         alt={login}
@@ -19,9 +18,8 @@ function UserAvatar({ url, login }: { url: string; login: string }) {
         className="rounded-full object-cover"
         style={{ border: '1.5px solid rgba(255,255,255,0.15)' }}
         onError={(e) => {
-          // fallback to 3d icon on broken avatar
-          const t = e.currentTarget as HTMLImageElement
-          t.src = iconPath('boy')
+          const target = e.currentTarget as HTMLImageElement
+          target.src = iconPath('boy')
         }}
       />
     </div>
@@ -41,12 +39,12 @@ function RepoIdentity() {
   return (
     <div className="flex items-center gap-2.5">
       <UserAvatar url={user.avatarUrl} login={user.login} />
-      <div className="flex flex-col min-w-0 leading-none">
-        <span className="text-fog text-[9px] font-mono uppercase tracking-[1.5px] truncate">
+      <div className="flex flex-col min-w-0 leading-none gap-0.5">
+        <span className="nav-label text-[11px] text-fog truncate">
           {user.login}
         </span>
         {repoName && (
-          <span className="text-white text-sm font-display font-black truncate max-w-[140px]">
+          <span className="text-white text-base font-display font-black truncate max-w-[160px]">
             {repoName}
           </span>
         )}
@@ -66,12 +64,12 @@ function ReadinessBlock() {
   const key      = building ? activeBuilding! : 'global'
 
   const cubeColors: [string, string, string] = building
-    ? [building.theme.gradient.from, building.theme.gradient.via ?? building.theme.primary, building.theme.gradient.to]
-    : ['#4F46E5', '#06B6D4', '#10B981']
+    ? [building.theme.primary, building.theme.primary, building.theme.primary]
+    : ['#2563EB', '#06B6D4', '#2DD4BF']
 
-  const numStyle: React.CSSProperties = building
-    ? { color: building.theme.primary, fontSize: '1.6rem', lineHeight: 1 }
-    : { fontSize: '1.6rem', lineHeight: 1 }
+  const numStyle: CSSProperties = building
+    ? { color: building.theme.primary, fontSize: '2rem', lineHeight: 1 }
+    : { fontSize: '2rem', lineHeight: 1 }
   const numClass = building
     ? 'font-action font-black tabular-nums'
     : 'gradient-progress-text gradient-shift-text font-action font-black tabular-nums'
@@ -94,10 +92,10 @@ function ReadinessBlock() {
         </motion.div>
       </AnimatePresence>
 
-      <div className="flex flex-col gap-1 min-w-0" style={{ width: 'clamp(140px, 16vw, 260px)' }}>
+      <div className="flex flex-col gap-1 min-w-0 pt-1" style={{ width: 'clamp(140px, 16vw, 260px)' }}>
         <CubeProgress
           value={value}
-          height={28}
+          height={34}
           colors={cubeColors}
           animated={!building && value > 0}
         />
@@ -108,7 +106,7 @@ function ReadinessBlock() {
             animate={{ opacity: 1, y: 0 }}
             exit={{    opacity: 0, y: -4 }}
             transition={{ duration: 0.15 }}
-            className="text-[8px] font-mono uppercase tracking-[1.5px]"
+            className="nav-label text-[10px]"
             style={{ color: building ? building.theme.primary : undefined, opacity: building ? 0.7 : undefined }}
           >
             {label}
@@ -124,30 +122,29 @@ function AgentStatusBtn() {
   const isRunning = Object.values(buildings).some((b) => b.implementStatus === 'running')
 
   return (
-    <div style={{ fontSize: 10 }}>
-      <GlassIconBtn
-        icon={<FiCpu size={14} />}
-        color={isRunning ? 'amber' : 'cyan'}
-        label={isRunning ? 'Running' : 'Agent idle'}
-      />
-    </div>
+    <button className="glass-text-button">
+      <span style={{
+        width: '0.5em', height: '0.5em', borderRadius: '50%', flexShrink: 0,
+        background: isRunning ? '#F59E0B' : '#6EE7B7',
+        boxShadow: isRunning ? '0 0 6px #F59E0B88' : '0 0 6px #6EE7B788',
+      }} />
+      {isRunning ? 'running' : 'agent idle'}
+    </button>
   )
 }
 
+const API_URL = process.env['NEXT_PUBLIC_API_URL'] ?? 'http://localhost:3001'
+
 function LogoutBtn() {
-  function handleLogout() {
-    window.location.href = '/api/auth/logout'
+  async function handleLogout() {
+    await fetch(`${API_URL}/api/auth/logout`, { method: 'POST', credentials: 'include' })
+    window.location.href = '/'
   }
 
   return (
-    <div style={{ fontSize: 10 }}>
-      <GlassIconBtn
-        icon={<FiLogOut size={14} />}
-        color="purple"
-        label="Logout"
-        onClick={handleLogout}
-      />
-    </div>
+    <button className="glass-text-button" onClick={handleLogout}>
+      sign out
+    </button>
   )
 }
 
@@ -161,20 +158,17 @@ export default function TopNav() {
         WebkitBackdropFilter: 'blur(12px)',
         borderBottom:         '1px solid rgba(255,255,255,0.07)',
         boxShadow:            '0 1px 0 rgba(255,255,255,0.04), 0 4px 32px rgba(0,0,0,0.45)',
-        overflow:             'visible', // allows GlassIcon labels to drop below nav
+        overflow:             'visible',
       }}
     >
-      {/* left */}
       <div className="flex-1 flex items-center">
         <RepoIdentity />
       </div>
 
-      {/* center */}
       <div className="flex items-center justify-center">
         <ReadinessBlock />
       </div>
 
-      {/* right */}
       <div className="flex-1 flex items-center justify-end gap-1">
         <AgentStatusBtn />
         <LogoutBtn />
