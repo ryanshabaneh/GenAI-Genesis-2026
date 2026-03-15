@@ -42,6 +42,8 @@ export interface Session {
   changes: AcceptedChange[]
   conversations: Partial<Record<BuildingId, Message[]>>
   changeLog: ChangeLogEntry[]
+  /** Per-building hash of repo context at last evaluation — used to skip re-eval when nothing changed */
+  lastEvalHash: Partial<Record<BuildingId, string>>
   createdAt: number
 }
 

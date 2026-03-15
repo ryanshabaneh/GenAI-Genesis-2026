@@ -44,6 +44,13 @@ export function useImplement(buildingId: BuildingId) {
     setImplementStatus(buildingId, 'running')
     try {
       const result = await evaluateTasks({ sessionId, buildingId, taskIds })
+
+      if (result.skipped) {
+        // Nothing changed since last eval — no updates needed
+        console.log('[useImplement] evaluate skipped:', result.message)
+        return
+      }
+
       // Mark passing tasks as done in the store
       const currentTasks = useStore.getState().buildings[buildingId].tasks
       const passingIds = result.results.filter((r) => r.pass).map((r) => r.taskId)
@@ -53,6 +60,24 @@ export function useImplement(buildingId: BuildingId) {
       }))
       setBuildingStatus(buildingId, { percent: result.percent, tasks: updatedTasks })
       setScore(result.score)
+
+      // Add eval summary to local chat history so user sees it
+      const passed = result.results.filter((r) => r.pass).length
+      const total = result.results.length
+      const summaryLines = result.results.map((r) => {
+        const task = currentTasks.find((t) => t.id === r.taskId)
+        const label = task?.label ?? r.taskId
+        return r.pass
+          ? `✓ ${label}${r.summary ? ` — ${r.summary}` : ''}`
+          : `✗ ${label} — ${r.feedback ?? 'Not implemented'}`
+      })
+      const summaryText = `**Evaluation complete** — ${passed}/${total} passing\n\n${summaryLines.join('\n')}`
+      useStore.getState().addMessage(buildingId, {
+        id: `eval-${Date.now()}`,
+        role: 'assistant',
+        content: summaryText,
+        timestamp: Date.now(),
+      })
     } catch (err) {
       console.error('[useImplement] evaluate failed:', err)
     } finally {

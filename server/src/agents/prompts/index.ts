@@ -1,7 +1,7 @@
 import type { BuildingId } from '../../types'
 import { CHAT_FORMAT } from './formats'
 
-export { CHAT_FORMAT, IMPLEMENTATION_FORMAT, ANALYZER_FORMAT, EVALUATOR_FORMAT, REPO_EVALUATOR_FORMAT } from './formats'
+export { CHAT_FORMAT, IMPLEMENTATION_FORMAT, ANALYZER_FORMAT, EVALUATOR_FORMAT, REPO_EVALUATOR_FORMAT, BATCH_REPO_EVALUATOR_FORMAT } from './formats'
 
 // Building-specific role and domain knowledge. CHAT_FORMAT is appended
 // automatically — individual prompts should NOT include format instructions.

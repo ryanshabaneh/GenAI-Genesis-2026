@@ -12,7 +12,18 @@ import os from 'os'
 const execAsync = promisify(exec)
 
 function buildSdkClient(): Anthropic {
-  return new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
+  const real = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
+
+  // Wrap messages.create to strip the non-standard `cwd` property
+  // that our codebase adds for the CLI path. The real API doesn't accept it.
+  const origCreate = real.messages.create.bind(real.messages)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  ;(real.messages as any).create = (params: any, ...rest: any[]) => {
+    const { cwd: _cwd, ...clean } = params
+    return origCreate(clean, ...rest)
+  }
+
+  return real
 }
 
 function buildCliClient(): Anthropic {

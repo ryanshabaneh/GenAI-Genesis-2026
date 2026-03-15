@@ -6,9 +6,9 @@
 import { Router } from 'express'
 import type { Request, Response } from 'express'
 import type { Server as SocketIOServer } from 'socket.io'
-import type { BuildingId, ChangeLogEntry } from '../types'
+import type { BuildingId, ChangeLogEntry, Message } from '../types'
 import { getSession, updateSession } from '../session/store'
-import { evaluateRepoState } from '../agents/evaluator'
+import { evaluateRepoState, computeRepoHash, buildEvalSummary } from '../agents/evaluator'
 import { calculatePercent } from '../agents/scanner-context'
 
 const router = Router()
@@ -45,6 +45,27 @@ router.post('/', async (req: Request, res: Response): Promise<void> => {
   const io = req.app.locals['io'] as SocketIOServer
 
   try {
+    // Check if repo changed since last evaluation — skip if identical
+    const currentHash = await computeRepoHash(buildingId, session.repoPath)
+    const lastHash = session.lastEvalHash?.[buildingId]
+    if (lastHash === currentHash) {
+      // Nothing changed — return cached task state without re-evaluating
+      const percent = calculatePercent(buildingResult.tasks)
+      const allResults = Object.values(session.results)
+      const score = allResults.length > 0
+        ? Math.round(allResults.reduce((sum, r) => sum + (r?.percent ?? 0), 0) / allResults.length)
+        : 0
+      res.json({
+        results: [],
+        tasks: buildingResult.tasks,
+        percent,
+        score,
+        skipped: true,
+        message: 'No changes detected since last evaluation.',
+      })
+      return
+    }
+
     const evalResults = await evaluateRepoState({
       buildingId,
       repoPath: session.repoPath,
@@ -78,12 +99,28 @@ router.post('/', async (req: Request, res: Response): Promise<void> => {
 
     const percent = calculatePercent(updatedTasks)
 
+    // Inject evaluation summary into the chat history so the chat agent has context
+    const evalSummaryText = buildEvalSummary(evalResults, buildingResult.tasks)
+    const chatHistory: Message[] = freshSession.conversations[buildingId] ?? []
+    const updatedHistory: Message[] = [
+      ...chatHistory,
+      { role: 'assistant', content: evalSummaryText },
+    ]
+
     updateSession(sessionId, {
       results: {
         ...freshSession.results,
         [buildingId]: { ...current, tasks: updatedTasks, percent },
       },
       changeLog: [...freshSession.changeLog, ...newLogEntries],
+      conversations: {
+        ...freshSession.conversations,
+        [buildingId]: updatedHistory,
+      },
+      lastEvalHash: {
+        ...freshSession.lastEvalHash,
+        [buildingId]: currentHash,
+      },
     })
 
     // Emit eval:result per task

@@ -117,6 +117,8 @@ export async function evaluateTasks(params: {
   results: Array<{ taskId: string; pass: boolean; feedback?: string; summary?: string }>
   percent: number
   score: number
+  skipped?: boolean
+  message?: string
 }> {
   const res = await fetch(`${API_BASE}/api/evaluate`, {
     method: 'POST',
@@ -132,5 +134,7 @@ export async function evaluateTasks(params: {
     results: Array<{ taskId: string; pass: boolean; feedback?: string; summary?: string }>
     percent: number
     score: number
+    skipped?: boolean
+    message?: string
   }>
 }
