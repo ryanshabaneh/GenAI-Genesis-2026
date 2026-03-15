@@ -40,11 +40,13 @@ const Folder: React.FC<FolderProps> = ({ color = '#5227FF', size = 1, items = []
   const paper2 = darkenColor('#ffffff', 0.05)
   const paper3 = '#ffffff'
 
-  const handleClick = () => {
-    setOpen(prev => !prev)
-    if (open) {
-      setPaperOffsets(Array.from({ length: maxItems }, () => ({ x: 0, y: 0 })))
-    }
+  const handleMouseEnter = () => {
+    setOpen(true)
+  }
+
+  const handleMouseLeave = () => {
+    setOpen(false)
+    setPaperOffsets(Array.from({ length: maxItems }, () => ({ x: 0, y: 0 })))
   }
 
   const handlePaperMouseMove = (e: React.MouseEvent<HTMLDivElement>, index: number) => {
@@ -82,7 +84,7 @@ const Folder: React.FC<FolderProps> = ({ color = '#5227FF', size = 1, items = []
 
   return (
     <div style={scaleStyle} className={className}>
-      <div className={folderClassName} style={folderStyle} onClick={handleClick}>
+      <div className={folderClassName} style={folderStyle} onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
         <div className="folderback">
           {papers.map((item, i) => (
             <div
