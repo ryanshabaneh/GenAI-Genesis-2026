@@ -1,0 +1,44 @@
+.wave-card {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--wc-radius, 16px);
+}
+
+.wave-card__content {
+  position: relative;
+  z-index: 10;
+}
+
+.wave-card__blob {
+  position: absolute;
+  width: 480px;
+  height: 640px;
+  left: 0;
+  top: 0;
+  margin-left: -50%;
+  margin-top: -70%;
+  background: linear-gradient(
+    744deg,
+    var(--wave-color-one, #A78BFA),
+    var(--wave-color-two, #4A78D4) 55%,
+    var(--wave-color-three, #00D4FF)
+  );
+  border-radius: 40%;
+  opacity: var(--wave-opacity, 0.45);
+  animation: wave-card-spin var(--wave-speed, 10s) linear infinite;
+}
+
+.wave-card__blob:nth-child(2) {
+  animation-duration: calc(var(--wave-speed, 10s) * 1.3);
+  opacity: calc(var(--wave-opacity, 0.45) * 0.62);
+}
+
+.wave-card__blob:nth-child(3) {
+  animation-duration: calc(var(--wave-speed, 10s) * 0.8);
+  opacity: calc(var(--wave-opacity, 0.45) * 0.4);
+}
+
+@keyframes wave-card-spin {
+  0%   { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
