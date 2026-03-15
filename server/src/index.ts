@@ -19,6 +19,7 @@ import implementRouter from './routes/implement'
 import evaluateRouter from './routes/evaluate'
 import platformRouter from './routes/platform'
 import verifyRouter from './routes/verify'
+import rejectRouter from './routes/reject'
 import authRouter from './routes/auth'
 
 const PORT = process.env['PORT'] ? parseInt(process.env['PORT'], 10) : 3001
@@ -73,6 +74,7 @@ app.use('/api/implement', implementRouter)
 app.use('/api/evaluate', evaluateRouter)
 app.use('/api/platform', platformRouter)
 app.use('/api/verify', verifyRouter)
+app.use('/api/reject', rejectRouter)
 
 // Health check — used by hosting platforms (Railway, Fly.io) to verify the process is alive
 app.get('/health', (_req, res) => {

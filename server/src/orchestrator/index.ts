@@ -54,6 +54,10 @@ export async function runTaskImplementation(params: {
   const session = getSession(sessionId)
   if (!session) throw new Error('Session not found')
 
+  if (session.pendingReview) {
+    throw new Error('A pending review must be accepted or rejected before running another implementation')
+  }
+
   if (activeSessions.has(sessionId)) {
     throw new Error('Another implementation is already running for this session')
   }
@@ -174,8 +178,23 @@ async function runWithAider(ctx: ImplementContext) {
 
     if (evalResult.pass || iteration === MAX_ITERATIONS) {
       console.log(`[orchestrator] eval ${evalResult.pass ? 'PASSED' : 'auto-accepted (max iterations)'}`)
-      acceptChanges(ctx, aiderResult.changedFiles, evalResult.summary)
-      await resetAiderChanges(session.repoPath)
+      // Leave aider's changes on disk for user review instead of resetting
+      const filesList = aiderResult.changedFiles.map((f) => f.path)
+      updateSession(sessionId, {
+        pendingReview: {
+          buildingId,
+          taskIds,
+          files: filesList,
+          summary: evalResult.summary,
+          createdAt: Date.now(),
+        },
+      })
+      io.to(sessionId).emit('message', {
+        type: 'review:pending',
+        building: buildingId,
+        files: filesList,
+        summary: evalResult.summary,
+      })
       break
     }
 

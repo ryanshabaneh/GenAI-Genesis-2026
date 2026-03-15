@@ -31,6 +31,15 @@ export interface AnalyzerResult {
   details: Record<string, unknown>
 }
 
+// PendingReview holds aider's disk changes until the user accepts or rejects them.
+export interface PendingReview {
+  buildingId: BuildingId
+  taskIds: string[]
+  files: string[]
+  summary: string
+  createdAt: number
+}
+
 // Session is the in-memory record for one user's scan and chat session.
 // repoPath is set after cloneRepo completes (starts empty).
 // results accumulate as each analyzer finishes.
@@ -56,6 +65,7 @@ export interface Session {
   deploymentRecommendation?: DeploymentRecommendation
   /** Platform the user chose to deploy to (from PlatformPicker) */
   chosenPlatform?: string
+  pendingReview?: PendingReview | null
   createdAt: number
 }
 
@@ -120,4 +130,5 @@ export type WsEvent =
   | { type: 'verify:start'; building: BuildingId }
   | { type: 'verify:result'; command: string; success: boolean; output: string }
   | { type: 'verify:complete'; building: BuildingId; success: boolean; output: string }
+  | { type: 'review:pending'; building: BuildingId; files: string[]; summary: string }
   | { type: 'orchestrator:complete'; score: number }

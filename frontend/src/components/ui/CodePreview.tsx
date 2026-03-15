@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Editor from '@monaco-editor/react'
-import { acceptChange } from '@/lib/api'
+import { acceptChange, rejectChange } from '@/lib/api'
 import { useStore } from '@/store/useStore'
 import type { CodeBlock } from '@/types'
 
@@ -39,7 +39,16 @@ export default function CodePreview({ codeBlock, buildingId, onAccepted, onRejec
     }
   }
 
-  function handleReject() {
+  async function handleReject() {
+    const sessionId = sessionStorage.getItem('shipcity_session_id') ?? ''
+    try {
+      await rejectChange({
+        sessionId,
+        buildingId: buildingId as Parameters<typeof rejectChange>[0]['buildingId'],
+      })
+    } catch {
+      // Reject API may fail if no pending review — still update UI
+    }
     setStatus('rejected')
     onRejected?.(codeBlock.path)
   }
