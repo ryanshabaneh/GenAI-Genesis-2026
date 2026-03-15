@@ -6,6 +6,8 @@ import type { IconType } from 'react-icons'
 import { useStore } from '@/store/useStore'
 import { BUILDINGS, getBuildingConfig } from '@/lib/buildings'
 import CountUp from '@/components/text/CountUp'
+import NarrationBox from './NarrationBox'
+import { INTRO_NARRATION } from '@/lib/narration'
 import type { BuildingId } from '@/types'
 
 const ICON_MAP: Record<string, IconType> = {
@@ -134,6 +136,8 @@ export default function CityOverview() {
           {blurb}
         </motion.p>
       </div>
+
+      <NarrationBox lines={INTRO_NARRATION} />
 
       {/* building rows */}
       <div className="flex-1 overflow-y-auto px-2 py-3 flex flex-col gap-0.5">

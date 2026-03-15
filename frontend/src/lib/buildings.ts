@@ -96,7 +96,7 @@ export const BUILDINGS: BuildingConfig[] = [
     category: 'Docker',
     description: 'Checks for Dockerfile, .dockerignore, and docker-compose setup',
     position: [11, 0, -11],
-    modelPath: '/models/Buildings/Dock.glb',
+    modelPath: '/models/Crate.fbx.glb',
     iconName: 'cube',
     foundationBlurb: "Your containers are only as airtight as the secrets inside them. Seal the Vault and Power Plant before loading cargo.",
     theme: {

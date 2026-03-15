@@ -12,6 +12,8 @@ import PlatformPicker from './PlatformPicker'
 import { useImplement } from '@/hooks/useImplement'
 import { useBuildingFlow } from '@/hooks/useBuildingFlow'
 import { setDeployPlatform } from '@/lib/api'
+import { BUILDING_NARRATION } from '@/lib/narration'
+import NarrationBox from './NarrationBox'
 import type { BuildingId } from '@/types'
 
 const stepVariants = {
@@ -141,7 +143,10 @@ function StepOverview({ buildingId, config, isComplete, pendingCount, onInspect 
   }
 
   return (
-    <div className="px-5 py-5 flex flex-col gap-5">
+    <div className="flex flex-col gap-5 pb-5">
+      <NarrationBox lines={BUILDING_NARRATION[buildingId] ?? []} />
+
+      <div className="px-5 flex flex-col gap-5">
       <motion.p initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}
         className="text-white/70 text-sm font-ui leading-relaxed">
         {config.description}
@@ -180,6 +185,7 @@ function StepOverview({ buildingId, config, isComplete, pendingCount, onInspect 
           onClose={() => setShowPicker(false)}
         />
       )}
+      </div>
     </div>
   )
 }
