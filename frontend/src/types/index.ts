@@ -94,4 +94,5 @@ export type WsMessage =
   | { type: 'task:start'; building: BuildingId; taskId: string; taskLabel: string }
   | { type: 'task:complete'; building: BuildingId; taskId: string; success: boolean; summary: string }
   | { type: 'eval:result'; building: BuildingId; taskId: string; pass: boolean; feedback: string }
+  | { type: 'review:pending'; building: BuildingId; files: string[]; summary: string }
   | { type: 'orchestrator:complete'; score: number }

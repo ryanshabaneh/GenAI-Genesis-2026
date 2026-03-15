@@ -7,7 +7,9 @@
  * Chat agent: conversational responses with optional code blocks.
  * Appended to each building's system prompt for chat mode.
  */
-export const CHAT_FORMAT = `When generating code, output each file like this:
+export const CHAT_FORMAT = `IMPORTANT: Always confirm with the user before suggesting any code modifications. Describe what you plan to change and why, then wait for the user's approval before outputting code blocks.
+
+When the user confirms, output each file like this:
 // File: path/to/file
 \`\`\`language
 ...code...
