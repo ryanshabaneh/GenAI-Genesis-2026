@@ -17,6 +17,8 @@ export interface BuildingConfig {
   // folder name inside /3dicons/generic/dynamic/ — use iconPath() helper for full src
   iconName: string
   theme: BuildingTheme
+  // optional per-model scale multiplier — applied on top of stage scale for oversize/undersize GLBs
+  modelScale?: number
   // power plant + vault must be healthy before other buildings are well-founded
   isFoundation?: boolean
   // shown in BuildingPanel OVERVIEW when foundation buildings aren't complete (educational, never blocking)
@@ -29,8 +31,8 @@ export const BUILDINGS: BuildingConfig[] = [
     name: 'Power Plant',
     category: 'Env Vars',
     description: 'Checks for .env.example, gitignore rules, and dotenv setup',
-    position: [3, 0, 1],
-    modelPath: '/models/powerplant.glb',
+    position: [15, 0, 0],
+    modelPath: '/models/power_plant.glb',
     iconName: 'flash',
     isFoundation: true,
     theme: {
@@ -45,8 +47,8 @@ export const BUILDINGS: BuildingConfig[] = [
     name: 'Vault',
     category: 'Security',
     description: 'Checks for .gitignore, secret exposure, and basic security hygiene',
-    position: [-4, 0, 4],
-    modelPath: '/models/vault.glb',
+    position: [-15, 0, 0],
+    modelPath: '/models/Buildings/Bank.glb',
     iconName: 'lock',
     isFoundation: true,
     theme: {
@@ -61,8 +63,8 @@ export const BUILDINGS: BuildingConfig[] = [
     name: 'School',
     category: 'Tests',
     description: 'Checks for test framework, test files, and test coverage',
-    position: [-4, 0, -3],
-    modelPath: '/models/school.glb',
+    position: [-11, 0, -11],
+    modelPath: '/models/Buildings/Building2.fbx.glb',
     iconName: 'tick',
     foundationBlurb: "Tests without a secure environment are like grading papers in a hurricane. Lock down the Power Plant and Vault first — then we'll grade on a curve.",
     theme: {
@@ -77,8 +79,8 @@ export const BUILDINGS: BuildingConfig[] = [
     name: 'Factory',
     category: 'CI/CD',
     description: 'Checks for GitHub Actions workflows and automated pipelines',
-    position: [0, 0, -4],
-    modelPath: '/models/factory.glb',
+    position: [0, 0, -15],
+    modelPath: '/models/power_plant.glb',
     iconName: 'setting',
     foundationBlurb: "Automating your pipeline is great. Automating the leaking of your secrets? Slightly less great. Wire up the Power Plant and Vault first.",
     theme: {
@@ -93,8 +95,8 @@ export const BUILDINGS: BuildingConfig[] = [
     name: 'Container Terminal',
     category: 'Docker',
     description: 'Checks for Dockerfile, .dockerignore, and docker-compose setup',
-    position: [4, 0, -3],
-    modelPath: '/models/dock.glb',
+    position: [11, 0, -11],
+    modelPath: '/models/Buildings/Dock.glb',
     iconName: 'cube',
     foundationBlurb: "Your containers are only as airtight as the secrets inside them. Seal the Vault and Power Plant before loading cargo.",
     theme: {
@@ -109,8 +111,8 @@ export const BUILDINGS: BuildingConfig[] = [
     name: 'Town Hall',
     category: 'Documentation',
     description: 'Checks README quality: description, setup instructions, badges',
-    position: [-3, 0, 1],
-    modelPath: '/models/townhall.glb',
+    position: [-11, 0, 11],
+    modelPath: '/models/City_Center.glb',
     iconName: 'file-text',
     foundationBlurb: "Great docs. Would be a shame if someone found a hardcoded API key in the examples. Secure the foundation first, then tell the world.",
     theme: {
@@ -125,8 +127,8 @@ export const BUILDINGS: BuildingConfig[] = [
     name: 'Watchtower',
     category: 'Logging',
     description: 'Checks for structured logging library and absence of raw console.log',
-    position: [0, 0, 4],
-    modelPath: '/models/watchtower.glb',
+    position: [0, 0, 15],
+    modelPath: '/models/Buildings/Lighthouse.glb',
     iconName: 'bell',
     foundationBlurb: "Logging everything — including whatever's in your .env? Bold choice. Patch the Power Plant and Vault first, then we can watch properly.",
     theme: {
@@ -141,8 +143,8 @@ export const BUILDINGS: BuildingConfig[] = [
     name: 'Shipping Dock',
     category: 'Deployment',
     description: 'Checks for deployment config: Vercel, Railway, Fly.io, Procfile',
-    position: [4, 0, 4],
-    modelPath: '/models/launchpad.glb',
+    position: [11, 0, 11],
+    modelPath: '/models/Buildings/Port.glb',
     iconName: 'rocket',
     foundationBlurb: "Ready to ship to the world? Your env vars have been waving at everyone since page one. Foundation first — then we launch.",
     theme: {

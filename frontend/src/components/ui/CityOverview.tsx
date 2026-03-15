@@ -114,9 +114,11 @@ export default function CityOverview() {
     <div
       className="w-full h-full flex flex-col rounded-[18px] overflow-hidden"
       style={{
-        background:           'rgba(9,12,18,0.72)',
-        backdropFilter:       'blur(14px)',
-        WebkitBackdropFilter: 'blur(14px)',
+        background:           'rgba(255,255,255,0.22)',
+        backdropFilter:       'blur(22px) saturate(1.4)',
+        WebkitBackdropFilter: 'blur(22px) saturate(1.4)',
+        border:               '1px solid rgba(255,255,255,0.45)',
+        boxShadow:            '0 8px 32px rgba(74,138,212,0.10), inset 0 1px 0 rgba(255,255,255,0.6)',
       }}
     >
       {/* header */}

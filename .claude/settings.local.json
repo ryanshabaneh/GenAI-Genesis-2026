@@ -8,7 +8,9 @@
       "Read(//Users/kelly/GenAI-Genesis-2026/local/claude-skills/engineering/$skill/**)",
       "Bash(done)",
       "WebFetch(domain:codepen.io)",
-      "WebFetch(domain:cdpn.io)"
+      "WebFetch(domain:cdpn.io)",
+      "mcp__ide__executeCode",
+      "Bash(python3:*)"
     ]
   }
 }

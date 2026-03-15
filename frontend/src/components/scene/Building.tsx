@@ -1,75 +1,126 @@
 'use client'
 
-// components/scene/Building.tsx
-// Renders a single building in the 3D scene as a colored box.
-// Visual appearance (color, scale, opacity, glow) is driven entirely by the
-// building's current score stage — so the scene updates automatically as
-// WebSocket events arrive. Clicking the mesh opens the building's panel.
-//
-// Note: GLB models (modelPath in BUILDINGS config) are not loaded yet —
-// this uses a colored boxGeometry as a placeholder for the hackathon.
-
+import { useMemo, useEffect } from 'react'
+import { useGLTF } from '@react-three/drei'
+import * as THREE from 'three'
 import { useStore } from '@/store/useStore'
 import { BUILDINGS } from '@/lib/buildings'
 import { percentToStage, STAGE_CONFIG } from '@/lib/stages'
 import type { BuildingId } from '@/types'
 
-// Maps stages to design token hex values.
-// foundation = fog (empty), frame/halfBuilt/almostDone = amber (in-progress), complete = teal.
-// Scanning overrides all of these with cyan — checked before this lookup.
+// ─── model swap ──────────────────────────────────────────────────────────────
+// flip to false to go back to placeholder boxes
+const USE_MODELS = true
+// ─────────────────────────────────────────────────────────────────────────────
+
 const STAGE_COLORS: Record<string, string> = {
-  foundation: '#6B7A94', // --fog
-  frame:      '#4A78D4', // --blue
-  halfBuilt:  '#4A78D4', // --blue
-  almostDone: '#4A78D4', // --blue
-  complete:   '#3ECFB2', // --teal
+  foundation: '#6B7A94',
+  frame:      '#4A78D4',
+  halfBuilt:  '#4A78D4',
+  almostDone: '#4A78D4',
+  complete:   '#3ECFB2',
 }
 
-interface BuildingProps {
-  buildingId: BuildingId
+// placeholder box — used when USE_MODELS = false
+function BuildingBox({ color, stageConfig }: {
+  color: string
+  stageConfig: typeof STAGE_CONFIG[keyof typeof STAGE_CONFIG]
+}) {
+  return (
+    <group>
+      <mesh castShadow>
+        <boxGeometry args={[3, 2, 3]} />
+        <meshStandardMaterial
+          color={color}
+          transparent
+          opacity={stageConfig.opacity}
+          emissive={color}
+          emissiveIntensity={stageConfig.emissiveIntensity}
+          wireframe={stageConfig.wireframe}
+          roughness={stageConfig.roughness}
+          metalness={stageConfig.metalness}
+        />
+      </mesh>
+
+      {/* scaffolding wireframe overlay — frame + halfBuilt only */}
+      {stageConfig.scaffolding && (
+        <mesh>
+          <boxGeometry args={[3.06, 2.06, 3.06]} />
+          <meshBasicMaterial color={color} wireframe transparent opacity={0.15} />
+        </mesh>
+      )}
+    </group>
+  )
 }
 
-export default function Building({ buildingId }: BuildingProps) {
-  const buildingState = useStore((s) => s.buildings[buildingId])
+// GLB model — cloned once via useMemo, material tint updated via useEffect
+function BuildingGLB({ path, color, stageConfig, modelScale = 1 }: {
+  path: string
+  color: string
+  stageConfig: typeof STAGE_CONFIG[keyof typeof STAGE_CONFIG]
+  modelScale?: number
+}) {
+  const { scene } = useGLTF(path)
+
+  // Clone once per path so instances are independent and don't re-clone on re-render
+  const cloned = useMemo(() => scene.clone(true), [scene])
+
+  // Apply stage tint/opacity whenever stage or color changes — not on every frame
+  useEffect(() => {
+    cloned.traverse((child) => {
+      if (!(child as THREE.Mesh).isMesh) return
+      const mesh = child as THREE.Mesh
+      mesh.castShadow = true
+      const mats = Array.isArray(mesh.material) ? mesh.material : [mesh.material]
+      mats.forEach((m) => {
+        const mat = m as THREE.MeshStandardMaterial
+        mat.transparent = stageConfig.opacity < 1
+        mat.opacity = stageConfig.opacity
+        mat.emissive = new THREE.Color(color)
+        mat.emissiveIntensity = stageConfig.emissiveIntensity
+        mat.wireframe = stageConfig.wireframe
+        mat.needsUpdate = true
+      })
+    })
+  }, [cloned, color, stageConfig])
+
+  const s = modelScale
+  return <primitive object={cloned} scale={[s, s, s]} />
+}
+
+export default function Building({ buildingId }: { buildingId: BuildingId }) {
+  const buildingState     = useStore((s) => s.buildings[buildingId])
+  const scanStatus        = useStore((s) => s.scanStatus)
   const setActiveBuilding = useStore((s) => s.setActiveBuilding)
-  const config = BUILDINGS.find((b) => b.id === buildingId)
+  const config            = BUILDINGS.find((b) => b.id === buildingId)
 
   if (!config) return null
 
-  const isScanning = buildingState.status === 'scanning'
-  const stage = percentToStage(buildingState.percent)
+  const isScanning  = buildingState.status === 'scanning'
+  const stage       = percentToStage(buildingState.percent)
   const stageConfig = STAGE_CONFIG[stage]
-  // Cyan overrides all stage colors while a building is actively being scanned
-  const color = isScanning ? '#00D4FF' : STAGE_COLORS[stage]
+  const color       = isScanning ? '#00D4FF' : STAGE_COLORS[stage]
 
-  // Box height scales with stage — shrink the geometry itself rather than just
-  // scaling the mesh so the base stays flush with the island surface
-  const boxHeight = 2 * stageConfig.scale
   const [x, , z] = config.position
-  // Raise box so it sits on the island surface
-  const y = (boxHeight / 2) + 0.05
+  const y         = stageConfig.scale + 0.05  // base flush with island
 
-  // TODO: re-enable guard when done testing — flip to true to require scan before click
+  // TODO: flip BUILDING_GUARD_ENABLED to true to re-enable scan gate
   const BUILDING_GUARD_ENABLED = false
-  const scanStatus = useStore((s) => s.scanStatus)
   const canClick = !BUILDING_GUARD_ENABLED || (scanStatus !== 'idle' && scanStatus !== 'error')
 
   return (
-    <mesh
+    <group
       position={[x, y, z]}
       scale={[stageConfig.scale, stageConfig.scale, stageConfig.scale]}
-      castShadow
       onClick={canClick ? () => setActiveBuilding(buildingId) : undefined}
     >
-      <boxGeometry args={[3, 2, 3]} />
-      <meshStandardMaterial
-        color={color}
-        transparent
-        opacity={stageConfig.opacity}
-        // Emissive makes complete buildings glow — visible even under shadow
-        emissive={color}
-        emissiveIntensity={stageConfig.emissiveIntensity}
-      />
-    </mesh>
+      {USE_MODELS
+        ? <BuildingGLB path={config.modelPath} color={color} stageConfig={stageConfig} modelScale={config.modelScale} />
+        : <BuildingBox color={color} stageConfig={stageConfig} />
+      }
+    </group>
   )
 }
+
+// Preload all GLB models at module load time to avoid pop-in
+BUILDINGS.forEach((b) => useGLTF.preload(b.modelPath))

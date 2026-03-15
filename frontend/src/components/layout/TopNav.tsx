@@ -158,11 +158,11 @@ export default function TopNav() {
     <nav
       className="w-full h-full flex items-center px-5 gap-4"
       style={{
-        background:           'rgba(9,12,18,0.75)',
+        background:           'rgba(255,255,255,0.30)',
         backdropFilter:       'blur(12px)',
         WebkitBackdropFilter: 'blur(12px)',
-        borderBottom:         '1px solid rgba(255,255,255,0.07)',
-        boxShadow:            '0 1px 0 rgba(255,255,255,0.04), 0 4px 32px rgba(0,0,0,0.45)',
+        borderBottom:         '1px solid rgba(74,138,212,0.15)',
+        boxShadow:            '0 1px 0 rgba(74,138,212,0.08), 0 4px 32px rgba(100,150,200,0.15)',
         overflow:             'visible',
       }}
     >

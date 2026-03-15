@@ -1,36 +1,36 @@
 :root {
 
-  /* surfaces */
-  --ink:      #090C12;
-  --deep:     #0D1220;
-  --surface:  #141C2E;
-  --surface2: #1A2438;
-  --surface3: #202C44;
+  /* surfaces — Animal Crossing sky palette */
+  --ink:      #EBF5FF;   /* sky-white main background */
+  --deep:     #DDE8F5;   /* slightly deeper sky */
+  --surface:  #FFFFFF;   /* clean white panels */
+  --surface2: #F2F8FF;   /* barely-blue card */
+  --surface3: #E5F0FA;   /* soft blue tertiary */
 
-  /* primary/CTA/in-progress — mid blue, modern game UI */
-  --blue:        #4A78D4;
-  --blue-border: rgba(74,120,212,0.28);
-  --blue-dim:    rgba(74,120,212,0.11);
+  /* primary/CTA/in-progress */
+  --blue:        #4A8AD4;
+  --blue-border: rgba(74,138,212,0.30);
+  --blue-dim:    rgba(74,138,212,0.12);
 
   /* teal — complete/success */
-  --teal:        #3ECFB2;
-  --teal-border: rgba(62,207,178,0.28);
-  --teal-dim:    rgba(62,207,178,0.10);
+  --teal:        #34C9A2;
+  --teal-border: rgba(52,201,162,0.30);
+  --teal-dim:    rgba(52,201,162,0.12);
 
   /* cyan — scanning/agents */
-  --cyan:        #00D4FF;
-  --cyan-border: rgba(0,212,255,0.25);
-  --cyan-dim:    rgba(0,212,255,0.09);
+  --cyan:        #1ABFDE;
+  --cyan-border: rgba(26,191,222,0.28);
+  --cyan-dim:    rgba(26,191,222,0.10);
 
   /* purple — Scout NPC only */
-  --purple:        #A78BFA;
-  --purple-border: rgba(167,139,250,0.28);
-  --purple-dim:    rgba(167,139,250,0.10);
+  --purple:        #9B87F5;
+  --purple-border: rgba(155,135,245,0.30);
+  --purple-dim:    rgba(155,135,245,0.12);
 
   /* neutrals */
-  --fog:       #6B7A94;
-  --fog-light: #8A9BB8;
-  --white:     #F0F4FF;
+  --fog:       #6B8DA8;   /* secondary text */
+  --fog-light: #8AAEC8;   /* lighter text variant */
+  --white:     #1A3355;   /* primary text — dark navy */
 
   /* motion */
   --t-fast: 120ms ease;
@@ -38,10 +38,10 @@
   --t-slow: 380ms ease;
 
   /* fonts
-     display  → SFTSchriftedRound Black  
-     action   → SFTSchriftedRoundComp   
-     ui       → Gabarito                 
-     mono     → JetBrains Mono           
+     display  → SFTSchriftedRound Black
+     action   → SFTSchriftedRoundComp
+     ui       → Gabarito
+     mono     → JetBrains Mono
   */
   --font-display: 'SFTSchriftedRound', 'Nunito', sans-serif;
   --font-action:  'SFTSchriftedRoundComp', 'Nunito', sans-serif;
@@ -62,13 +62,13 @@
   justify-content: center;
   gap: 0.4em;
   min-width: 5.8rem;
-  background: rgba(255, 255, 255, 0.06);
+  background: rgba(74,138,212,0.08);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(74,138,212,0.20);
   border-radius: 8px;
   padding: 0.45em 1em;
-  color: rgba(255, 255, 255, 0.65);
+  color: rgba(26,51,85,0.70);
   font-family: var(--font-ui);
   font-size: 0.82rem;
   font-weight: 500;
@@ -79,12 +79,12 @@
 }
 
 .glass-text-button:hover {
-  background: rgba(255, 255, 255, 0.1);
-  color: rgba(255, 255, 255, 0.9);
-  border-color: rgba(255, 255, 255, 0.18);
+  background: rgba(74,138,212,0.14);
+  color: rgba(26,51,85,0.95);
+  border-color: rgba(74,138,212,0.35);
 }
 
 .glass-text-button:active {
   transform: scale(0.96);
-  background: rgba(255, 255, 255, 0.05);
+  background: rgba(74,138,212,0.06);
 }

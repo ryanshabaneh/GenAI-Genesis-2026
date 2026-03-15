@@ -11,8 +11,6 @@ import { useAuth } from '@/hooks/useAuth'
 import { SocketProvider } from '@/contexts/SocketContext'
 import BuildingPanel from '@/components/ui/BuildingPanel'
 import ScanProgress from '@/components/ui/ScanProgress'
-import ScoreBar from '@/components/ui/ScoreBar'
-
 import CityStub from '@/components/scene/CityStub'
 
 const VillageScene = dynamic(() => import('@/components/scene/Village'), {
@@ -29,9 +27,6 @@ export default function VillageClient() {
         {/* Scene — left 60% */}
         <div className="relative" style={{ width: '60%' }}>
           <VillageScene />
-          <div className="absolute bottom-4 left-4 right-4">
-            <ScoreBar />
-          </div>
         </div>
 
         {/* Panel — right 40% */}

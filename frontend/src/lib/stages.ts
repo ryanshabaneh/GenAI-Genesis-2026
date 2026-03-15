@@ -25,37 +25,36 @@ export const STAGE_CONFIG: Record<
     opacity: number
     scale: number
     emissiveIntensity: number
+    wireframe: boolean   // true = ghost outline only (foundation)
+    roughness: number    // 1 = matte/raw, 0 = smooth/polished
+    metalness: number
+    scaffolding: boolean // overlay wireframe mesh for frame/halfBuilt
     description: string
   }
 > = {
   foundation: {
-    opacity: 0.25,
-    scale: 0.3,
-    emissiveIntensity: 0.0,
+    opacity: 0.22, scale: 0.3, emissiveIntensity: 0.0,
+    wireframe: true,  roughness: 1.0, metalness: 0.0, scaffolding: false,
     description: 'Foundation laid',
   },
   frame: {
-    opacity: 0.45,
-    scale: 0.5,
-    emissiveIntensity: 0.05,
+    opacity: 0.38, scale: 0.5, emissiveIntensity: 0.05,
+    wireframe: false, roughness: 0.9, metalness: 0.0, scaffolding: true,
     description: 'Frame going up',
   },
   halfBuilt: {
-    opacity: 0.65,
-    scale: 0.7,
-    emissiveIntensity: 0.1,
+    opacity: 0.62, scale: 0.7, emissiveIntensity: 0.1,
+    wireframe: false, roughness: 0.65, metalness: 0.1, scaffolding: true,
     description: 'Half built',
   },
   almostDone: {
-    opacity: 0.85,
-    scale: 0.9,
-    emissiveIntensity: 0.2,
+    opacity: 0.83, scale: 0.9, emissiveIntensity: 0.22,
+    wireframe: false, roughness: 0.35, metalness: 0.25, scaffolding: false,
     description: 'Almost done',
   },
   complete: {
-    opacity: 1.0,
-    scale: 1.0,
-    emissiveIntensity: 0.4,
+    opacity: 1.0,  scale: 1.0, emissiveIntensity: 0.45,
+    wireframe: false, roughness: 0.15, metalness: 0.4, scaffolding: false,
     description: 'Complete',
   },
 }

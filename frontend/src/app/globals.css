@@ -52,17 +52,18 @@
 @layer utilities {
   /* game panels */
   .overlay {
-    background: rgba(9,12,18,0.88);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border: 1px solid rgba(255,255,255,0.08);
+    background: rgba(255,255,255,0.22);
+    backdrop-filter: blur(22px) saturate(1.4);
+    -webkit-backdrop-filter: blur(22px) saturate(1.4);
+    border: 1px solid rgba(255,255,255,0.45);
+    box-shadow: 0 8px 32px rgba(74,138,212,0.10), inset 0 1px 0 rgba(255,255,255,0.6);
   }
 
   /* modal gradient */
   .gradient-brand {
-    background: linear-gradient(135deg, #0c1220 0%, #071018 100%);
-    border: 1px solid rgba(255,255,255,0.07);
-    box-shadow: 0 24px 64px rgba(0,0,0,0.6);
+    background: linear-gradient(135deg, #f0f8ff 0%, #e5f0fa 100%);
+    border: 1px solid rgba(74,138,212,0.15);
+    box-shadow: 0 24px 64px rgba(100,150,200,0.22);
   }
 
   /* static gradient text */
@@ -101,7 +102,7 @@
 
   /* reusable hover lift, scale + float for panels/cards that aren't buttons */
   .hover-lift { transition: transform 0.18s ease, box-shadow 0.18s ease; }
-  .hover-lift:hover { transform: scale(1.025) translateY(-3px); box-shadow: 0 12px 32px rgba(0,0,0,0.35); }
+  .hover-lift:hover { transform: scale(1.025) translateY(-3px); box-shadow: 0 12px 32px rgba(74,138,212,0.18); }
 }
 
 /* component: bubbly button */
@@ -192,7 +193,7 @@
   font-weight: 900; font-size: 15px;
   letter-spacing: 1.5px; text-transform: uppercase;
   color: var(--white);
-  background: rgba(14,20,40,0.6);
+  background: rgba(255,255,255,0.82);
   border-radius: 999px; backdrop-filter: blur(8px);
   transition: color 0.3s;
 }
@@ -234,11 +235,11 @@
   width: 100%; height: 100%;
   display: flex; align-items: center; justify-content: center;
   color: var(--white);
-  background: rgba(14,20,40,0.82);
+  background: rgba(255,255,255,0.88);
   font-family: 'SFTSchriftedRound', var(--font-display), sans-serif;
   text-transform: uppercase; font-size: 14px; font-weight: 900; letter-spacing: 2.5px;
   transition: background 0.5s, border-color 0.5s;
-  border: 1px solid rgba(255,255,255,0.12);
+  border: 1px solid rgba(74,138,212,0.20);
   backdrop-filter: blur(8px); border-radius: 10px;
 }
 .cube-btn:hover .cube-btn__face {
@@ -271,7 +272,7 @@
   cursor: pointer;
   border-radius: 14px;
   border: 1px solid rgba(74,120,212,0.35);
-  background-color: rgba(9,12,18,0.92);
+  background-color: rgba(255,255,255,0.92);
   transition: box-shadow 0.4s ease, border-color 0.4s ease, transform 0.25s ease;
   box-shadow:
     0 0 4px  0 rgba(74,120,212,0.35),
@@ -322,12 +323,12 @@
 }
 .water-btn i::before {
   border-radius: 46%;
-  background-color: rgba(9,12,18,0.28);
+  background-color: rgba(200,228,255,0.35);
   animation: water-wave 5s linear infinite;
 }
 .water-btn i::after {
   border-radius: 40%;
-  background-color: rgba(9,12,18,0.5);
+  background-color: rgba(200,228,255,0.55);
   animation: water-wave 10s linear infinite;
 }
 
