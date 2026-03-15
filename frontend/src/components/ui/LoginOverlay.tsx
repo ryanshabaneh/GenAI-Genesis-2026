@@ -5,6 +5,7 @@ import { motion } from 'framer-motion'
 import { useSearchParams } from 'next/navigation'
 import { FiGithub } from 'react-icons/fi'
 import { SplitHeader } from '@/components/text'
+import CurvedLoop from '@/components/text/CurvedLoop'
 import LighthouseLogo from '@/components/landing/LighthouseLogo'
 import GameModal from './GameModal'
 import BubblyButton from './buttonstyles/BubblyButton'
@@ -55,8 +56,9 @@ export default function LoginOverlay() {
           transition={{ duration: 0.4 }}
           className="flex flex-col items-center text-center"
         >
-          {/* logo mark */}
-          <div className="animate-bob" style={{ marginBottom: '2.5rem' }}>
+          {/* logo mark — halo sits behind it, both bob together */}
+          <div className="animate-bob relative" style={{ marginBottom: '2.5rem' }}>
+            <div className="lighthouse-glow-halo" />
             <LighthouseLogo size={120} />
           </div>
 
@@ -84,6 +86,17 @@ export default function LoginOverlay() {
             className="water-btn--lg"
           />
         </motion.div>
+      </div>
+
+      {/* cinematic ticker strip — floats above scene at bottom */}
+      <div className="absolute bottom-0 left-0 right-0 pointer-events-none" style={{ opacity: 0.28 }}>
+        <CurvedLoop
+          marqueeText="SHIP ✦ DEPLOY ✦ SET SAIL ✦ "
+          speed={1.1}
+          curveAmount={35}
+          direction="left"
+          interactive={false}
+        />
       </div>
 
       {/* auth modal — spring pop on button click */}
