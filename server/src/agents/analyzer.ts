@@ -95,7 +95,8 @@ Return ONLY a JSON object mapping each building to its task array. No markdown f
       max_tokens: 4096,
       system: systemPrompt,
       messages: [{ role: 'user', content: userMessage }],
-    })
+      cwd: repoPath,
+    } as Anthropic.MessageCreateParamsNonStreaming)
 
     const text = response.content
       .filter((block): block is Anthropic.TextBlock => block.type === 'text')

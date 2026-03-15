@@ -62,7 +62,8 @@ export async function callAgent(params: {
     max_tokens: 4096,
     system: systemWithContext,
     messages,
-  })
+    cwd: repoPath,
+  } as Anthropic.MessageCreateParamsNonStreaming)
 
   const assistantText =
     response.content
@@ -118,7 +119,8 @@ export async function callAgentForImplementation(params: {
     max_tokens: 4096,
     system: systemWithContext,
     messages,
-  })
+    cwd: repoPath,
+  } as Anthropic.MessageCreateParamsNonStreaming)
 
   return response.content
     .filter((block): block is Anthropic.TextBlock => block.type === 'text')

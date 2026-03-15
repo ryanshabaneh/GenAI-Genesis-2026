@@ -21,7 +21,8 @@ function buildCliClient(): Anthropic {
       if (prop === 'messages') {
         return {
           create: async (params: Anthropic.MessageCreateParamsNonStreaming) => {
-            return callClaudeCli(params)
+            const cwd = (params as Anthropic.MessageCreateParamsNonStreaming & { cwd?: string }).cwd
+            return callClaudeCli(params, cwd)
           },
         }
       }
@@ -32,7 +33,8 @@ function buildCliClient(): Anthropic {
 }
 
 async function callClaudeCli(
-  params: Anthropic.MessageCreateParamsNonStreaming
+  params: Anthropic.MessageCreateParamsNonStreaming,
+  cwd?: string
 ): Promise<Anthropic.Message> {
   const parts: string[] = []
 
@@ -67,12 +69,15 @@ async function callClaudeCli(
 
   console.log(`[claude-cli] calling (${(prompt.length / 1024).toFixed(1)}KB prompt)...`)
 
+  const execOpts = {
+    timeout: 180_000,
+    maxBuffer: 10 * 1024 * 1024,
+    env: { ...process.env },
+    ...(cwd && { cwd }),
+  }
+
   try {
-    const { stdout, stderr } = await execAsync(cmd, {
-      timeout: 180_000,
-      maxBuffer: 10 * 1024 * 1024,
-      env: { ...process.env },
-    })
+    const { stdout, stderr } = await execAsync(cmd, execOpts)
 
     if (!stdout?.trim()) {
       console.error('[claude-cli] empty stdout, stderr:', stderr?.slice(0, 500))
@@ -93,6 +98,7 @@ async function callClaudeCli(
           timeout: 60_000,
           maxBuffer: 10 * 1024 * 1024,
           env: { ...process.env },
+          ...(cwd && { cwd }),
         })
         const followEnvelope = JSON.parse(followOut)
         resultText = followEnvelope.result ?? ''

@@ -1,3 +1,4 @@
+import Anthropic from '@anthropic-ai/sdk'
 import { client } from './client'
 import { buildAgentContext } from './context'
 import { EVALUATOR_FORMAT, REPO_EVALUATOR_FORMAT } from './prompts'
@@ -25,7 +26,7 @@ export async function callEvaluator(params: {
   builderResponse: string
   codeBlocks: Array<{ path: string; content: string; language: string }>
 }): Promise<EvaluatorResult> {
-  const { buildingId, tasks, builderResponse, codeBlocks } = params
+  const { buildingId, repoPath, tasks, builderResponse, codeBlocks } = params
 
   const incompleteTasks = tasks.filter((t) => !t.done)
 
@@ -48,7 +49,8 @@ Evaluate whether this output properly addresses all tasks. Respond with JSON onl
       max_tokens: 1024,
       system: EVALUATOR_SYSTEM_PROMPT,
       messages: [{ role: 'user', content: userMessage }],
-    })
+      cwd: repoPath,
+    } as Anthropic.MessageCreateParamsNonStreaming)
 
     const text = response.content
       .filter((block) => block.type === 'text')
@@ -125,7 +127,8 @@ Evaluate whether this task has been completed in the actual codebase. Respond wi
         max_tokens: 1024,
         system: REPO_EVALUATOR_SYSTEM_PROMPT,
         messages: [{ role: 'user', content: userMessage }],
-      })
+        cwd: repoPath,
+      } as Anthropic.MessageCreateParamsNonStreaming)
 
       const text = response.content
         .filter((block) => block.type === 'text')
