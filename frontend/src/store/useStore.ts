@@ -64,6 +64,8 @@ interface ShipCityStore {
   scoutDialogue: string
   // Authenticated GitHub user — null if not signed in
   githubUser: GitHubUser | null
+  // Whether there are local commits not yet pushed to remote
+  hasUnpushedCommits: boolean
 
   // Actions
   setRepoUrl: (url: string) => void
@@ -78,6 +80,7 @@ interface ShipCityStore {
   setImplementStatus: (id: BuildingId, status: 'idle' | 'running') => void
   setTaskFeedback: (id: BuildingId, taskId: string, feedback: string) => void
   toggleTaskSelected: (id: BuildingId, taskId: string) => void
+  setHasUnpushedCommits: (v: boolean) => void
 }
 
 export const useStore = create<ShipCityStore>((set) => ({
@@ -89,6 +92,7 @@ export const useStore = create<ShipCityStore>((set) => ({
   changesQueue: [],
   scoutDialogue: '',
   githubUser: null,
+  hasUnpushedCommits: false,
 
   setRepoUrl: (url) => set({ repoUrl: url }),
 
@@ -151,6 +155,8 @@ export const useStore = create<ShipCityStore>((set) => ({
         },
       },
     })),
+
+  setHasUnpushedCommits: (v) => set({ hasUnpushedCommits: v }),
 
   toggleTaskSelected: (id, taskId) =>
     set((state) => {

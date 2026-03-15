@@ -3,7 +3,9 @@
 import Image from 'next/image'
 import { AnimatePresence, motion } from 'framer-motion'
 import type { CSSProperties } from 'react'
+import { useState } from 'react'
 import { useStore } from '@/store/useStore'
+import { pushChanges } from '@/lib/api'
 import { getBuildingConfig, iconPath } from '@/lib/buildings'
 import CubeProgress from '@/components/ui/CubeProgress'
 import CountUp from '@/components/text/CountUp'
@@ -133,6 +135,51 @@ function AgentStatusBtn() {
   )
 }
 
+function PushBtn() {
+  const hasUnpushed = useStore((s) => s.hasUnpushedCommits)
+  const setHasUnpushedCommits = useStore((s) => s.setHasUnpushedCommits)
+  const [pushing, setPushing] = useState(false)
+
+  if (!hasUnpushed) return null
+
+  async function handlePush() {
+    const sessionId = sessionStorage.getItem('shipcity_session_id') ?? ''
+    if (!sessionId || pushing) return
+
+    console.log('[push] push button clicked, sessionId:', sessionId)
+    setPushing(true)
+    try {
+      const { pushed } = await pushChanges({ sessionId })
+      if (pushed) {
+        console.log('[push] push succeeded')
+        setHasUnpushedCommits(false)
+      } else {
+        console.warn('[push] push returned pushed=false')
+      }
+    } catch (err) {
+      console.error('[push] push failed:', err)
+    } finally {
+      setPushing(false)
+    }
+  }
+
+  return (
+    <button
+      className="glass-text-button"
+      onClick={handlePush}
+      disabled={pushing}
+      style={pushing ? { opacity: 0.5, pointerEvents: 'none' } : undefined}
+    >
+      <span style={{
+        width: '0.5em', height: '0.5em', borderRadius: '50%', flexShrink: 0,
+        background: '#2563EB',
+        boxShadow: '0 0 6px #2563EB88',
+      }} />
+      {pushing ? 'pushing…' : 'push'}
+    </button>
+  )
+}
+
 const API_URL = process.env['NEXT_PUBLIC_API_URL'] ?? 'http://localhost:3001'
 
 function LogoutBtn() {
@@ -170,6 +217,7 @@ export default function TopNav() {
       </div>
 
       <div className="flex-1 flex items-center justify-end gap-1">
+        <PushBtn />
         <AgentStatusBtn />
         <LogoutBtn />
       </div>
