@@ -2,6 +2,7 @@
 
 import dynamic from 'next/dynamic'
 import { Suspense } from 'react'
+import { AnimatePresence, motion } from 'framer-motion'
 import { useAuth } from '@/hooks/useAuth'
 import { useStore } from '@/store/useStore'
 import LoginOverlay from '@/components/ui/LoginOverlay'
@@ -9,7 +10,6 @@ import RepoPickerOverlay from '@/components/ui/RepoPickerOverlay'
 import ScanProgress from '@/components/ui/ScanProgress'
 import HUDLayout from '@/components/layout/HUDLayout'
 import BuildingPanel from '@/components/ui/BuildingPanel'
-import GlowFrame from '@/components/ui/GlowFrame'
 import CityOverview from '@/components/ui/CityOverview'
 import CityStub from '@/components/scene/CityStub'
 import { getBuildingConfig } from '@/lib/buildings'
@@ -31,29 +31,9 @@ export default function HomePage() {
 
   const buildingTheme = activeBuilding ? getBuildingConfig(activeBuilding).theme : null
   const rightPanel = !isInSession ? null : activeBuilding ? (
-    <GlowFrame
-      c1={buildingTheme!.gradient.from}
-      c2={buildingTheme!.gradient.to}
-      radius={18}
-      borderWidth={2}
-      variant="pulse"
-      speed={3}
-      className="w-full h-full"
-    >
-      <BuildingPanel />
-    </GlowFrame>
+    <BuildingPanel />
   ) : (
-    <GlowFrame
-      c1="#A78BFA"
-      c2="#00D4FF"
-      radius={18}
-      borderWidth={2}
-      variant="pulse"
-      speed={5}
-      className="w-full h-full"
-    >
-      <CityOverview />
-    </GlowFrame>
+    <CityOverview />
   )
 
   return (
@@ -64,26 +44,45 @@ export default function HomePage() {
           <VillageScene />
         </div>
 
-        {/* ── Auth overlays ── */}
-        {!githubUser && (
-          <Suspense fallback={null}>
-            <LoginOverlay />
-          </Suspense>
-        )}
+        <AnimatePresence>
+          {!githubUser && (
+            <motion.div key="login" className="absolute inset-0"
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              transition={{ duration: 0.35 }}>
+              <Suspense fallback={null}><LoginOverlay /></Suspense>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
-        {githubUser && (scanStatus === 'idle' || scanStatus === 'error') && (
-          <RepoPickerOverlay scanError={scanStatus === 'error'} />
-        )}
+        <AnimatePresence>
+          {githubUser && (scanStatus === 'idle' || scanStatus === 'error') && (
+            <motion.div key="repo-picker" className="absolute inset-0"
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              transition={{ duration: 0.3 }}>
+              <RepoPickerOverlay scanError={scanStatus === 'error'} />
+            </motion.div>
+          )}
+        </AnimatePresence>
 
-        {isInSession && (
-          <HUDLayout rightPanel={rightPanel} />
-        )}
+        <AnimatePresence>
+          {isInSession && (
+            <motion.div key="hud" className="absolute inset-0"
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              transition={{ duration: 0.3 }}>
+              <HUDLayout rightPanel={rightPanel} />
+            </motion.div>
+          )}
+        </AnimatePresence>
 
-        {isInSession && scanStatus === 'scanning' && (
-          <div className="absolute inset-0 z-30 pointer-events-none">
-            <ScanProgress />
-          </div>
-        )}
+        <AnimatePresence>
+          {isInSession && scanStatus === 'scanning' && (
+            <motion.div key="scan" className="absolute inset-0 z-30 pointer-events-none"
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}>
+              <ScanProgress />
+            </motion.div>
+          )}
+        </AnimatePresence>
 
       </main>
     </SocketProvider>
