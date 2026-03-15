@@ -75,15 +75,17 @@ export default function BuildingPanel() {
       </div>
 
       {/* Tasks */}
-      <div className="px-5 py-3 border-b border-white/[0.06]">
+      <div className="px-5 py-3 border-b border-white/[0.06] flex flex-col min-h-0">
         <p className="text-fog text-[10px] font-display font-black uppercase tracking-[1.5px] mb-2">
           Checklist
         </p>
-        <TaskChecklist
-          tasks={state.tasks}
-          selectedTaskIds={state.selectedTaskIds ?? []}
-          onTaskClick={(taskId) => toggleTaskSelected(activeBuilding, taskId)}
-        />
+        <div className="overflow-y-auto max-h-[7.5rem]">
+          <TaskChecklist
+            tasks={state.tasks}
+            selectedTaskIds={state.selectedTaskIds ?? []}
+            onTaskClick={(taskId) => toggleTaskSelected(activeBuilding, taskId)}
+          />
+        </div>
 
         {/* Implement / Evaluate — uses selected tasks when any selected, else all pending */}
         {pendingTaskIds.length > 0 && (
