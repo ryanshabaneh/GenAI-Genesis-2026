@@ -159,7 +159,7 @@ export const useStore = create<ShipCityStore>((set) => ({
       const current = state.buildings[id].selectedTaskIds
       const next = current.includes(taskId)
         ? current.filter((t) => t !== taskId)
-        : [...current, taskId]
+        : current.length >= 3 ? current : [...current, taskId]
       return {
         buildings: {
           ...state.buildings,
