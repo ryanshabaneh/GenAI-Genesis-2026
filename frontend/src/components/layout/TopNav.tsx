@@ -88,7 +88,7 @@ function ReadinessBlock() {
           <span className={numClass} style={numStyle}>
             <CountUp to={value} duration={0.8} />
           </span>
-          <span className="font-action font-black text-sm" style={{ color: building ? building.theme.primary : undefined, opacity: 0.7 }}>%</span>
+          <span className="font-action font-black text-lg" style={{ color: building ? building.theme.primary : undefined, opacity: 0.7 }}>%</span>
         </motion.div>
       </AnimatePresence>
 
@@ -124,11 +124,11 @@ function AgentStatusBtn() {
   return (
     <button className="glass-text-button">
       <span style={{
-        width: '0.5em', height: '0.5em', borderRadius: '50%', flexShrink: 0,
+        width: '0.6em', height: '0.6em', borderRadius: '50%', flexShrink: 0,
         background: isRunning ? '#F59E0B' : '#6EE7B7',
-        boxShadow: isRunning ? '0 0 6px #F59E0B88' : '0 0 6px #6EE7B788',
+        boxShadow: isRunning ? '0 0 8px #F59E0BAA' : '0 0 8px #6EE7B7AA',
       }} />
-      {isRunning ? 'running' : 'agent idle'}
+      {isRunning ? 'agent running' : 'agent idle'}
     </button>
   )
 }
@@ -165,7 +165,7 @@ export default function TopNav() {
         <RepoIdentity />
       </div>
 
-      <div className="flex items-center justify-center">
+      <div className="absolute left-1/2 -translate-x-1/2 flex items-center justify-center">
         <ReadinessBlock />
       </div>
 

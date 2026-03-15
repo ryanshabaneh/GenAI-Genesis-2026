@@ -160,7 +160,7 @@ function StepTasklist({ buildingId, state, pendingTasks, onChat }: {
               <span className={`shrink-0 w-4 h-4 rounded border flex items-center justify-center text-[9px] transition-colors duration-[200ms] ${task.done ? 'bg-teal/20 border-teal/40 text-teal' : 'bg-white/5 border-white/15 text-fog'}`}>
                 {task.done ? '✓' : ''}
               </span>
-              <span className={`text-xs font-ui leading-snug transition-colors duration-[200ms] ${task.done ? 'text-fog line-through decoration-fog/50' : 'text-white/80'}`}>
+              <span className={`text-xs font-ui leading-snug transition-colors duration-[200ms] line-clamp-2 ${task.done ? 'text-fog line-through decoration-fog/50' : 'text-white/80'}`}>
                 {task.label}
               </span>
             </div>

@@ -251,10 +251,11 @@
   color: var(--white);
   background: rgba(14,20,40,0.82);
   font-family: 'SFTSchriftedRound', var(--font-display), sans-serif;
-  text-transform: uppercase; font-size: 14px; font-weight: 900; letter-spacing: 2.5px;
+  text-transform: uppercase; font-size: 13px; font-weight: 600; letter-spacing: 2px;
   transition: background 0.5s, border-color 0.5s;
   border: 1px solid rgba(255,255,255,0.12);
   backdrop-filter: blur(8px); border-radius: 10px;
+  backface-visibility: hidden;
 }
 .cube-btn:hover .cube-btn__face {
   background: linear-gradient(90deg, var(--teal), var(--cyan), var(--teal));
@@ -374,6 +375,9 @@
   font-size: 17px;
   letter-spacing: 4px;
 }
+
+/* repo picker placeholder */
+.repo-url-input::placeholder { color: rgba(255,255,255,0.28) !important; }
 
 /* keyframes */
 @keyframes fade-in        { from { opacity:0; transform:translateY(8px); }  to { opacity:1; transform:translateY(0); } }
