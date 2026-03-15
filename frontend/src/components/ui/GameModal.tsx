@@ -24,23 +24,38 @@ export default function GameModal({ isOpen, onClose, icon, panelClassName, align
           className="fixed inset-0 z-50 grid place-items-center p-4 cursor-pointer"
           style={{ background: 'rgba(9,12,18,0.7)', backdropFilter: 'blur(4px)' }}
         >
-          {/* Modal panel — spring scale + rotate on enter, collapses on exit */}
           <motion.div
-            initial={{ scale: 0, rotate: '12.5deg' }}
-            animate={{ scale: 1, rotate: '0deg' }}
-            exit={{ scale: 0, rotate: '0deg' }}
-            transition={{ type: 'spring', stiffness: 260, damping: 20 }}
-            onClick={(e: React.MouseEvent) => e.stopPropagation()}  // prevent backdrop click bubbling
-            className={`gradient-brand rounded-[18px] p-6 w-full cursor-default relative overflow-hidden shadow-2xl ${panelClassName ?? 'max-w-md'}`}
+            initial={{ scale: 0.88, y: 20, opacity: 0 }}
+            animate={{ scale: 1,    y: 0,  opacity: 1 }}
+            exit={{    scale: 0.93, y: 10, opacity: 0 }}
+            transition={{ type: 'spring', stiffness: 340, damping: 28 }}
+            onClick={(e: React.MouseEvent) => e.stopPropagation()}
+            className={`gradient-brand rounded-[20px] p-6 w-full cursor-default relative overflow-hidden shadow-2xl ${panelClassName ?? 'max-w-md'}`}
           >
             <div className={`relative z-10 flex flex-col ${align === 'center' ? 'items-center text-center' : 'items-start text-left'}`}>
               {icon && (
-                <div className="w-14 h-14 rounded-full bg-white/10 border border-purple-border grid place-items-center text-2xl text-white mb-4 animate-bob glow-purple hover:scale-110 transition-transform duration-[150ms]">
+                <motion.div
+                  initial={{ scale: 0, rotate: '-12deg' }}
+                  animate={{ scale: 1, rotate: '0deg' }}
+                  transition={{ type: 'spring', stiffness: 300, damping: 18, delay: 0.12 }}
+                  className="w-14 h-14 rounded-full bg-white/10 border border-purple-border grid place-items-center text-2xl text-white mb-4 animate-bob glow-purple hover:scale-110 transition-transform duration-[150ms]"
+                >
                   {icon}
-                </div>
+                </motion.div>
               )}
 
-              {children}
+              {/* Stagger children entry */}
+              <motion.div
+                className={`w-full flex flex-col ${align === 'center' ? 'items-center' : 'items-start'}`}
+                initial="hidden"
+                animate="visible"
+                variants={{
+                  hidden: {},
+                  visible: { transition: { staggerChildren: 0.07, delayChildren: 0.18 } },
+                }}
+              >
+                {children}
+              </motion.div>
             </div>
           </motion.div>
         </motion.div>

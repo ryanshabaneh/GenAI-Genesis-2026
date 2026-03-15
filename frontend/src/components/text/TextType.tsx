@@ -1,10 +1,5 @@
 'use client'
 
-// typewriter — types/deletes strings from the text array
-// pure react + setTimeout, no gsap needed
-// loop: cycles through all strings in text array
-// cursor: blinks via css animation, hideable while typing
-
 import { useState, useEffect, useMemo, ElementType, createElement } from 'react'
 
 interface TextTypeProps {
