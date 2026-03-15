@@ -1,11 +1,11 @@
-# ShipCity
+# Shipyard
 
-ShipCity analyzes a GitHub repository and visualizes its production readiness as a 3D village. Each building represents a category (tests, CI/CD, Docker, logging, etc.) and grows taller as you improve it with help from specialized AI agents.
+Shipyard analyzes a GitHub repository and visualizes its production readiness as a 3D city. Each building represents a category (tests, CI/CD, Docker, logging, etc.) and grows taller as you improve it with help from specialized AI agents.
 
 ## What it does
 
-1. Paste a GitHub repo URL
-2. ShipCity clones it and runs 8 deterministic analyzers (tests, CI/CD, Docker, documentation, env vars, security, logging, deployment)
+1. Paste a GitHub repo URL or pick one of your own
+2. Shipyard clones it and runs 8 deterministic analyzers (tests, CI/CD, Docker, documentation, env vars, security, logging, deployment)
 3. Results stream live via WebSocket — buildings rise in real time as each analyzer finishes
 4. Click any building to chat with its specialized AI agent, get real generated code, and accept changes
 5. Export all accepted changes as a ZIP
@@ -32,25 +32,13 @@ ShipCity analyzes a GitHub repository and visualizes its production readiness as
 
 ## Setup
 
-### 0. External dependencies (not in package.json)
-
-The agent orchestrator uses [aider](https://aider.chat) via CLI for code generation. It requires Python 3.9+ and must be installed separately:
-
-```bash
-pip install aider-chat
-```
-
-Git must also be available on PATH (used by both the scanner and aider).
-
 ### 1. Server
 
 ```bash
 cd server
 npm install
 cp .env.example .env
-# Fill in ANTHROPIC_API_KEY in .env
-# Fill in GITHUB_CLIENT_ID= GITHUB_CLIENT_SECRET= in .env
-
+# Fill in ANTHROPIC_API_KEY, GITHUB_CLIENT_ID, GITHUB_CLIENT_SECRET in .env
 npm run dev
 ```
 
@@ -71,7 +59,9 @@ Open [http://localhost:3000](http://localhost:3000).
 ANTHROPIC_API_KEY=your_key_here
 PORT=3001
 FRONTEND_URL=http://localhost:3000
-TEMP_DIR=/tmp/shipcity-repos
+GITHUB_CLIENT_ID=your_client_id
+GITHUB_CLIENT_SECRET=your_client_secret
+SESSION_SECRET=your_session_secret
 ```
 
 **frontend** — set `NEXT_PUBLIC_API_URL=http://localhost:3001` if you need to override the default.

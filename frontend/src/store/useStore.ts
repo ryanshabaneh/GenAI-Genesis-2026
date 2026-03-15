@@ -50,7 +50,7 @@ function makeInitialBuildings(): Record<BuildingId, BuildingState> {
 
 // --- Store shape ---
 
-interface ShipCityStore {
+interface ShipyardStore {
   repoUrl: string
   scanStatus: ScanStatus
   score: number
@@ -78,7 +78,7 @@ interface ShipCityStore {
   setTaskFeedback: (id: BuildingId, taskId: string, feedback: string) => void
 }
 
-export const useStore = create<ShipCityStore>((set) => ({
+export const useStore = create<ShipyardStore>((set) => ({
   repoUrl: '',
   scanStatus: 'idle',
   score: 0,

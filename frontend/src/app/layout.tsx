@@ -27,7 +27,7 @@ const mono = JetBrains_Mono({
 })
 
 export const metadata: Metadata = {
-  title: 'ShipCity',
+  title: 'Shipyard',
   description: "Your project's a port town. We'll help you build it into a city.",
 }
 

@@ -29,7 +29,7 @@ export function useScan() {
       // only this scan's events and not other users' scans
       joinSession(sessionId)
       // Store sessionId in sessionStorage so other components can access it
-      sessionStorage.setItem('shipcity_session_id', sessionId)
+      sessionStorage.setItem('shipyard_session_id', sessionId)
     } catch (err) {
       console.error('Scan failed:', err)
       setScanStatus('error')

@@ -1,5 +1,5 @@
 // server/src/index.ts
-// Express + Socket.IO entry point for the ShipCity backend.
+// Express + Socket.IO entry point for the Shipyard backend.
 // Responsibilities: CORS, JSON parsing, route mounting, Socket.IO session rooms,
 // global error handling, and process-level exception guards.
 // io is attached to app.locals so route handlers can emit events without
@@ -108,6 +108,6 @@ process.on('unhandledRejection', (reason) => {
 })
 
 httpServer.listen(PORT, () => {
-  console.log(`[server] ShipCity server running on http://localhost:${PORT}`)
+  console.log(`[server] Shipyard server running on http://localhost:${PORT}`)
   console.log(`[server] Accepting requests from ${FRONTEND_URL}`)
 })

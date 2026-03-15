@@ -27,7 +27,7 @@ let repoPath: string
 let ctx: AnalyzerContext
 
 beforeAll(async () => {
-  repoPath = fs.mkdtempSync(path.join(os.tmpdir(), 'shipcity-empty-repo-'))
+  repoPath = fs.mkdtempSync(path.join(os.tmpdir(), 'shipyard-empty-repo-'))
 
   const simpleGit = (await import('simple-git')).default
   const git = simpleGit()

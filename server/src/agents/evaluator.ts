@@ -3,7 +3,7 @@ import { buildAgentContext } from './context'
 import { EVALUATOR_FORMAT, REPO_EVALUATOR_FORMAT } from './prompts'
 import type { BuildingId, EvaluatorResult, Task } from '../types'
 
-const EVALUATOR_SYSTEM_PROMPT = `You are the Quality Inspector for ShipCity.
+const EVALUATOR_SYSTEM_PROMPT = `You are the Quality Inspector for Shipyard.
 
 You receive:
 1. A list of tasks the builder was asked to complete
@@ -72,7 +72,7 @@ Evaluate whether this output properly addresses all tasks. Respond with JSON onl
 
 // --- On-demand evaluation against actual repo state ---
 
-const REPO_EVALUATOR_SYSTEM_PROMPT = `You are the Quality Inspector for ShipCity.
+const REPO_EVALUATOR_SYSTEM_PROMPT = `You are the Quality Inspector for Shipyard.
 
 You receive:
 1. A task to evaluate

@@ -6,7 +6,7 @@
 // throughout the app (scan events, building clicks, milestones, etc.).
 
 export const SCOUT_DIALOGUES = {
-  welcome: "Welcome to ShipCity! I'm Scout. Let me take a look at your project...",
+  welcome: "Welcome to Shipyard! I'm Scout. Let me take a look at your project...",
 
   scanStart: 'Surveying the land...',
 
@@ -33,7 +33,7 @@ export const SCOUT_DIALOGUES = {
     `The ${name} is complete! Look at it shine!`,
 
   celebrate100:
-    "100%! ShipCity is fully built! Your project is production ready. Time to deploy!",
+    "100%! Shipyard is fully built! Your project is production ready. Time to deploy!",
 
   // Shown when an agent opens in BuildingPanel
   agentGreet: (name: string) =>

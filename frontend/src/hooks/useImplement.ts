@@ -16,7 +16,7 @@ export function useImplement(buildingId: BuildingId) {
   const isRunning = useStore((s) => s.buildings[buildingId].implementStatus === 'running')
 
   async function runImplement(taskIds: string[]) {
-    const sessionId = sessionStorage.getItem('shipcity_session_id') ?? ''
+    const sessionId = sessionStorage.getItem('shipyard_session_id') ?? ''
     if (!sessionId || isRunning) return
 
     setImplementStatus(buildingId, 'running')
@@ -38,7 +38,7 @@ export function useImplement(buildingId: BuildingId) {
   }
 
   async function runEvaluate(taskIds?: string[]) {
-    const sessionId = sessionStorage.getItem('shipcity_session_id') ?? ''
+    const sessionId = sessionStorage.getItem('shipyard_session_id') ?? ''
     if (!sessionId || isRunning) return
 
     setImplementStatus(buildingId, 'running')

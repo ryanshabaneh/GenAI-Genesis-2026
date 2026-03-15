@@ -102,7 +102,7 @@ export default function RepoPickerOverlay({ scanError = false }: { scanError?: b
               <path d="M6 19c0 2 2.686 3 6 3s6-1 6-3"/>
             </svg>
             <span style={{ color: 'rgba(255,255,255,0.25)', fontSize: '10px', fontFamily: 'var(--font-mono)', letterSpacing: '2.5px', textTransform: 'uppercase' }}>
-              ShipCity
+              Shipyard
             </span>
           </div>
           <div className="flex items-center gap-1.5">

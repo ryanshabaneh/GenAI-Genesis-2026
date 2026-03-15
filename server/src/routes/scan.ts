@@ -24,7 +24,7 @@ router.post('/', async (req: Request, res: Response): Promise<void> => {
     return
   }
 
-  const tempDir = process.env['TEMP_DIR'] ?? '/tmp/shipcity-repos'
+  const tempDir = process.env['TEMP_DIR'] ?? '/tmp/shipyard-repos'
 
   // Create session immediately with empty repoPath — we'll update it after clone
   const session = createSession({ repoUrl, repoPath: '' })

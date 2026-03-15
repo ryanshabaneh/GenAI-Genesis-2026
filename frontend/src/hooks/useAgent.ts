@@ -21,7 +21,7 @@ export function useAgent(buildingId: BuildingId) {
   async function sendMessage(text: string) {
     // sessionId lives in sessionStorage because it's set in useScan after the HTTP response —
     // we can't put it in the Zustand store without a timing race on navigation
-    const sessionId = sessionStorage.getItem('shipcity_session_id') ?? ''
+    const sessionId = sessionStorage.getItem('shipyard_session_id') ?? ''
 
     // Optimistically add the user message so the UI feels instant
     const userMessage = {
