@@ -31,12 +31,16 @@ function hasTestDepInRequirements(repoPath: string): boolean {
   } catch { return false }
 }
 
-function hasGoTests(repoPath: string): boolean {
+function isGoProject(repoPath: string): boolean {
   return fs.existsSync(path.join(repoPath, 'go.mod'))
 }
 
-function hasTestDep(pkg: Record<string, unknown> | null, repoPath: string): boolean {
-  return hasTestDepInPkg(pkg) || hasTestDepInRequirements(repoPath) || hasGoTests(repoPath)
+function hasTestDep(pkg: Record<string, unknown> | null, repoPath: string, testFiles: string[]): boolean {
+  if (hasTestDepInPkg(pkg)) return true
+  if (hasTestDepInRequirements(repoPath)) return true
+  // Go has testing built-in — only count as "dep installed" if test files actually exist
+  if (isGoProject(repoPath) && testFiles.some((f) => f.endsWith('_test.go'))) return true
+  return false
 }
 
 function findTestFiles(dir: string, found: string[] = []): string[] {
@@ -83,9 +87,8 @@ export const testsAnalyzer: Analyzer = {
   buildingId: 'tests',
 
   async analyze(ctx: AnalyzerContext): Promise<AnalyzerResult> {
-    const hasDep = hasTestDep(ctx.packageJson, ctx.repoPath)
-
     const testFiles = findTestFiles(ctx.repoPath)
+    const hasDep = hasTestDep(ctx.packageJson, ctx.repoPath, testFiles)
     const hasTestFiles = testFiles.length > 0
     const hasManyTests = testFiles.length > 3
 
@@ -100,7 +103,8 @@ export const testsAnalyzer: Analyzer = {
       fs.existsSync(path.join(ctx.repoPath, 'pytest.ini')) ||
       fs.existsSync(path.join(ctx.repoPath, 'setup.cfg')) ||
       fs.existsSync(path.join(ctx.repoPath, 'tox.ini')) ||
-      hasMakeTestTarget(ctx.repoPath)
+      hasMakeTestTarget(ctx.repoPath) ||
+      isGoProject(ctx.repoPath) // Go: `go test ./...` is built-in
 
     const tasks: Task[] = [
       { id: 'tests-dep', label: 'Test framework dependency installed', done: hasDep },

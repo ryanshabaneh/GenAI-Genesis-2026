@@ -7,10 +7,10 @@
 import { Router } from 'express'
 import type { Request, Response } from 'express'
 import { v4 as uuidv4 } from 'uuid'
-import type { BuildingId } from '../types'
+import type { BuildingId, Message } from '../types'
 import { getSession, updateSession } from '../session/store'
 import { addChange } from '../changes/queue'
-import { calculatePercent } from '../agents/scanner-context'
+import { calculatePercent, formatDeploymentRecommendation } from '../agents/scanner-context'
 
 const router = Router()
 
@@ -62,12 +62,24 @@ router.post('/', (req: Request, res: Response): void => {
 
     const percent = calculatePercent(updatedTasks)
 
-    updateSession(sessionId, {
+    const sessionUpdate: Record<string, unknown> = {
       results: {
         ...session.results,
         [buildingId]: { ...current, tasks: updatedTasks, percent },
       },
-    })
+    }
+
+    // If deployment just hit 100%, inject deployment recommendation into chat
+    if (buildingId === 'deployment' && percent === 100 && session.deploymentRecommendation) {
+      const chatHistory: Message[] = session.conversations[buildingId] ?? []
+      const recMessage = formatDeploymentRecommendation(session.deploymentRecommendation)
+      sessionUpdate['conversations'] = {
+        ...session.conversations,
+        [buildingId]: [...chatHistory, { role: 'assistant', content: recMessage }],
+      }
+    }
+
+    updateSession(sessionId, sessionUpdate)
   }
 
   // Re-fetch session for latest state

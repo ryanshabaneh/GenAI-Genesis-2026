@@ -15,8 +15,8 @@ export function useAgent(buildingId: BuildingId) {
   const [isLoading, setIsLoading] = useState(false)
 
   const addMessage = useStore((s) => s.addMessage)
-  // Read this building's chat history from the store so it survives re-renders
   const chatHistory = useStore((s) => s.buildings[buildingId].chatHistory)
+  const selectedTaskIds = useStore((s) => s.buildings[buildingId].selectedTaskIds ?? [])
 
   async function sendMessage(text: string) {
     // sessionId lives in sessionStorage because it's set in useScan after the HTTP response —
@@ -38,8 +38,9 @@ export function useAgent(buildingId: BuildingId) {
         sessionId,
         buildingId,
         message: text,
-        // Send the full history so the server-side agent has context for follow-up questions
         history: chatHistory,
+        // When tasks are selected, focus agent on those; otherwise agent considers all tasks
+        taskIds: selectedTaskIds.length > 0 ? selectedTaskIds : undefined,
       })
       addMessage(buildingId, {
         ...reply,

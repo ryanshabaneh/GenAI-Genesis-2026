@@ -78,8 +78,21 @@ beforeAll(() => {
     ? fs.readFileSync(path.join(repoPath, '.gitignore'), 'utf8')
     : ''
   hasEnvFile = fs.existsSync(path.join(repoPath, '.env'))
-  hasLockfile = ['package-lock.json', 'yarn.lock', 'pnpm-lock.yaml', 'go.sum', 'Gemfile.lock', 'poetry.lock', 'Pipfile.lock']
-    .some((f) => fs.existsSync(path.join(repoPath, f)))
+  const lockfiles = ['package-lock.json', 'yarn.lock', 'pnpm-lock.yaml', 'go.sum', 'Gemfile.lock', 'poetry.lock', 'Pipfile.lock']
+  hasLockfile = lockfiles.some((f) => fs.existsSync(path.join(repoPath, f)))
+  // Also check subdirs (monorepo support, matches analyzer behavior)
+  if (!hasLockfile) {
+    const skip = new Set(['node_modules', '.git', 'dist', 'build', '.next', 'coverage', '.cache'])
+    try {
+      for (const entry of fs.readdirSync(repoPath, { withFileTypes: true })) {
+        if (!entry.isDirectory() || skip.has(entry.name)) continue
+        if (lockfiles.some((f) => fs.existsSync(path.join(repoPath, entry.name, f)))) {
+          hasLockfile = true
+          break
+        }
+      }
+    } catch {}
+  }
   hasRootPkg = fs.existsSync(path.join(repoPath, 'package.json'))
 })
 

@@ -26,27 +26,13 @@ Focus on what to implement, not explaining concepts.
 Give clear, step-by-step implementation instructions that a code editor can follow mechanically.`
 
 /**
- * Analyzer agent: JSON array of tasks.
- * Used as part of the user message in analyzeForTasks().
+ * Analyzer agent: JSON array of tasks (per-building format, used in eval scripts).
  */
 export const ANALYZER_FORMAT = `Return ONLY a JSON array of task objects. No markdown, no explanation, just the array:
 [
   { "id": "unique-id", "label": "Human-readable task description", "done": false },
   ...
 ]`
-
-/**
- * Deduplicator agent: JSON map of building → tasks.
- * Used as part of the user message in deduplicateAcrossBuildings().
- */
-export const DEDUP_FORMAT = `Return ONLY a JSON object mapping each building to its deduplicated task array. No markdown, no explanation:
-{
-  "tests": [{"id": "...", "label": "...", "done": false}],
-  "cicd": [...],
-  ...
-}
-
-Every task must appear in exactly one building. Do not invent new tasks. Do not change labels.`
 
 /**
  * Evaluator agent: raw JSON object (no markdown fences).
@@ -66,3 +52,19 @@ export const REPO_EVALUATOR_FORMAT = `Respond with ONLY a JSON object — no mar
 
 If the task is NOT fulfilled:
 { "pass": false, "feedback": "Explain what's missing or incomplete", "summary": "" }`
+
+/**
+ * Batched repo evaluator: evaluates ALL tasks in one call, returns a JSON array.
+ */
+export const BATCH_REPO_EVALUATOR_FORMAT = `Respond with ONLY a JSON array — no markdown fences, no explanation.
+One entry per task, in the same order as the tasks listed. Each entry has:
+- "id": the task id provided
+- "pass": true if the task is fulfilled in the codebase, false otherwise
+- "feedback": if pass is false, briefly explain what's missing (1 sentence max). Empty string if pass is true.
+- "summary": if pass is true, brief 1-sentence summary of what exists. Empty string if pass is false.
+
+Example:
+[
+  { "id": "task-1", "pass": true, "feedback": "", "summary": "Winston logger configured with JSON format" },
+  { "id": "task-2", "pass": false, "feedback": "No error tracking middleware found", "summary": "" }
+]`

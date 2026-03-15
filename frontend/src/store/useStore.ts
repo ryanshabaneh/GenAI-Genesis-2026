@@ -10,6 +10,7 @@ import type {
   BuildingState,
   BuildingStatus,
   CodeChange,
+  DeploymentRecommendation,
   GitHubUser,
   Message,
   ScanStatus,
@@ -43,6 +44,7 @@ function makeInitialBuildings(): Record<BuildingId, BuildingState> {
         chatHistory: [],
         implementStatus: 'idle' as const,
         taskFeedback: {},
+        selectedTaskIds: [],
       },
     ])
   ) as unknown as Record<BuildingId, BuildingState>
@@ -63,6 +65,10 @@ interface ShipyardStore {
   scoutDialogue: string
   // Authenticated GitHub user — null if not signed in
   githubUser: GitHubUser | null
+  // Deployment recommendation from scanner
+  deploymentRecommendation: DeploymentRecommendation | null
+  // Platform the user chose to deploy to (from PlatformPicker)
+  chosenPlatform: string | null
 
   // Actions
   setRepoUrl: (url: string) => void
@@ -76,6 +82,9 @@ interface ShipyardStore {
   setGithubUser: (user: GitHubUser | null) => void
   setImplementStatus: (id: BuildingId, status: 'idle' | 'running') => void
   setTaskFeedback: (id: BuildingId, taskId: string, feedback: string) => void
+  toggleTaskSelected: (id: BuildingId, taskId: string) => void
+  setDeploymentRecommendation: (rec: DeploymentRecommendation) => void
+  setChosenPlatform: (platform: string) => void
 }
 
 export const useStore = create<ShipyardStore>((set) => ({
@@ -87,6 +96,8 @@ export const useStore = create<ShipyardStore>((set) => ({
   changesQueue: [],
   scoutDialogue: '',
   githubUser: null,
+  deploymentRecommendation: null,
+  chosenPlatform: null,
 
   setRepoUrl: (url) => set({ repoUrl: url }),
 
@@ -151,4 +162,22 @@ export const useStore = create<ShipyardStore>((set) => ({
         },
       },
     })),
+
+  setDeploymentRecommendation: (rec) => set({ deploymentRecommendation: rec }),
+
+  setChosenPlatform: (platform) => set({ chosenPlatform: platform }),
+
+  toggleTaskSelected: (id, taskId) =>
+    set((state) => {
+      const current = state.buildings[id].selectedTaskIds
+      const next = current.includes(taskId)
+        ? current.filter((t) => t !== taskId)
+        : current.length >= 3 ? current : [...current, taskId]
+      return {
+        buildings: {
+          ...state.buildings,
+          [id]: { ...state.buildings[id], selectedTaskIds: next },
+        },
+      }
+    }),
 }))

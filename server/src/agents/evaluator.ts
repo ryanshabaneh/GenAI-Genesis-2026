@@ -1,7 +1,19 @@
+import Anthropic from '@anthropic-ai/sdk'
+import crypto from 'crypto'
 import { client } from './client'
 import { buildAgentContext } from './context'
-import { EVALUATOR_FORMAT, REPO_EVALUATOR_FORMAT } from './prompts'
+import { EVALUATOR_FORMAT, BATCH_REPO_EVALUATOR_FORMAT } from './prompts'
 import type { BuildingId, EvaluatorResult, Task } from '../types'
+
+/**
+ * Strip markdown fences from LLM output that should be raw JSON.
+ * Handles ```json ... ``` and ``` ... ``` wrapping.
+ */
+function stripMarkdownFences(text: string): string {
+  const trimmed = text.trim()
+  const fenced = trimmed.match(/^```(?:json)?\s*\n?([\s\S]*?)\n?\s*```$/m)
+  return fenced ? fenced[1].trim() : trimmed
+}
 
 const EVALUATOR_SYSTEM_PROMPT = `You are the Quality Inspector for Shipyard.
 
@@ -25,7 +37,7 @@ export async function callEvaluator(params: {
   builderResponse: string
   codeBlocks: Array<{ path: string; content: string; language: string }>
 }): Promise<EvaluatorResult> {
-  const { buildingId, tasks, builderResponse, codeBlocks } = params
+  const { buildingId, repoPath, tasks, builderResponse, codeBlocks } = params
 
   const incompleteTasks = tasks.filter((t) => !t.done)
 
@@ -48,14 +60,15 @@ Evaluate whether this output properly addresses all tasks. Respond with JSON onl
       max_tokens: 1024,
       system: EVALUATOR_SYSTEM_PROMPT,
       messages: [{ role: 'user', content: userMessage }],
-    })
+      cwd: repoPath,
+    } as Anthropic.MessageCreateParamsNonStreaming)
 
     const text = response.content
       .filter((block) => block.type === 'text')
       .map((block) => ('text' in block ? block.text : ''))
       .join('')
 
-    const parsed = JSON.parse(text) as EvaluatorResult
+    const parsed = JSON.parse(stripMarkdownFences(text)) as EvaluatorResult
     return {
       pass: Boolean(parsed.pass),
       feedback: parsed.feedback ?? '',
@@ -72,22 +85,22 @@ Evaluate whether this output properly addresses all tasks. Respond with JSON onl
 
 // --- On-demand evaluation against actual repo state ---
 
-const REPO_EVALUATOR_SYSTEM_PROMPT = `You are the Quality Inspector for Shipyard.
+const BATCH_REPO_EVALUATOR_SYSTEM_PROMPT = `You are the Quality Inspector for Shipyard.
 
 You receive:
-1. A task to evaluate
+1. A list of tasks to evaluate
 2. The actual repository code (not a builder's output)
 
-Your job is to evaluate whether the task has been completed in the actual codebase. Check:
+Your job is to evaluate whether each task has been completed in the actual codebase. Check:
 - Does the code fulfill the task requirement?
 - Is the implementation complete (no stubs, TODOs, placeholders)?
 - Is the code syntactically valid and would work if run?
 
-${REPO_EVALUATOR_FORMAT}`
+${BATCH_REPO_EVALUATOR_FORMAT}`
 
 /**
- * Evaluate tasks against the actual repository state (not aider output).
- * Reads the repo files and checks each task individually.
+ * Evaluate tasks against the actual repository state in a single batched LLM call.
+ * Sends all tasks + repo context once, gets back one JSON array with per-task results.
  */
 export async function evaluateRepoState(params: {
   buildingId: BuildingId
@@ -106,48 +119,96 @@ export async function evaluateRepoState(params: {
 
   const repoContext = await buildAgentContext(buildingId, repoPath)
 
-  const results: Array<{ taskId: string; pass: boolean; feedback: string; summary: string }> = []
+  const taskList = tasksToEval
+    .map((t) => `- ${t.label} (id: ${t.id})`)
+    .join('\n')
 
-  for (const task of tasksToEval) {
-    const userMessage = `## Building: ${buildingId}
+  const userMessage = `## Building: ${buildingId}
 
-## Task to evaluate:
-- ${task.label} (id: ${task.id})
+## Tasks to evaluate (${tasksToEval.length}):
+${taskList}
 
 ## Repository code:
 ${repoContext}
 
-Evaluate whether this task has been completed in the actual codebase. Respond with JSON only.`
+Evaluate whether each task has been completed in the actual codebase. Respond with a JSON array, one entry per task.`
 
-    try {
-      const response = await client.messages.create({
-        model: 'claude-sonnet-4-6',
-        max_tokens: 1024,
-        system: REPO_EVALUATOR_SYSTEM_PROMPT,
-        messages: [{ role: 'user', content: userMessage }],
-      })
+  try {
+    const response = await client.messages.create({
+      model: 'claude-sonnet-4-6',
+      max_tokens: 2048,
+      system: BATCH_REPO_EVALUATOR_SYSTEM_PROMPT,
+      messages: [{ role: 'user', content: userMessage }],
+      cwd: repoPath,
+    } as Anthropic.MessageCreateParamsNonStreaming)
 
-      const text = response.content
-        .filter((block) => block.type === 'text')
-        .map((block) => ('text' in block ? block.text : ''))
-        .join('')
+    const text = response.content
+      .filter((block) => block.type === 'text')
+      .map((block) => ('text' in block ? block.text : ''))
+      .join('')
 
-      const parsed = JSON.parse(text) as EvaluatorResult
-      results.push({
-        taskId: task.id,
-        pass: Boolean(parsed.pass),
-        feedback: parsed.feedback ?? '',
-        summary: parsed.summary ?? '',
-      })
-    } catch {
-      results.push({
-        taskId: task.id,
-        pass: false,
-        feedback: 'Evaluator failed to produce valid JSON for this task.',
-        summary: '',
-      })
+    const parsed = JSON.parse(stripMarkdownFences(text)) as Array<{
+      id: string
+      pass: boolean
+      feedback: string
+      summary: string
+    }>
+
+    // Map parsed results back to task IDs, falling back for any missing entries
+    return tasksToEval.map((task) => {
+      const match = parsed.find((r) => r.id === task.id)
+      if (match) {
+        return {
+          taskId: task.id,
+          pass: Boolean(match.pass),
+          feedback: match.feedback ?? '',
+          summary: match.summary ?? '',
+        }
+      }
+      return { taskId: task.id, pass: false, feedback: 'Task not included in evaluator response.', summary: '' }
+    })
+  } catch {
+    // If the single call fails, return all as failed rather than silently succeeding
+    return tasksToEval.map((t) => ({
+      taskId: t.id,
+      pass: false,
+      feedback: 'Evaluator failed to produce valid JSON. Please retry.',
+      summary: '',
+    }))
+  }
+}
+
+/**
+ * Compute a quick content hash of the repo context for a building.
+ * Used to detect whether anything changed since the last evaluation.
+ */
+export async function computeRepoHash(buildingId: BuildingId, repoPath: string): Promise<string> {
+  const context = await buildAgentContext(buildingId, repoPath)
+  return crypto.createHash('sha256').update(context).digest('hex').slice(0, 16)
+}
+
+/**
+ * Build a brief summary of evaluation results suitable for injecting
+ * into the chat agent's conversation history.
+ */
+export function buildEvalSummary(
+  results: Array<{ taskId: string; pass: boolean; feedback: string; summary: string }>,
+  tasks: Task[]
+): string {
+  const lines: string[] = ['[Evaluation Results]']
+
+  for (const r of results) {
+    const task = tasks.find((t) => t.id === r.taskId)
+    const label = task?.label ?? r.taskId
+    if (r.pass) {
+      lines.push(`✓ ${label}${r.summary ? ` — ${r.summary}` : ''}`)
+    } else {
+      lines.push(`✗ ${label} — ${r.feedback}`)
     }
   }
 
-  return results
+  const passed = results.filter((r) => r.pass).length
+  lines.push(`\n${passed}/${results.length} tasks passing.`)
+
+  return lines.join('\n')
 }
