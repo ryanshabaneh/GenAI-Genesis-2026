@@ -38,7 +38,7 @@ router.post('/', async (req: Request, res: Response): Promise<void> => {
     const buffer = await generateZip(session)
     res.setHeader('Content-Type', 'application/zip')
     // Content-Disposition triggers a browser download with a sensible filename
-    res.setHeader('Content-Disposition', 'attachment; filename="shipcity-changes.zip"')
+    res.setHeader('Content-Disposition', 'attachment; filename="shipyard-changes.zip"')
     res.send(buffer)
   } catch (err) {
     console.error('Export error:', err)

@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Editor from '@monaco-editor/react'
-import { acceptChange } from '@/lib/api'
+import { acceptChange, rejectChange } from '@/lib/api'
 import { useStore } from '@/store/useStore'
 import type { CodeBlock } from '@/types'
 
@@ -14,14 +14,21 @@ interface CodePreviewProps {
 }
 
 export default function CodePreview({ codeBlock, buildingId, onAccepted, onRejected }: CodePreviewProps) {
-  const [status, setStatus] = useState<'idle' | 'accepting' | 'accepted' | 'rejected'>('idle')
+  const bid = buildingId as import('@/types').BuildingId
+  const isAccepted = useStore((s) => s.buildings[bid]?.acceptedPaths.includes(codeBlock.path))
+  const isRejected = useStore((s) => s.buildings[bid]?.rejectedPaths.includes(codeBlock.path))
+  const initialStatus = isAccepted ? 'accepted' : isRejected ? 'rejected' : 'idle'
+  const [status, setStatus] = useState<'idle' | 'accepting' | 'accepted' | 'rejected'>(initialStatus)
   const setBuildingStatus = useStore((s) => s.setBuildingStatus)
   const setScore = useStore((s) => s.setScore)
   const addChange = useStore((s) => s.addChange)
+  const setHasUnpushedCommits = useStore((s) => s.setHasUnpushedCommits)
+  const markPathAccepted = useStore((s) => s.markPathAccepted)
+  const markPathRejected = useStore((s) => s.markPathRejected)
 
   async function handleAccept() {
     setStatus('accepting')
-    const sessionId = sessionStorage.getItem('shipcity_session_id') ?? ''
+    const sessionId = sessionStorage.getItem('shipyard_session_id') ?? ''
     try {
       const { percent, tasks, score } = await acceptChange({
         sessionId,
@@ -32,6 +39,8 @@ export default function CodePreview({ codeBlock, buildingId, onAccepted, onRejec
       setBuildingStatus(bid, { percent, tasks })
       setScore(score)
       addChange({ id: `change-${Date.now()}`, buildingId: bid, files: [{ path: codeBlock.path, content: codeBlock.content, isNew: true }], acceptedAt: Date.now() })
+      setHasUnpushedCommits(true)
+      markPathAccepted(bid, codeBlock.path)
       setStatus('accepted')
       onAccepted?.(codeBlock.path)
     } catch {
@@ -39,7 +48,17 @@ export default function CodePreview({ codeBlock, buildingId, onAccepted, onRejec
     }
   }
 
-  function handleReject() {
+  async function handleReject() {
+    const sessionId = sessionStorage.getItem('shipyard_session_id') ?? ''
+    try {
+      await rejectChange({
+        sessionId,
+        buildingId: buildingId as Parameters<typeof rejectChange>[0]['buildingId'],
+      })
+    } catch {
+      // Reject API may fail if no pending review — still update UI
+    }
+    markPathRejected(bid, codeBlock.path)
     setStatus('rejected')
     onRejected?.(codeBlock.path)
   }

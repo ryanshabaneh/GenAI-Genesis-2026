@@ -44,7 +44,7 @@ export const BUILDINGS: BuildingConfig[] = [
   },
   {
     id: 'security',
-    name: 'Vault',
+    name: 'Security Vault',
     category: 'Security',
     description: 'Checks for .gitignore, secret exposure, and basic security hygiene',
     position: [-15, 0, 0],
@@ -92,7 +92,7 @@ export const BUILDINGS: BuildingConfig[] = [
   },
   {
     id: 'docker',
-    name: 'Container Terminal',
+    name: 'Cargo',
     category: 'Docker',
     description: 'Checks for Dockerfile, .dockerignore, and docker-compose setup',
     position: [11, 0, -11],
@@ -140,7 +140,7 @@ export const BUILDINGS: BuildingConfig[] = [
   },
   {
     id: 'deployment',
-    name: 'Shipping Dock',
+    name: 'Shipping Port',
     category: 'Deployment',
     description: 'Checks for deployment config: Vercel, Railway, Fly.io, Procfile',
     position: [11, 0, 11],

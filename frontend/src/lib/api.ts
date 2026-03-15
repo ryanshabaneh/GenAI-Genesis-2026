@@ -31,6 +31,7 @@ export async function sendChatMessage(params: {
   buildingId: BuildingId
   message: string
   history: Message[]
+  taskIds?: string[]
 }): Promise<{ reply: Message }> {
   const res = await fetch(`${API_BASE}/api/chat`, {
     method: 'POST',
@@ -64,6 +65,24 @@ export async function acceptChange(params: {
     throw new Error(`Accept change failed: ${text}`)
   }
   return res.json() as Promise<{ percent: number; tasks: Task[]; score: number }>
+}
+
+// POST /api/reject — rejects pending aider changes, resetting repo to clean state.
+export async function rejectChange(params: {
+  sessionId: string
+  buildingId: BuildingId
+}): Promise<{ success: boolean }> {
+  const res = await fetch(`${API_BASE}/api/reject`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify(params),
+  })
+  if (!res.ok) {
+    const text = await res.text()
+    throw new Error(`Reject change failed: ${text}`)
+  }
+  return res.json() as Promise<{ success: boolean }>
 }
 
 // POST /api/export — downloads all accepted changes for this session as a zip.
@@ -106,6 +125,23 @@ export async function implementTasks(params: {
   return res.json() as Promise<{ success: boolean; completedTaskIds: string[]; percent: number; score: number }>
 }
 
+// POST /api/push — pushes local commits to the remote origin.
+export async function pushChanges(params: {
+  sessionId: string
+}): Promise<{ pushed: boolean }> {
+  const res = await fetch(`${API_BASE}/api/push`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify(params),
+  })
+  if (!res.ok) {
+    const text = await res.text()
+    throw new Error(`Push failed: ${text}`)
+  }
+  return res.json() as Promise<{ pushed: boolean }>
+}
+
 // POST /api/evaluate — checks which tasks are now fulfilled in the repo.
 // Returns per-task pass/fail with feedback and the updated percent + score.
 export async function evaluateTasks(params: {
@@ -116,6 +152,8 @@ export async function evaluateTasks(params: {
   results: Array<{ taskId: string; pass: boolean; feedback?: string; summary?: string }>
   percent: number
   score: number
+  skipped?: boolean
+  message?: string
 }> {
   const res = await fetch(`${API_BASE}/api/evaluate`, {
     method: 'POST',
@@ -131,5 +169,48 @@ export async function evaluateTasks(params: {
     results: Array<{ taskId: string; pass: boolean; feedback?: string; summary?: string }>
     percent: number
     score: number
+    skipped?: boolean
+    message?: string
   }>
+}
+
+// POST /api/verify — runs sandboxed build verification.
+export async function verifyBuild(params: {
+  sessionId: string
+  buildingId?: string
+  command?: string
+}): Promise<{
+  install?: { success: boolean; stderr: string; durationMs: number } | null
+  build: { success: boolean; command: string; stdout: string; stderr: string; durationMs: number }
+  start?: { success: boolean; stdout: string; stderr: string; durationMs: number; healthCheck?: { status: number; ok: boolean } | null } | null
+}> {
+  const res = await fetch(`${API_BASE}/api/verify`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify(params),
+  })
+  if (!res.ok) {
+    const text = await res.text()
+    throw new Error(`Verify failed: ${text}`)
+  }
+  return res.json()
+}
+
+// POST /api/platform — stores the user's chosen deployment platform.
+export async function setDeployPlatform(params: {
+  sessionId: string
+  platform: string
+}): Promise<{ ok: boolean }> {
+  const res = await fetch(`${API_BASE}/api/platform`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify(params),
+  })
+  if (!res.ok) {
+    const text = await res.text()
+    throw new Error(`Set platform failed: ${text}`)
+  }
+  return res.json() as Promise<{ ok: boolean }>
 }

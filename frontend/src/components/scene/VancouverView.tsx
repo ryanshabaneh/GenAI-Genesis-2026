@@ -8,8 +8,8 @@
 //   Camera is then placed at distance = TARGET_SPAN * 1.5 from origin.
 //   This makes the math self-consistent regardless of raw GLB scale.
 
-import { useMemo, useRef, useEffect, Suspense } from 'react'
-import { Canvas, useThree } from '@react-three/fiber'
+import { useMemo, useRef, Suspense } from 'react'
+import { Canvas, useThree, useFrame } from '@react-three/fiber'
 import { OrbitControls, useGLTF } from '@react-three/drei'
 import * as THREE from 'three'
 import type { OrbitControls as OCImpl } from 'three-stdlib'
@@ -73,14 +73,18 @@ const CAM_TARGET = new THREE.Vector3(0, 0, 0)
 function CameraReset() {
   const { camera } = useThree()
   const controlsRef = useRef<OCImpl>(null)
+  const done = useRef(false)
 
-  useEffect(() => {
+  // useFrame fires after R3F commits, guaranteeing OrbitControls ref is populated.
+  // useEffect fires too early (before controls init) so controlsRef.current is null.
+  useFrame(() => {
+    if (done.current) return
     camera.position.copy(CAM_POS)
-    if (controlsRef.current) {
-      controlsRef.current.target.copy(CAM_TARGET)
-      controlsRef.current.update()
-    }
-  }, [camera])
+    if (!controlsRef.current) return
+    controlsRef.current.target.copy(CAM_TARGET)
+    controlsRef.current.update()
+    done.current = true
+  })
 
   return (
     <OrbitControls

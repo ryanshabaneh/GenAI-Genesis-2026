@@ -1,5 +1,7 @@
 'use client'
 import { AnimatePresence, motion } from 'framer-motion'
+import { createPortal } from 'react-dom'
+import { useEffect, useState } from 'react'
 import type { ReactNode } from 'react'
 
 interface GameModalProps {
@@ -12,7 +14,12 @@ interface GameModalProps {
 }
 
 export default function GameModal({ isOpen, onClose, icon, panelClassName, align = 'center', children }: GameModalProps) {
-  return (
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => { setMounted(true) }, [])
+
+  if (!mounted) return null
+
+  return createPortal(
     <AnimatePresence>
       {isOpen && (
         <motion.div
@@ -22,7 +29,7 @@ export default function GameModal({ isOpen, onClose, icon, panelClassName, align
           transition={{ duration: 0.22 }}
           onClick={onClose ?? undefined}
           className="fixed inset-0 z-50 grid place-items-center p-4 cursor-pointer"
-          style={{ background: 'rgba(9,12,18,0.7)', backdropFilter: 'blur(4px)' }}
+          style={{ background: 'rgba(200,220,255,0.35)', backdropFilter: 'blur(8px)' }}
         >
           <motion.div
             initial={{ scale: 0.88, y: 20, opacity: 0 }}
@@ -30,7 +37,8 @@ export default function GameModal({ isOpen, onClose, icon, panelClassName, align
             exit={{    scale: 0.93, y: 10, opacity: 0 }}
             transition={{ type: 'spring', stiffness: 340, damping: 28 }}
             onClick={(e: React.MouseEvent) => e.stopPropagation()}
-            className={`gradient-brand rounded-[20px] p-6 w-full cursor-default relative overflow-hidden shadow-2xl ${panelClassName ?? 'max-w-md'}`}
+            className={`gradient-brand rounded-[20px] p-6 w-full cursor-default relative overflow-y-auto shadow-2xl ${panelClassName ?? 'max-w-md'}`}
+            style={{ maxHeight: '90vh' }}
           >
             <div className={`relative z-10 flex flex-col ${align === 'center' ? 'items-center text-center' : 'items-start text-left'}`}>
               {icon && (
@@ -60,6 +68,7 @@ export default function GameModal({ isOpen, onClose, icon, panelClassName, align
           </motion.div>
         </motion.div>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body
   )
 }

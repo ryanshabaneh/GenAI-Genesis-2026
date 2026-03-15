@@ -123,13 +123,13 @@ export default function CityOverview() {
     >
       {/* header */}
       <div className="px-4 pt-4 pb-3 border-b border-white/[0.06] shrink-0">
-        <p className="nav-label text-[9px] text-fog">City Overview</p>
+        <p className="nav-label text-[13px] text-fog">Yard Overview</p>
         <motion.p
           key={blurb}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.4 }}
-          className="text-white/50 text-[11px] font-ui leading-snug mt-0.5"
+          className="text-white/50 text-xs font-ui leading-snug mt-1"
         >
           {blurb}
         </motion.p>

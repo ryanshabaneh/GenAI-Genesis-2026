@@ -25,7 +25,7 @@ let repoPath: string
 let ctx: AnalyzerContext
 
 beforeAll(async () => {
-  repoPath = fs.mkdtempSync(path.join(os.tmpdir(), 'shipcity-atlas-queue-'))
+  repoPath = fs.mkdtempSync(path.join(os.tmpdir(), 'shipyard-atlas-queue-'))
 
   const simpleGit = (await import('simple-git')).default
   const git = simpleGit()
@@ -140,9 +140,9 @@ describe('atlas-queue integration — deployment', () => {
 
   it('structural: 4 tasks, correct formula', () => assertStructure(result))
 
-  it('0% — no deploy config, no package.json scripts, no process.env.PORT', () => {
+  it('50% — no deploy config or PORT, but go.mod (build) and cmd/*/main.go (start) detected', () => {
     expect(ctx.packageJson).toBeNull()
-    expect(result.percent).toBe(0)
+    expect(result.percent).toBe(50)
   })
 })
 

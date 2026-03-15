@@ -31,9 +31,26 @@ export interface AnalyzerResult {
   details: Record<string, unknown>
 }
 
+// PendingReview holds aider's disk changes until the user accepts or rejects them.
+export interface PendingReview {
+  buildingId: BuildingId
+  taskIds: string[]
+  files: string[]
+  summary: string
+  createdAt: number
+}
+
 // Session is the in-memory record for one user's scan and chat session.
 // repoPath is set after cloneRepo completes (starts empty).
 // results accumulate as each analyzer finishes.
+export interface DeploymentRecommendation {
+  platform: string           // e.g. 'vercel', 'railway', 'render'
+  reason: string             // why this platform was chosen
+  framework: string | null   // detected framework
+  services: string[]         // detected services
+  steps: string[]            // concrete deployment steps
+}
+
 export interface Session {
   id: string
   repoUrl: string
@@ -42,6 +59,13 @@ export interface Session {
   changes: AcceptedChange[]
   conversations: Partial<Record<BuildingId, Message[]>>
   changeLog: ChangeLogEntry[]
+  /** Per-building hash of repo context at last evaluation — used to skip re-eval when nothing changed */
+  lastEvalHash: Partial<Record<BuildingId, string>>
+  /** Computed deployment recommendation based on scanner findings */
+  deploymentRecommendation?: DeploymentRecommendation
+  /** Platform the user chose to deploy to (from PlatformPicker) */
+  chosenPlatform?: string
+  pendingReview?: PendingReview | null
   createdAt: number
 }
 
@@ -102,4 +126,9 @@ export type WsEvent =
   | { type: 'task:start'; building: BuildingId; taskId: string; taskLabel: string }
   | { type: 'task:complete'; building: BuildingId; taskId: string; success: boolean; summary: string }
   | { type: 'eval:result'; building: BuildingId; taskId: string; pass: boolean; feedback: string }
+  | { type: 'deploy:recommendation'; recommendation: DeploymentRecommendation }
+  | { type: 'verify:start'; building: BuildingId }
+  | { type: 'verify:result'; command: string; success: boolean; output: string }
+  | { type: 'verify:complete'; building: BuildingId; success: boolean; output: string }
+  | { type: 'review:pending'; building: BuildingId; files: string[]; summary: string }
   | { type: 'orchestrator:complete'; score: number }

@@ -4,7 +4,7 @@
 // what's done, what's not, and the raw details from heuristic checks.
 // The agent can then go deeper — but it doesn't start from zero.
 
-import type { AnalyzerResult, BuildingId, Session } from '../types'
+import type { AnalyzerResult, BuildingId, DeploymentRecommendation, Session } from '../types'
 
 /**
  * Convert scanner AnalyzerResult into a preprompt string that gets injected
@@ -90,4 +90,32 @@ export function calculatePercent(tasks: Array<{ done: boolean }>): number {
   if (tasks.length === 0) return 0
   const doneCount = tasks.filter((t) => t.done).length
   return Math.round((doneCount / tasks.length) * 100)
+}
+
+/**
+ * Format a deployment recommendation as a chat message for the user.
+ */
+export function formatDeploymentRecommendation(rec: DeploymentRecommendation): string {
+  const lines = [
+    `**Ready to deploy!** Based on your project, here's the recommended pathway:`,
+    '',
+    `**Platform: ${rec.platform.charAt(0).toUpperCase() + rec.platform.slice(1)}**`,
+    rec.reason,
+    '',
+  ]
+
+  if (rec.services.length > 0) {
+    lines.push(`Detected services: ${rec.services.join(', ')}`)
+    lines.push('')
+  }
+
+  lines.push('**Deployment steps:**')
+  rec.steps.forEach((step, i) => {
+    lines.push(`${i + 1}. ${step}`)
+  })
+
+  lines.push('')
+  lines.push('Would you like help setting this up? I can generate the config files and walk you through each step.')
+
+  return lines.join('\n')
 }

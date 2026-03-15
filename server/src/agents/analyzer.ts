@@ -1,109 +1,155 @@
 // server/src/agents/analyzer.ts
-// Analysis agent: after the scanner's heuristic pass, calls the building's
-// specialist agent to review actual code and generate deeper tasks.
-// Returns structured JSON — does NOT edit files (that's aider's job).
-// Includes a dedup pass to remove cross-building overlap.
+// Deep analysis agent: ONE LLM call to analyze ALL buildings at once.
+// Replaces the old per-building analyzeForTasks + dedup flow (9 calls → 1).
+// The model sees every building's scanner results + repo context in a single
+// prompt, so it naturally avoids cross-building duplication.
 
 import Anthropic from '@anthropic-ai/sdk'
-import type { AnalyzerResult, BuildingId, Task } from '../types'
-import { AGENT_PROMPTS, ANALYZER_FORMAT, DEDUP_FORMAT } from './prompts'
-import { buildAgentContext } from './context'
+import type { AnalyzerResult, BuildingId, DeploymentRecommendation, Task } from '../types'
+import { buildSlimContext } from './context'
 import { buildScannerPreprompt } from './scanner-context'
 import { client } from './client'
 
-// Domain boundaries — tells each agent what IS and ISN'T its responsibility
-const DOMAIN_BOUNDARIES: Record<BuildingId, string> = {
-  tests: `Your domain is ONLY: test framework, test files, test coverage, test scripts.
-Do NOT flag: security issues, missing env vars, deployment config, Docker, CI/CD, logging, or documentation.`,
+const ALL_BUILDINGS: BuildingId[] = [
+  'tests', 'cicd', 'docker', 'documentation', 'envVars', 'security', 'logging', 'deployment',
+]
 
-  cicd: `Your domain is ONLY: CI/CD pipelines, GitHub Actions, build/test automation workflows.
-Do NOT flag: security issues, missing tests, env vars, Docker, logging, deployment config, or documentation.`,
-
-  docker: `Your domain is ONLY: Dockerfile quality, docker-compose, .dockerignore, container best practices.
-Do NOT flag: security issues, missing tests, env vars, CI/CD, logging, deployment config, or documentation.`,
-
-  documentation: `Your domain is ONLY: README quality, API documentation, setup instructions, code comments.
-Do NOT flag: security issues, missing tests, env vars, Docker, CI/CD, logging, or deployment config.`,
-
-  envVars: `Your domain is ONLY: environment variable management, .env files, config loading, hardcoded config values.
-Do NOT flag: general security issues, missing tests, Docker, CI/CD, logging, deployment config, or documentation.`,
-
-  security: `Your domain is ONLY: secrets in code, .gitignore coverage, input validation, auth, CORS, HTTP security headers.
-Do NOT flag: missing tests, env var management, Docker, CI/CD, logging, deployment config, or documentation.`,
-
-  logging: `Your domain is ONLY: logging library, log levels, structured logging, request logging, log configuration.
-Do NOT flag: security issues, missing tests, env vars, Docker, CI/CD, deployment config, or documentation.`,
-
-  deployment: `Your domain is ONLY: deploy config, build/start scripts, PORT binding, health checks, graceful shutdown, production readiness.
-Do NOT flag: security issues, missing tests, env vars, Docker, CI/CD, logging, or documentation.`,
-}
-
-function buildAnalysisPrompt(buildingId: BuildingId): string {
-  const boundary = DOMAIN_BOUNDARIES[buildingId]
-
-  return `Based on your analysis of the repository, generate a list of ADDITIONAL tasks
-that the scanner missed. The scanner only checks surface-level things (file exists, dependency installed).
-You should check for deeper issues WITHIN YOUR DOMAIN ONLY.
-
-${boundary}
-
-${ANALYZER_FORMAT}
-
-Rules:
-- Each task ID must start with your building prefix (e.g., "${buildingId}-...")
-- Each label should be specific and actionable (e.g., "Add tests for DELETE /api/books/:id route")
-- Do NOT repeat tasks the scanner already found — only add NEW ones
-- STAY IN YOUR DOMAIN — do not flag issues that belong to other buildings
-- Only add tasks that are genuinely incomplete — if something is already done well, don't add a task for it
-- Focus on the most impactful issues
-- Set done to true if you see the repo already handles it, false if it doesn't`
+const BUILDING_DOMAINS: Record<BuildingId, string> = {
+  tests: 'test framework, test files, test coverage, test scripts',
+  cicd: 'CI/CD pipelines, GitHub Actions, build/test automation workflows',
+  docker: 'Dockerfile, docker-compose, .dockerignore, container best practices',
+  documentation: 'README quality, API documentation, setup instructions, code comments',
+  envVars: '.env files, environment variable management, config loading, hardcoded config',
+  security: 'secrets in code, .gitignore coverage, input validation, auth, CORS, HTTP headers',
+  logging: 'logging library, log levels, structured logging, request logging, log configuration',
+  deployment: 'deploy config, build/start scripts, PORT binding, health checks, production readiness',
 }
 
 /**
- * Call the building's specialist agent to analyze the repo and generate
- * additional tasks beyond what the scanner found heuristically.
+ * Single LLM call that analyzes all buildings at once.
+ * Returns a map of buildingId → additional tasks the scanner missed.
+ * Replaces analyzeForTasks (8 calls) + deduplicateAcrossBuildings (1 call) = 9 calls → 1.
  */
-export async function analyzeForTasks(params: {
-  buildingId: BuildingId
+export async function analyzeAllBuildings(params: {
   repoPath: string
-  scanResult: AnalyzerResult
-}): Promise<Task[]> {
-  const { buildingId, repoPath, scanResult } = params
+  scanResults: AnalyzerResult[]
+  deploymentRecommendation?: DeploymentRecommendation
+}): Promise<Map<BuildingId, Task[]>> {
+  const { repoPath, scanResults, deploymentRecommendation } = params
 
-  const systemPrompt = AGENT_PROMPTS[buildingId]
-  const context = await buildAgentContext(buildingId, repoPath)
-  const scannerPreprompt = buildScannerPreprompt(scanResult)
+  // Build one slim context (shared across buildings — it's the same repo)
+  // Use 'deployment' as the key since it reads the widest set of config files
+  const context = await buildSlimContext('deployment', repoPath)
 
-  const fullSystem = `${systemPrompt}\n\n---\n\n${scannerPreprompt}\n\n---\n\n${context}`
+  // Build scanner summaries for all buildings
+  const scannerSummaries = scanResults.map((r) => {
+    const preprompt = buildScannerPreprompt(r)
+    return `### ${r.buildingId.toUpperCase()}\n${preprompt}`
+  }).join('\n\n')
+
+  // Build the domain list
+  const domainList = ALL_BUILDINGS.map((b) => `- **${b}**: ${BUILDING_DOMAINS[b]}`).join('\n')
+
+  const systemPrompt = `You are a codebase analyzer for ShipCity. You review repositories and identify additional tasks that a heuristic scanner missed.
+
+You are analyzing ALL 8 building domains in a single pass. Each building has a specific domain — do not cross boundaries.
+
+## Building Domains
+${domainList}
+
+## Repository Context
+${context}`
+
+  // Build deployment-specific context from the recommendation
+  const deployContext = deploymentRecommendation
+    ? `\n\n## Deployment Recommendation (pre-computed)
+**Recommended platform: ${deploymentRecommendation.platform}**
+Reason: ${deploymentRecommendation.reason}
+Framework: ${deploymentRecommendation.framework ?? 'unknown'}
+Detected services: ${deploymentRecommendation.services.length > 0 ? deploymentRecommendation.services.join(', ') : 'none'}
+
+Deployment steps the user needs to complete:
+${deploymentRecommendation.steps.map((s, i) => `${i + 1}. ${s}`).join('\n')}
+
+Use this recommendation to generate specific, actionable deployment tasks. Focus on things that would actually block a deploy:
+- Missing or invalid platform config files for ${deploymentRecommendation.platform}
+- Missing build/start scripts that the platform needs
+- Undocumented environment variables the platform needs set
+- Database connection setup (migrations, connection strings, provider config)
+- Health check endpoints (if backend)
+- CORS/domain configuration for production
+Do NOT generate generic tasks like "deploy to X" — each task should be a specific code change.`
+    : ''
+
+  const userMessage = `## Scanner Results (all 8 buildings)
+
+${scannerSummaries}
+${deployContext}
+
+---
+
+For each building, generate additional tasks the scanner missed. Follow these rules:
+
+1. **Task dependency**: For most buildings, if the FOUNDATION doesn't exist (e.g., no Dockerfile, no CI config, no test framework), return an EMPTY array. Only add refinement tasks for things that ALREADY EXIST but need improvement. **EXCEPTION: deployment** — always generate tasks for deployment even if no config exists yet. The deployment building should include tasks to GET the project ready to deploy (create config files, add scripts, set up the platform).
+
+2. **No cross-building duplication**: Each task belongs to exactly ONE building. You see all 8 buildings at once — assign each issue to the single most relevant building.
+
+3. **Be specific**: Reference actual files, functions, or patterns from the repo context. Not generic advice. For deployment, reference the recommended platform and the project's actual framework/services.
+
+4. **Max 6 tasks for deployment, max 4 for other buildings**. Return fewer if fewer are needed. Return [] if the scanner already covers everything.
+
+5. Task IDs must start with the building prefix (e.g., "tests-...", "deployment-...").
+
+Return ONLY a JSON object mapping each building to its task array. No markdown fences, no explanation:
+{
+  "tests": [{"id": "tests-...", "label": "...", "done": false}],
+  "cicd": [],
+  "docker": [],
+  "documentation": [...],
+  "envVars": [],
+  "security": [],
+  "logging": [],
+  "deployment": [{"id": "deployment-...", "label": "...", "done": false}]
+}`
 
   try {
     const response = await client.messages.create({
       model: 'claude-sonnet-4-6',
-      max_tokens: 2048,
-      system: fullSystem,
-      messages: [{ role: 'user', content: buildAnalysisPrompt(buildingId) }],
-    })
+      max_tokens: 4096,
+      system: systemPrompt,
+      messages: [{ role: 'user', content: userMessage }],
+      cwd: repoPath,
+    } as Anthropic.MessageCreateParamsNonStreaming)
 
     const text = response.content
       .filter((block): block is Anthropic.TextBlock => block.type === 'text')
       .map((block) => block.text)
       .join('')
 
-    // Parse JSON from response — handle markdown fences or leading prose
-    const fenceStripped = text.replace(/```json?\n?/g, '').replace(/```/g, '').trim()
-    const arrayMatch = fenceStripped.match(/\[[\s\S]*\]/)
-    if (!arrayMatch) return []
-    const tasks = JSON.parse(arrayMatch[0]) as Task[]
+    const cleaned = text.replace(/```json?\n?/g, '').replace(/```/g, '').trim()
+    const parsed = JSON.parse(cleaned) as Record<string, Task[]>
 
-    // Validate structure
-    if (!Array.isArray(tasks)) return []
+    const result = new Map<BuildingId, Task[]>()
+    for (const buildingId of ALL_BUILDINGS) {
+      const tasks = parsed[buildingId]
+      if (Array.isArray(tasks)) {
+        result.set(
+          buildingId,
+          tasks
+            .filter((t) => t && typeof t.id === 'string' && typeof t.label === 'string' && typeof t.done === 'boolean')
+            .map((t) => ({ id: t.id, label: t.label, done: t.done }))
+        )
+      } else {
+        result.set(buildingId, [])
+      }
+    }
 
-    return tasks
-      .filter((t) => t && typeof t.id === 'string' && typeof t.label === 'string' && typeof t.done === 'boolean')
-      .map((t) => ({ id: t.id, label: t.label, done: t.done }))
+    return result
   } catch (err) {
-    console.error(`Analysis agent error for ${buildingId}:`, err)
-    return []
+    console.error('Deep analysis failed, returning empty tasks:', err)
+    const empty = new Map<BuildingId, Task[]>()
+    for (const b of ALL_BUILDINGS) empty.set(b, [])
+    return empty
   }
 }
 
@@ -124,84 +170,4 @@ export function mergeTasks(scannerTasks: Task[], agentTasks: Task[]): Task[] {
   }
 
   return merged
-}
-
-/**
- * Dedup tasks across all buildings using an LLM call.
- * Sends all tasks from all buildings to Claude, asks it to remove duplicates
- * and assign each task to the single most relevant building.
- */
-export async function deduplicateAcrossBuildings(
-  allResults: Map<BuildingId, Task[]>
-): Promise<Map<BuildingId, Task[]>> {
-  // Build a flat list with building attribution for the LLM
-  const taskList: Array<{ building: BuildingId; id: string; label: string; done: boolean }> = []
-
-  for (const [buildingId, tasks] of allResults) {
-    for (const task of tasks) {
-      taskList.push({ building: buildingId, id: task.id, label: task.label, done: task.done })
-    }
-  }
-
-  if (taskList.length === 0) return allResults
-
-  const prompt = `You are a deduplication agent. Below is a list of tasks generated by 8 specialist agents for different buildings in a codebase analysis tool. Many tasks overlap — the same issue was flagged by multiple agents.
-
-Your job:
-1. Identify duplicate or overlapping tasks (same issue described differently)
-2. For each group of duplicates, keep it in the ONE building where it fits best
-3. Remove the duplicates from all other buildings
-4. Keep tasks that are genuinely unique to their building
-
-The 8 buildings and their domains:
-- tests: test framework, test files, test coverage, test scripts
-- cicd: CI/CD pipelines, GitHub Actions, automated workflows
-- docker: Dockerfile, docker-compose, container config
-- documentation: README, API docs, code comments, dead code
-- envVars: .env files, environment variable management, config loading
-- security: secrets, auth, input validation, CORS, HTTP headers
-- logging: logging library, log levels, request logging, error logging
-- deployment: deploy config, build/start scripts, PORT, health checks, production readiness
-
-Here are all ${taskList.length} tasks:
-
-${JSON.stringify(taskList, null, 2)}
-
-${DEDUP_FORMAT}`
-
-  try {
-    const response = await client.messages.create({
-      model: 'claude-sonnet-4-6',
-      max_tokens: 4096,
-      messages: [{ role: 'user', content: prompt }],
-    })
-
-    const text = response.content
-      .filter((block): block is Anthropic.TextBlock => block.type === 'text')
-      .map((block) => block.text)
-      .join('')
-
-    const cleaned = text.replace(/```json?\n?/g, '').replace(/```/g, '').trim()
-    const parsed = JSON.parse(cleaned) as Record<string, Task[]>
-
-    const result = new Map<BuildingId, Task[]>()
-    for (const [buildingId, tasks] of allResults) {
-      const dedupedTasks = parsed[buildingId]
-      if (Array.isArray(dedupedTasks)) {
-        result.set(
-          buildingId,
-          dedupedTasks
-            .filter((t) => t && typeof t.id === 'string' && typeof t.label === 'string')
-            .map((t) => ({ id: t.id, label: t.label, done: Boolean(t.done) }))
-        )
-      } else {
-        result.set(buildingId, tasks)
-      }
-    }
-
-    return result
-  } catch (err) {
-    console.error('Dedup LLM call failed, returning undeduped tasks:', err)
-    return allResults
-  }
 }

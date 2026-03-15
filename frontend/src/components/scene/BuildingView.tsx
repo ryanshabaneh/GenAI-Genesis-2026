@@ -4,8 +4,8 @@
 // GLB is auto-normalized via bounding box to TARGET_HEIGHT units tall.
 // Camera is auto-positioned based on normalized size.
 
-import { useMemo, useRef, useEffect } from 'react'
-import { Canvas, useThree } from '@react-three/fiber'
+import { useMemo, useRef } from 'react'
+import { Canvas, useThree, useFrame } from '@react-three/fiber'
 import { OrbitControls, useGLTF } from '@react-three/drei'
 import * as THREE from 'three'
 import type { OrbitControls as OCImpl } from 'three-stdlib'
@@ -52,18 +52,30 @@ function NormalizedBuilding({ path, accentColor }: { path: string; accentColor: 
     // Shift so the model's lowest world point sits flush at y = 0
     const yOff = -box.min.y * s
 
-    // Light accent emissive so building colour is visible without blowing out textures
+    // Light accent emissive so building colour is visible without blowing out textures.
+    // IMPORTANT: scene.clone(true) shares material references with the useGLTF cache.
+    // We must clone each material before mutating, otherwise two buildings using the
+    // same GLB (e.g. envVars + cicd both use power_plant.glb) cross-contaminate
+    // each other's emissive colour and corrupt the cached scene for future renders.
     c.traverse((child) => {
       if (!(child as THREE.Mesh).isMesh) return
       const mesh = child as THREE.Mesh
       mesh.castShadow = true
-      const mats = Array.isArray(mesh.material) ? mesh.material : [mesh.material]
-      mats.forEach((m) => {
-        const mat = m as THREE.MeshStandardMaterial
+      if (Array.isArray(mesh.material)) {
+        mesh.material = mesh.material.map((m) => {
+          const mat = (m as THREE.MeshStandardMaterial).clone()
+          mat.emissive = new THREE.Color(accentColor)
+          mat.emissiveIntensity = 0.06
+          mat.needsUpdate = true
+          return mat
+        })
+      } else {
+        const mat = (mesh.material as THREE.MeshStandardMaterial).clone()
         mat.emissive = new THREE.Color(accentColor)
         mat.emissiveIntensity = 0.06
         mat.needsUpdate = true
-      })
+        mesh.material = mat
+      }
     })
 
     return [c, s, yOff]
@@ -79,16 +91,24 @@ function NormalizedBuilding({ path, accentColor }: { path: string; accentColor: 
 function AutoCamera({ modelPath }: { modelPath: string }) {
   const { camera } = useThree()
   const controlsRef = useRef<OCImpl>(null)
+  const done = useRef(false)
+  const lastPath = useRef(modelPath)
 
-  useEffect(() => {
+  // useFrame fires after R3F commits, guaranteeing OrbitControls ref is populated.
+  // Reset done flag whenever modelPath changes so switching buildings re-snaps camera.
+  useFrame(() => {
+    if (lastPath.current !== modelPath) {
+      lastPath.current = modelPath
+      done.current = false
+    }
+    if (done.current) return
     const h = TARGET_H
     camera.position.set(h * 0.85, h * 1.35, h * 1.55)
-    const target = new THREE.Vector3(0, h * 0.38, 0)
-    if (controlsRef.current) {
-      controlsRef.current.target.copy(target)
-      controlsRef.current.update()
-    }
-  }, [modelPath, camera])
+    if (!controlsRef.current) return
+    controlsRef.current.target.set(0, h * 0.38, 0)
+    controlsRef.current.update()
+    done.current = true
+  })
 
   return (
     <OrbitControls

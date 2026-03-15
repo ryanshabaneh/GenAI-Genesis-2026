@@ -22,7 +22,8 @@ export async function cloneRepo(repoUrl: string, destDir: string): Promise<strin
     return clonePath
   }
 
-  fs.mkdirSync(clonePath, { recursive: true })
+  // Ensure parent exists; do NOT create clonePath — git clone creates it
+  fs.mkdirSync(destDir, { recursive: true })
 
   const git = simpleGit()
   await git.clone(normalizedUrl, clonePath, ['--depth', '1'])

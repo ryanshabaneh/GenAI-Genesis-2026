@@ -7,7 +7,9 @@
  * Chat agent: conversational responses with optional code blocks.
  * Appended to each building's system prompt for chat mode.
  */
-export const CHAT_FORMAT = `When generating code, output each file like this:
+export const CHAT_FORMAT = `IMPORTANT: Always confirm with the user before suggesting any code modifications. Describe what you plan to change and why, then wait for the user's approval before outputting code blocks.
+
+When the user confirms, output each file like this:
 // File: path/to/file
 \`\`\`language
 ...code...
@@ -26,27 +28,13 @@ Focus on what to implement, not explaining concepts.
 Give clear, step-by-step implementation instructions that a code editor can follow mechanically.`
 
 /**
- * Analyzer agent: JSON array of tasks.
- * Used as part of the user message in analyzeForTasks().
+ * Analyzer agent: JSON array of tasks (per-building format, used in eval scripts).
  */
 export const ANALYZER_FORMAT = `Return ONLY a JSON array of task objects. No markdown, no explanation, just the array:
 [
   { "id": "unique-id", "label": "Human-readable task description", "done": false },
   ...
 ]`
-
-/**
- * Deduplicator agent: JSON map of building → tasks.
- * Used as part of the user message in deduplicateAcrossBuildings().
- */
-export const DEDUP_FORMAT = `Return ONLY a JSON object mapping each building to its deduplicated task array. No markdown, no explanation:
-{
-  "tests": [{"id": "...", "label": "...", "done": false}],
-  "cicd": [...],
-  ...
-}
-
-Every task must appear in exactly one building. Do not invent new tasks. Do not change labels.`
 
 /**
  * Evaluator agent: raw JSON object (no markdown fences).
@@ -57,6 +45,17 @@ export const EVALUATOR_FORMAT = `Respond with ONLY a JSON object — no markdown
 
 If the code fails any check, set pass to false and explain what needs fixing in feedback:
 { "pass": false, "feedback": "The test file imports a module that doesn't exist.", "summary": "Attempted to add unit tests but imports are broken" }`
+
+/**
+ * Batch repo evaluator: JSON array of per-task results (one object per task).
+ */
+export const BATCH_REPO_EVALUATOR_FORMAT = `Respond with ONLY a JSON array — no markdown fences, no explanation. One object per task:
+[
+  { "id": "task-id", "pass": true, "feedback": "", "summary": "Brief summary" },
+  ...
+]
+
+If a task is NOT fulfilled: { "id": "task-id", "pass": false, "feedback": "What's missing", "summary": "" }`
 
 /**
  * Repo evaluator: same JSON shape as EVALUATOR_FORMAT but for checking repo state.

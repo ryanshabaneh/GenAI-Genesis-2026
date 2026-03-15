@@ -1,11 +1,12 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
 // Mock dependencies before imports
-const { mockCallAider, mockResetAiderChanges, mockCallEvaluator, mockCallAgentForImplementation, mockAddChange, mockGetSession, mockUpdateSession } = vi.hoisted(() => ({
+const { mockCallAider, mockResetAiderChanges, mockCallEvaluator, mockCallAgentForImplementation, mockCallAgent, mockAddChange, mockGetSession, mockUpdateSession } = vi.hoisted(() => ({
   mockCallAider: vi.fn(),
   mockResetAiderChanges: vi.fn(),
   mockCallEvaluator: vi.fn(),
   mockCallAgentForImplementation: vi.fn(),
+  mockCallAgent: vi.fn(),
   mockAddChange: vi.fn(),
   mockGetSession: vi.fn(),
   mockUpdateSession: vi.fn(),
@@ -15,7 +16,11 @@ vi.mock('../agents/aider', () => ({
   callAider: mockCallAider,
   resetAiderChanges: mockResetAiderChanges,
 }))
-vi.mock('../agents/base', () => ({ callAgentForImplementation: mockCallAgentForImplementation }))
+vi.mock('../agents/base', () => ({
+  callAgentForImplementation: mockCallAgentForImplementation,
+  callAgent: mockCallAgent,
+  parseCodeBlocks: vi.fn().mockReturnValue([]),
+}))
 vi.mock('../agents/evaluator', () => ({ callEvaluator: mockCallEvaluator }))
 vi.mock('../changes/queue', () => ({ addChange: mockAddChange }))
 vi.mock('../session/store', () => ({
@@ -23,7 +28,7 @@ vi.mock('../session/store', () => ({
   updateSession: mockUpdateSession,
 }))
 
-import { runTaskImplementation } from './index'
+import { runTaskImplementation, _setAiderAvailable } from './index'
 
 function makeIo() {
   const emit = vi.fn()
@@ -45,6 +50,7 @@ function makeSession(overrides = {}) {
     changes: [],
     conversations: {},
     changeLog: [],
+    pendingReview: null,
     createdAt: Date.now(),
     ...overrides,
   }
@@ -63,35 +69,55 @@ function makeAiderFailure(error = 'aider error') {
 }
 
 describe('runTaskImplementation', () => {
+  let currentSession: ReturnType<typeof makeSession> | undefined
+
   beforeEach(() => {
     vi.clearAllMocks()
+    currentSession = undefined
     mockResetAiderChanges.mockResolvedValue(undefined)
     mockCallAgentForImplementation.mockResolvedValue('Agent-generated implementation instructions')
+    // Force aider as available for tests (skip the execSync check)
+    _setAiderAvailable(true)
+    // Make updateSession actually mutate the session so getSession returns updated state
+    mockUpdateSession.mockImplementation((_id: string, updates: Record<string, unknown>) => {
+      if (currentSession) Object.assign(currentSession, updates)
+    })
   })
 
-  it('runs aider + evaluator and returns completed task IDs on success', async () => {
-    const session = makeSession()
-    mockGetSession.mockReturnValue(session)
+  function setupSession(overrides = {}) {
+    currentSession = makeSession(overrides)
+    mockGetSession.mockReturnValue(currentSession)
+    return currentSession
+  }
+
+  it('runs aider + evaluator and sets pendingReview on success', async () => {
+    setupSession()
     mockCallAider.mockResolvedValue(makeAiderSuccess())
     mockCallEvaluator.mockResolvedValue({ pass: true, feedback: '', summary: 'Added unit tests' })
 
     const io = makeIo()
-    const result = await runTaskImplementation({
+    await runTaskImplementation({
       sessionId: 'sess-1',
       buildingId: 'tests',
       taskIds: ['1'],
       io,
     })
 
-    expect(result.success).toBe(true)
-    expect(result.completedTaskIds).toContain('1')
     expect(mockCallAider).toHaveBeenCalledTimes(1)
     expect(mockCallEvaluator).toHaveBeenCalledTimes(1)
+    // Changes stay on disk — pendingReview is set instead of addChange
+    expect(mockUpdateSession).toHaveBeenCalledWith('sess-1', expect.objectContaining({
+      pendingReview: expect.objectContaining({
+        buildingId: 'tests',
+        taskIds: ['1'],
+        files: ['test.ts'],
+        summary: 'Added unit tests',
+      }),
+    }))
   })
 
-  it('emits task:start and task:complete events', async () => {
-    const session = makeSession()
-    mockGetSession.mockReturnValue(session)
+  it('emits task:start and review:pending events', async () => {
+    setupSession()
     mockCallAider.mockResolvedValue(makeAiderSuccess())
     mockCallEvaluator.mockResolvedValue({ pass: true, feedback: '', summary: 'Done' })
 
@@ -105,19 +131,18 @@ describe('runTaskImplementation', () => {
 
     const emittedTypes = io.to('sess-1').emit.mock.calls.map((c: any) => c[1].type)
     expect(emittedTypes).toContain('task:start')
-    expect(emittedTypes).toContain('task:complete')
+    expect(emittedTypes).toContain('review:pending')
   })
 
-  it('retries when evaluator fails', async () => {
-    const session = makeSession()
-    mockGetSession.mockReturnValue(session)
+  it('retries when evaluator fails then sets pendingReview on pass', async () => {
+    setupSession()
     mockCallAider.mockResolvedValue(makeAiderSuccess())
     mockCallEvaluator
       .mockResolvedValueOnce({ pass: false, feedback: 'Missing coverage', summary: '' })
       .mockResolvedValueOnce({ pass: true, feedback: '', summary: 'Fixed' })
 
     const io = makeIo()
-    const result = await runTaskImplementation({
+    await runTaskImplementation({
       sessionId: 'sess-1',
       buildingId: 'tests',
       taskIds: ['1'],
@@ -126,17 +151,19 @@ describe('runTaskImplementation', () => {
 
     expect(mockCallAider).toHaveBeenCalledTimes(2)
     expect(mockCallEvaluator).toHaveBeenCalledTimes(2)
-    expect(result.success).toBe(true)
+    // After retry passes, pendingReview is set (not addChange)
+    expect(mockUpdateSession).toHaveBeenCalledWith('sess-1', expect.objectContaining({
+      pendingReview: expect.objectContaining({ buildingId: 'tests' }),
+    }))
   })
 
-  it('auto-accepts after MAX_ITERATIONS even if evaluator fails', async () => {
-    const session = makeSession()
-    mockGetSession.mockReturnValue(session)
+  it('sets pendingReview after MAX_ITERATIONS even if evaluator fails', async () => {
+    setupSession()
     mockCallAider.mockResolvedValue(makeAiderSuccess())
     mockCallEvaluator.mockResolvedValue({ pass: false, feedback: 'Still bad', summary: '' })
 
     const io = makeIo()
-    const result = await runTaskImplementation({
+    await runTaskImplementation({
       sessionId: 'sess-1',
       buildingId: 'tests',
       taskIds: ['1'],
@@ -144,13 +171,18 @@ describe('runTaskImplementation', () => {
     })
 
     expect(mockCallAider).toHaveBeenCalledTimes(3)
-    expect(result.success).toBe(true)
-    expect(mockAddChange).toHaveBeenCalledTimes(1)
+    // Changes stay on disk for user review — no immediate addChange
+    expect(mockAddChange).not.toHaveBeenCalled()
+    expect(mockUpdateSession).toHaveBeenCalledWith('sess-1', expect.objectContaining({
+      pendingReview: expect.objectContaining({
+        buildingId: 'tests',
+        taskIds: ['1'],
+      }),
+    }))
   })
 
-  it('saves accepted changes via addChange', async () => {
-    const session = makeSession()
-    mockGetSession.mockReturnValue(session)
+  it('sets pendingReview with changed files (addChange deferred to accept)', async () => {
+    setupSession()
     mockCallAider.mockResolvedValue(makeAiderSuccess([
       { path: 'test.ts', content: 'test code' },
     ]))
@@ -164,15 +196,18 @@ describe('runTaskImplementation', () => {
       io,
     })
 
-    expect(mockAddChange).toHaveBeenCalledTimes(1)
-    const change = mockAddChange.mock.calls[0][1]
-    expect(change.buildingId).toBe('tests')
-    expect(change.files[0].path).toBe('test.ts')
+    // addChange is NOT called until user accepts via /api/accept
+    expect(mockAddChange).not.toHaveBeenCalled()
+    expect(mockUpdateSession).toHaveBeenCalledWith('sess-1', expect.objectContaining({
+      pendingReview: expect.objectContaining({
+        files: ['test.ts'],
+        summary: 'Tests added',
+      }),
+    }))
   })
 
   it('handles aider failure gracefully', async () => {
-    const session = makeSession()
-    mockGetSession.mockReturnValue(session)
+    setupSession()
     mockCallAider.mockResolvedValue(makeAiderFailure('timeout'))
 
     const io = makeIo()
@@ -200,9 +235,22 @@ describe('runTaskImplementation', () => {
     })).rejects.toThrow('Session not found')
   })
 
+  it('throws if pendingReview exists', async () => {
+    setupSession({
+      pendingReview: { buildingId: 'tests', taskIds: ['1'], files: ['test.ts'], summary: 'x', createdAt: Date.now() },
+    })
+
+    const io = makeIo()
+    await expect(runTaskImplementation({
+      sessionId: 'sess-1',
+      buildingId: 'tests',
+      taskIds: ['1'],
+      io,
+    })).rejects.toThrow('pending review must be accepted or rejected')
+  })
+
   it('throws if another implementation is already running', async () => {
-    const session = makeSession()
-    mockGetSession.mockReturnValue(session)
+    setupSession()
     mockCallAider.mockImplementation(() => new Promise((resolve) => setTimeout(() => resolve(makeAiderSuccess()), 100)))
     mockCallEvaluator.mockResolvedValue({ pass: true, feedback: '', summary: 'Done' })
 
@@ -228,8 +276,7 @@ describe('runTaskImplementation', () => {
   })
 
   it('includes user message in agent call', async () => {
-    const session = makeSession()
-    mockGetSession.mockReturnValue(session)
+    setupSession()
     mockCallAider.mockResolvedValue(makeAiderSuccess())
     mockCallEvaluator.mockResolvedValue({ pass: true, feedback: '', summary: 'Done' })
 

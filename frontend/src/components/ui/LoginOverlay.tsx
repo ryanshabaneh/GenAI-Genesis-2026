@@ -5,7 +5,6 @@ import { motion } from 'framer-motion'
 import { useSearchParams } from 'next/navigation'
 import { FiGithub } from 'react-icons/fi'
 import { SplitHeader } from '@/components/text'
-import CurvedLoop from '@/components/text/CurvedLoop'
 import LighthouseLogo from '@/components/landing/LighthouseLogo'
 import GameModal from './GameModal'
 import BubblyButton from './buttonstyles/BubblyButton'
@@ -28,7 +27,8 @@ export default function LoginOverlay() {
 
   return (
     <>
-      <div className="absolute inset-0 flex flex-col items-center justify-center px-6 -translate-y-32">
+      <div className="absolute inset-0" style={{ background: 'radial-gradient(ellipse at 50% 60%, rgba(6,18,32,0.82) 0%, rgba(4,10,20,0.96) 70%)' }} />
+      <div className="absolute inset-0 flex flex-col items-center justify-center px-6">
 
         <div className="absolute inset-0 pointer-events-none overflow-hidden">
           {([
@@ -54,20 +54,26 @@ export default function LoginOverlay() {
           transition={{ duration: 0.4 }}
           className="flex flex-col items-center text-center"
         >
-          <div className="animate-bob relative mb-10">
+          <div className="animate-bob relative mb-14">
             <div className="lighthouse-glow-halo" />
-            <LighthouseLogo size={120} />
+            <LighthouseLogo size={160} />
           </div>
 
-          <div className="mb-3">
+          <div className="mb-2">
             <SplitHeader left="Ship" right="Yard" />
           </div>
 
           <p
-            className="font-ui text-white/60 leading-relaxed max-w-xs mb-12"
-            style={{ fontSize: 'clamp(1rem, 2.2vw, 1.25rem)' }}
+            className="font-ui text-white leading-snug max-w-xs mb-0.5"
+            style={{ fontSize: 'clamp(1rem, 2vw, 1.15rem)' }}
           >
-            Every codebase deserves to ship.<br />Fix what's broken, then set sail.
+            Every codebase deserves to ship.
+          </p>
+          <p
+            className="font-ui text-white/35 leading-relaxed max-w-xs mb-4"
+            style={{ fontSize: 'clamp(0.72rem, 1.3vw, 0.82rem)', letterSpacing: '0.02em' }}
+          >
+            We help you set sail.
           </p>
         </motion.div>
 
@@ -84,15 +90,6 @@ export default function LoginOverlay() {
         </motion.div>
       </div>
 
-      <div className="absolute bottom-0 left-0 right-0 pointer-events-none" style={{ opacity: 0.32 }}>
-        <CurvedLoop
-          marqueeText="a deep dive into your codebase ✦ bridge the gap ✦ "
-          speed={1.1}
-          curveAmount={-18}
-          direction="left"
-          interactive={false}
-        />
-      </div>
 
       <GameModal
         isOpen={isAuthOpen}

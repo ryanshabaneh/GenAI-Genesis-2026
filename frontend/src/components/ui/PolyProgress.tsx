@@ -12,6 +12,8 @@ interface PolyProgressProps {
   showLabel?: boolean
   labelClassName?: string
   title?: string
+  fromColor?: string
+  toColor?: string
 }
 
 const GRADIENT_STOPS = [
@@ -54,16 +56,26 @@ export default function PolyProgress({
   showLabel = false,
   labelClassName = '',
   title,
+  fromColor,
+  toColor,
 }: PolyProgressProps) {
   const v       = Math.max(0, Math.min(100, value))
   const totalW  = 100
-  const tip     = 6
+  const tip     = 0
   const overlap = tip
   const segW    = (totalW + overlap * (segments - 1)) / segments
   const filled  = useMemo(() => (v / 100) * segments, [v, segments])
 
+  const segColor = (i: number) => {
+    if (fromColor && toColor) {
+      const t = segments > 1 ? i / (segments - 1) : 1
+      return lerpColor(fromColor, toColor, t)
+    }
+    return gradientColor((i + 0.5) / segments)
+  }
+
   const edgeIdx   = Math.floor(filled)
-  const edgeColor = gradientColor(Math.min(1, (edgeIdx + 0.5) / segments))
+  const edgeColor = segColor(edgeIdx)
   const glowFilter = animated && v > 0
     ? `drop-shadow(0 0 5px ${edgeColor}cc) drop-shadow(0 0 14px ${edgeColor}55)`
     : undefined
@@ -133,7 +145,7 @@ export default function PolyProgress({
                 return (
                   <polygon key={`f${i}`}
                     points={chevronPoints(i*(segW-overlap), segW, height, tip, i===0)}
-                    fill={gradientColor((i+0.5)/segments)}
+                    fill={segColor(i)}
                     opacity={isFull ? 1 : isEdge ? 0.5 : 0}
                     style={animated && isFull ? { animation: `poly-glow 2.4s ease-in-out ${i*0.07}s infinite` } : undefined}
                   />

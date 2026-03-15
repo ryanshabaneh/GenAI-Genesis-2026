@@ -3,9 +3,10 @@
 import Image from 'next/image'
 import { AnimatePresence, motion } from 'framer-motion'
 import type { CSSProperties } from 'react'
+import { useState } from 'react'
 import { useStore } from '@/store/useStore'
+import { pushChanges } from '@/lib/api'
 import { getBuildingConfig, iconPath } from '@/lib/buildings'
-import CountUp from '@/components/text/CountUp'
 
 
 function UserAvatar({ url, login }: { url: string; login: string }) {
@@ -60,7 +61,7 @@ function ReadinessBlock() {
 
   const building = activeBuilding ? getBuildingConfig(activeBuilding) : null
   const value    = building ? buildings[activeBuilding!].percent : score
-  const label    = building ? building.category : 'Production Readiness'
+  const label    = building ? building.category + ' Progress' : 'Production Readiness'
   const key      = building ? activeBuilding! : 'global'
 
   const fromColor = building ? building.theme.gradient.from : '#4A78D4'
@@ -70,8 +71,8 @@ function ReadinessBlock() {
     ? { color: building.theme.primary, fontSize: '2rem', lineHeight: 1 }
     : { fontSize: '2rem', lineHeight: 1 }
   const numClass = building
-    ? 'font-action font-black tabular-nums'
-    : 'gradient-progress-text gradient-shift-text font-action font-black tabular-nums'
+    ? 'font-action font-light tabular-nums'
+    : 'gradient-progress-text gradient-shift-text font-action font-light tabular-nums'
 
   return (
     <div className="flex items-center gap-3 min-w-0">
@@ -85,9 +86,9 @@ function ReadinessBlock() {
           className="flex items-baseline gap-1 shrink-0"
         >
           <span className={numClass} style={numStyle}>
-            <CountUp to={value} duration={0.8} />
+            {value}
           </span>
-          <span className="font-action font-black text-sm" style={{ color: building ? building.theme.primary : undefined, opacity: 0.7 }}>%</span>
+          <span className={`font-action font-light ${!building ? 'gradient-progress-text gradient-shift-text' : ''}`} style={{ color: building ? building.theme.primary : undefined, opacity: 0.7, fontSize: '2rem', lineHeight: 1 }}>%</span>
         </motion.div>
       </AnimatePresence>
 
@@ -127,13 +128,58 @@ function AgentStatusBtn() {
   const isRunning = Object.values(buildings).some((b) => b.implementStatus === 'running')
 
   return (
-    <button className="glass-text-button">
+    <div className="glass-text-button pointer-events-none">
+      <span style={{
+        width: '6px', height: '6px', borderRadius: '50%', flexShrink: 0,
+        background: isRunning ? '#F59E0B' : '#6EE7B7',
+        boxShadow: isRunning ? '0 0 8px #F59E0BAA' : '0 0 8px #6EE7B7AA',
+      }} />
+      {isRunning ? 'Agent Running' : 'Agent Active'}
+    </div>
+  )
+}
+
+function PushBtn() {
+  const hasUnpushed = useStore((s) => s.hasUnpushedCommits)
+  const setHasUnpushedCommits = useStore((s) => s.setHasUnpushedCommits)
+  const [pushing, setPushing] = useState(false)
+
+  if (!hasUnpushed) return null
+
+  async function handlePush() {
+    const sessionId = sessionStorage.getItem('shipyard_session_id') ?? ''
+    if (!sessionId || pushing) return
+
+    console.log('[push] push button clicked, sessionId:', sessionId)
+    setPushing(true)
+    try {
+      const { pushed } = await pushChanges({ sessionId })
+      if (pushed) {
+        console.log('[push] push succeeded')
+        setHasUnpushedCommits(false)
+      } else {
+        console.warn('[push] push returned pushed=false')
+      }
+    } catch (err) {
+      console.error('[push] push failed:', err)
+    } finally {
+      setPushing(false)
+    }
+  }
+
+  return (
+    <button
+      className="glass-text-button"
+      onClick={handlePush}
+      disabled={pushing}
+      style={pushing ? { opacity: 0.5, pointerEvents: 'none' } : undefined}
+    >
       <span style={{
         width: '0.5em', height: '0.5em', borderRadius: '50%', flexShrink: 0,
-        background: isRunning ? '#F59E0B' : '#6EE7B7',
-        boxShadow: isRunning ? '0 0 6px #F59E0B88' : '0 0 6px #6EE7B788',
+        background: '#2563EB',
+        boxShadow: '0 0 6px #2563EB88',
       }} />
-      {isRunning ? 'running' : 'agent idle'}
+      {pushing ? 'pushing…' : 'push'}
     </button>
   )
 }
@@ -148,7 +194,8 @@ function LogoutBtn() {
 
   return (
     <button className="glass-text-button" onClick={handleLogout}>
-      sign out
+      <span style={{ width: '6px', height: '6px', borderRadius: '50%', flexShrink: 0, background: '#EF4444', boxShadow: '0 0 8px #EF4444AA' }} />
+      Sign Out
     </button>
   )
 }
@@ -170,11 +217,12 @@ export default function TopNav() {
         <RepoIdentity />
       </div>
 
-      <div className="flex items-center justify-center">
+      <div className="absolute left-1/2 -translate-x-1/2 flex items-center justify-center">
         <ReadinessBlock />
       </div>
 
       <div className="flex-1 flex items-center justify-end gap-1">
+        <PushBtn />
         <AgentStatusBtn />
         <LogoutBtn />
       </div>

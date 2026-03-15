@@ -8,7 +8,7 @@ describe('buildAgentContext', () => {
   let tmpDir: string
 
   beforeEach(() => {
-    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'shipcity-test-'))
+    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'shipyard-test-'))
   })
 
   afterEach(() => {

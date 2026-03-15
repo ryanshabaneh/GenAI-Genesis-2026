@@ -10,6 +10,7 @@ import type {
   BuildingState,
   BuildingStatus,
   CodeChange,
+  DeploymentRecommendation,
   GitHubUser,
   Message,
   ScanStatus,
@@ -43,6 +44,9 @@ function makeInitialBuildings(): Record<BuildingId, BuildingState> {
         chatHistory: [],
         implementStatus: 'idle' as const,
         taskFeedback: {},
+        selectedTaskIds: [],
+        acceptedPaths: [],
+        rejectedPaths: [],
       },
     ])
   ) as unknown as Record<BuildingId, BuildingState>
@@ -50,7 +54,7 @@ function makeInitialBuildings(): Record<BuildingId, BuildingState> {
 
 // --- Store shape ---
 
-interface ShipCityStore {
+interface ShipyardStore {
   repoUrl: string
   scanStatus: ScanStatus
   score: number
@@ -63,6 +67,12 @@ interface ShipCityStore {
   scoutDialogue: string
   // Authenticated GitHub user — null if not signed in
   githubUser: GitHubUser | null
+  // Deployment recommendation from scanner
+  deploymentRecommendation: DeploymentRecommendation | null
+  // Platform the user chose to deploy to (from PlatformPicker)
+  chosenPlatform: string | null
+  // Whether there are local commits not yet pushed to remote
+  hasUnpushedCommits: boolean
 
   // Actions
   setRepoUrl: (url: string) => void
@@ -76,9 +86,16 @@ interface ShipCityStore {
   setGithubUser: (user: GitHubUser | null) => void
   setImplementStatus: (id: BuildingId, status: 'idle' | 'running') => void
   setTaskFeedback: (id: BuildingId, taskId: string, feedback: string) => void
+  toggleTaskSelected: (id: BuildingId, taskId: string) => void
+  setDeploymentRecommendation: (rec: DeploymentRecommendation) => void
+  setChosenPlatform: (platform: string) => void
+  setHasUnpushedCommits: (v: boolean) => void
+  setPendingChatMessage: (id: BuildingId, message: string | undefined) => void
+  markPathAccepted: (id: BuildingId, path: string) => void
+  markPathRejected: (id: BuildingId, path: string) => void
 }
 
-export const useStore = create<ShipCityStore>((set) => ({
+export const useStore = create<ShipyardStore>((set) => ({
   repoUrl: '',
   scanStatus: 'idle',
   score: 0,
@@ -87,6 +104,9 @@ export const useStore = create<ShipCityStore>((set) => ({
   changesQueue: [],
   scoutDialogue: '',
   githubUser: null,
+  deploymentRecommendation: null,
+  chosenPlatform: null,
+  hasUnpushedCommits: false,
 
   setRepoUrl: (url) => set({ repoUrl: url }),
 
@@ -151,4 +171,58 @@ export const useStore = create<ShipCityStore>((set) => ({
         },
       },
     })),
+
+  setDeploymentRecommendation: (rec) => set({ deploymentRecommendation: rec }),
+
+  setChosenPlatform: (platform) => set({ chosenPlatform: platform }),
+
+  setHasUnpushedCommits: (v) => set({ hasUnpushedCommits: v }),
+
+  setPendingChatMessage: (id, message) =>
+    set((state) => ({
+      buildings: {
+        ...state.buildings,
+        [id]: { ...state.buildings[id], pendingChatMessage: message },
+      },
+    })),
+
+  markPathAccepted: (id, path) =>
+    set((state) => ({
+      buildings: {
+        ...state.buildings,
+        [id]: {
+          ...state.buildings[id],
+          acceptedPaths: state.buildings[id].acceptedPaths.includes(path)
+            ? state.buildings[id].acceptedPaths
+            : [...state.buildings[id].acceptedPaths, path],
+        },
+      },
+    })),
+
+  markPathRejected: (id, path) =>
+    set((state) => ({
+      buildings: {
+        ...state.buildings,
+        [id]: {
+          ...state.buildings[id],
+          rejectedPaths: state.buildings[id].rejectedPaths.includes(path)
+            ? state.buildings[id].rejectedPaths
+            : [...state.buildings[id].rejectedPaths, path],
+        },
+      },
+    })),
+
+  toggleTaskSelected: (id, taskId) =>
+    set((state) => {
+      const current = state.buildings[id].selectedTaskIds
+      const next = current.includes(taskId)
+        ? current.filter((t) => t !== taskId)
+        : [...current, taskId]
+      return {
+        buildings: {
+          ...state.buildings,
+          [id]: { ...state.buildings[id], selectedTaskIds: next },
+        },
+      }
+    }),
 }))

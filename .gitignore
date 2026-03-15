@@ -15,3 +15,4 @@ yarn-error.log*
 # Analyzer unit tests (test against real repos instead)
 server/src/scanner/analyzers/__tests__/
 .claude/settings.local.json
+.claude/

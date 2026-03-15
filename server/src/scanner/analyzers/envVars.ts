@@ -34,6 +34,18 @@ function hasDotenvInGoMod(repoPath: string): boolean {
   } catch { return false }
 }
 
+/** Check if a file exists in any immediate subdirectory (monorepo support) */
+function findInSubdirs(repoPath: string, filename: string): boolean {
+  const skip = new Set(['node_modules', '.git', 'dist', 'build', '.next', 'coverage', '.cache'])
+  try {
+    for (const entry of fs.readdirSync(repoPath, { withFileTypes: true })) {
+      if (!entry.isDirectory() || skip.has(entry.name)) continue
+      if (fs.existsSync(path.join(repoPath, entry.name, filename))) return true
+    }
+  } catch {}
+  return false
+}
+
 const SOURCE_EXT = /\.[jt]sx?$|\.py$|\.go$|\.rb$/
 
 export const envVarsAnalyzer: Analyzer = {
@@ -42,7 +54,9 @@ export const envVarsAnalyzer: Analyzer = {
   async analyze(ctx: AnalyzerContext): Promise<AnalyzerResult> {
     const hasEnvExample =
       fs.existsSync(path.join(ctx.repoPath, '.env.example')) ||
-      fs.existsSync(path.join(ctx.repoPath, '.env.template'))
+      fs.existsSync(path.join(ctx.repoPath, '.env.template')) ||
+      findInSubdirs(ctx.repoPath, '.env.example') ||
+      findInSubdirs(ctx.repoPath, '.env.template')
 
     let envInGitignore = false
     const gitignorePath = path.join(ctx.repoPath, '.gitignore')

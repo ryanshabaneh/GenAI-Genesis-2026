@@ -30,7 +30,7 @@ const getAttr = (distance: number, maxDist: number, minVal: number, maxVal: numb
   Math.max(minVal, maxVal - Math.abs((maxVal * distance) / maxDist) + minVal)
 
 export default function TextPressure({
-  text = 'ShipCity',
+  text = 'Shipyard',
   fontFamily = 'var(--font-display)',
   fontUrl,
   weight = true,

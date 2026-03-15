@@ -1,5 +1,5 @@
 // server/src/index.ts
-// Express + Socket.IO entry point for the ShipCity backend.
+// Express + Socket.IO entry point for the Shipyard backend.
 // Responsibilities: CORS, JSON parsing, route mounting, Socket.IO session rooms,
 // global error handling, and process-level exception guards.
 // io is attached to app.locals so route handlers can emit events without
@@ -17,6 +17,10 @@ import acceptRouter from './routes/accept'
 import exportRouter from './routes/export'
 import implementRouter from './routes/implement'
 import evaluateRouter from './routes/evaluate'
+import platformRouter from './routes/platform'
+import verifyRouter from './routes/verify'
+import rejectRouter from './routes/reject'
+import pushRouter from './routes/push'
 import authRouter from './routes/auth'
 
 const PORT = process.env['PORT'] ? parseInt(process.env['PORT'], 10) : 3001
@@ -69,6 +73,10 @@ app.use('/api/accept', acceptRouter)
 app.use('/api/export', exportRouter)
 app.use('/api/implement', implementRouter)
 app.use('/api/evaluate', evaluateRouter)
+app.use('/api/platform', platformRouter)
+app.use('/api/verify', verifyRouter)
+app.use('/api/reject', rejectRouter)
+app.use('/api/push', pushRouter)
 
 // Health check — used by hosting platforms (Railway, Fly.io) to verify the process is alive
 app.get('/health', (_req, res) => {
@@ -108,6 +116,6 @@ process.on('unhandledRejection', (reason) => {
 })
 
 httpServer.listen(PORT, () => {
-  console.log(`[server] ShipCity server running on http://localhost:${PORT}`)
+  console.log(`[server] Shipyard server running on http://localhost:${PORT}`)
   console.log(`[server] Accepting requests from ${FRONTEND_URL}`)
 })

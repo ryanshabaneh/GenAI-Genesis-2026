@@ -2,7 +2,7 @@ import { deduplicateAcrossBuildings } from '../src/agents/analyzer'
 import type { BuildingId, Task } from '../src/types'
 import fs from 'fs'
 
-const dir = process.argv[2] || '/tmp/shipcity-pipeline-results'
+const dir = process.argv[2] || '/tmp/shipyard-pipeline-results'
 const buildings: BuildingId[] = ['documentation','tests','envVars','security','logging','cicd','docker','deployment']
 const input = new Map<BuildingId, Task[]>()
 
