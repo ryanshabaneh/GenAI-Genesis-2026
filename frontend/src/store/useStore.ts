@@ -88,6 +88,7 @@ interface ShipyardStore {
   setDeploymentRecommendation: (rec: DeploymentRecommendation) => void
   setChosenPlatform: (platform: string) => void
   setHasUnpushedCommits: (v: boolean) => void
+  setPendingChatMessage: (id: BuildingId, message: string | undefined) => void
 }
 
 export const useStore = create<ShipyardStore>((set) => ({
@@ -172,6 +173,14 @@ export const useStore = create<ShipyardStore>((set) => ({
   setChosenPlatform: (platform) => set({ chosenPlatform: platform }),
 
   setHasUnpushedCommits: (v) => set({ hasUnpushedCommits: v }),
+
+  setPendingChatMessage: (id, message) =>
+    set((state) => ({
+      buildings: {
+        ...state.buildings,
+        [id]: { ...state.buildings[id], pendingChatMessage: message },
+      },
+    })),
 
   toggleTaskSelected: (id, taskId) =>
     set((state) => {

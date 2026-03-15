@@ -190,16 +190,23 @@ function StepTasklist({ buildingId, state, pendingTasks, onChat }: {
   pendingTasks: typeof state.tasks
   onChat: () => void
 }) {
-  const { runImplement, isRunning } = useImplement(buildingId)
   const toggleTaskSelected = useStore((s) => s.toggleTaskSelected)
+  const setPendingChatMessage = useStore((s) => s.setPendingChatMessage)
 
   const pendingIds = pendingTasks.map((t) => t.id)
   const selectedIds = state.selectedTaskIds ?? []
   // When tasks are selected, use only those; otherwise use all pending (default)
-  const taskIdsToFix =
+  const tasksToFix =
     selectedIds.length > 0
-      ? pendingIds.filter((id) => selectedIds.includes(id))
-      : pendingIds
+      ? pendingTasks.filter((t) => selectedIds.includes(t.id))
+      : pendingTasks
+
+  function handleAutoFix() {
+    const taskLines = tasksToFix.map((t) => `- ${t.label}`).join('\n')
+    const message = `Please fix all of these tasks:\n\n${taskLines}\n\nProvide the code changes for each.`
+    setPendingChatMessage(buildingId, message)
+    onChat()
+  }
 
   return (
     <div className="px-5 py-4 flex flex-col gap-4">
@@ -219,9 +226,9 @@ function StepTasklist({ buildingId, state, pendingTasks, onChat }: {
           <button onClick={onChat} className="w-full py-2.5 rounded-[10px] bg-cyan/10 border border-cyan/25 text-cyan text-xs font-display font-black uppercase tracking-[1px] hover:bg-cyan/20 hover:border-cyan/40 transition-all duration-[150ms] active:scale-[0.98]">
             Talk to Agent →
           </button>
-          <button disabled={isRunning} onClick={() => runImplement(taskIdsToFix)}
+          <button onClick={handleAutoFix}
             className="w-full py-2.5 rounded-[10px] bg-blue/20 border border-blue/30 text-blue text-xs font-display font-black uppercase tracking-[1px] hover:bg-blue/30 disabled:opacity-40 disabled:pointer-events-none transition-all duration-[150ms] active:scale-[0.98]">
-            {isRunning ? 'Working…' : 'Auto-fix'}
+            Auto-fix
           </button>
         </div>
       )}

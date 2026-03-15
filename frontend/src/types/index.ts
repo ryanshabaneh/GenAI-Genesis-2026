@@ -38,6 +38,8 @@ export interface BuildingState {
   taskFeedback: Record<string, string>
   /** Task IDs the user has clicked to select (checkbox checked but not implemented) */
   selectedTaskIds: string[]
+  /** Auto-fix message queued to be sent when navigating to chat */
+  pendingChatMessage?: string
 }
 
 export type MessageRole = 'user' | 'assistant'

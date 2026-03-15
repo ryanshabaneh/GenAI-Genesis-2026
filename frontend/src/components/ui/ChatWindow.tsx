@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { useAgent } from '@/hooks/useAgent'
+import { useStore } from '@/store/useStore'
 import CodePreview from './CodePreview'
 import type { BuildingId, Message } from '@/types'
 
@@ -78,6 +79,18 @@ export default function ChatWindow({ buildingId }: { buildingId: BuildingId }) {
   const [input, setInput] = useState('')
   const { sendMessage, isLoading, chatHistory } = useAgent(buildingId)
   const bottomRef = useRef<HTMLDivElement>(null)
+  const pendingChatMessage = useStore((s) => s.buildings[buildingId].pendingChatMessage)
+  const setPendingChatMessage = useStore((s) => s.setPendingChatMessage)
+  const pendingSentRef = useRef(false)
+
+  // Auto-send pending message from Auto-fix button
+  useEffect(() => {
+    if (pendingChatMessage && !isLoading && !pendingSentRef.current) {
+      pendingSentRef.current = true
+      setPendingChatMessage(buildingId, undefined)
+      void sendMessage(pendingChatMessage)
+    }
+  }, [pendingChatMessage, isLoading, buildingId, sendMessage, setPendingChatMessage])
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
