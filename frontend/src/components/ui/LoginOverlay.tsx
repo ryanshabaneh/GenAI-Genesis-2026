@@ -27,7 +27,7 @@ export default function LoginOverlay() {
 
   return (
     <>
-      <div className="absolute inset-0" style={{ background: 'radial-gradient(ellipse at 50% 60%, rgba(6,18,32,0.82) 0%, rgba(4,10,20,0.96) 70%)' }} />
+      <div className="absolute inset-0" style={{ background: 'radial-gradient(ellipse at 50% 60%, rgba(210,232,255,0.75) 0%, rgba(225,242,255,0.92) 70%)' }} />
       <div className="absolute inset-0 flex flex-col items-center justify-center px-6">
 
         <div className="absolute inset-0 pointer-events-none overflow-hidden">
@@ -64,14 +64,14 @@ export default function LoginOverlay() {
           </div>
 
           <p
-            className="font-ui text-white leading-snug max-w-xs mb-0.5"
-            style={{ fontSize: 'clamp(1rem, 2vw, 1.15rem)' }}
+            className="font-ui leading-snug max-w-xs mb-0.5"
+            style={{ fontSize: 'clamp(1rem, 2vw, 1.15rem)', color: '#1A3355' }}
           >
             Every codebase deserves to ship.
           </p>
           <p
-            className="font-ui text-white/35 leading-relaxed max-w-xs mb-4"
-            style={{ fontSize: 'clamp(0.72rem, 1.3vw, 0.82rem)', letterSpacing: '0.02em' }}
+            className="font-ui leading-relaxed max-w-xs mb-4"
+            style={{ fontSize: 'clamp(0.72rem, 1.3vw, 0.82rem)', letterSpacing: '0.02em', color: 'rgba(26,51,85,0.50)' }}
           >
             We help you set sail.
           </p>
@@ -96,15 +96,15 @@ export default function LoginOverlay() {
         onClose={() => setIsAuthOpen(false)}
         icon={<FiGithub />}
       >
-        <h3 className="text-white font-display font-black text-xl mb-1">
+        <h3 className="font-display font-black text-xl mb-1" style={{ color: '#1A3355' }}>
           Connect GitHub
         </h3>
-        <p className="text-white/60 text-sm font-ui mb-5">
+        <p className="text-sm font-ui mb-5" style={{ color: 'rgba(26,51,85,0.60)' }}>
           Read-only access. Until you need us.
         </p>
 
         {authError && (
-          <p className="text-white/80 text-xs font-ui bg-white/10 rounded-full px-4 py-1.5 mb-3">
+          <p className="text-xs font-ui rounded-full px-4 py-1.5 mb-3" style={{ color: 'rgba(26,51,85,0.80)', background: 'rgba(74,138,212,0.10)' }}>
             {authError}
           </p>
         )}
