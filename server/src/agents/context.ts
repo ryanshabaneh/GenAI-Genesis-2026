@@ -272,7 +272,11 @@ export async function buildSlimContext(buildingId: BuildingId, repoPath: string)
   }
 
   if (sections.length === 0) return 'No relevant files were found in the repository.'
-  return `Here are the key files from the repository:\n\n${sections.join('\n\n')}`
+  return `## USER'S REPOSITORY (cloned to: ${repoPath})
+
+IMPORTANT: The files below are from the user's repository — the project you are analyzing. All analysis MUST be about THIS repository.
+
+${sections.join('\n\n')}`
 }
 
 export async function buildAgentContext(buildingId: BuildingId, repoPath: string): Promise<string> {
@@ -359,5 +363,9 @@ export async function buildAgentContext(buildingId: BuildingId, repoPath: string
     return 'No relevant files were found in the repository for this area.'
   }
 
-  return `Here are the relevant files from the repository:\n\n${sections.join('\n\n')}`
+  return `## USER'S REPOSITORY (cloned to: ${repoPath})
+
+IMPORTANT: The files below are from the user's repository — the project you are analyzing and helping with. All your answers, suggestions, and code generation MUST be about THIS repository. Do not describe or reference any other project.
+
+${sections.join('\n\n')}`
 }

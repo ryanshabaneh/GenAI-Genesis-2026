@@ -12,6 +12,7 @@ export default function BuildingPanel() {
   const activeBuilding = useStore((s) => s.activeBuilding)
   const buildings = useStore((s) => s.buildings)
   const setActiveBuilding = useStore((s) => s.setActiveBuilding)
+  const toggleTaskSelected = useStore((s) => s.toggleTaskSelected)
 
   if (!activeBuilding) return null
 
@@ -23,8 +24,14 @@ export default function BuildingPanel() {
   const progressColor = isComplete ? 'bg-teal' : 'bg-blue'
   const percentColor  = isComplete ? 'text-teal' : 'text-blue'
 
-  // Pending task IDs for implement/evaluate actions
+  // Pending (not done) task IDs
   const pendingTaskIds = state.tasks.filter((t) => !t.done).map((t) => t.id)
+  // When tasks are selected, use only those; otherwise use all pending (default)
+  const selectedIds = state.selectedTaskIds ?? []
+  const taskIdsToFix =
+    selectedIds.length > 0
+      ? pendingTaskIds.filter((id) => selectedIds.includes(id))
+      : pendingTaskIds
 
   return (
     <div className="absolute right-4 top-4 bottom-4 w-80 flex flex-col overlay rounded-[18px] animate-slide-in-right overflow-hidden">
@@ -72,11 +79,15 @@ export default function BuildingPanel() {
         <p className="text-fog text-[10px] font-display font-black uppercase tracking-[1.5px] mb-2">
           Checklist
         </p>
-        <TaskChecklist tasks={state.tasks} />
+        <TaskChecklist
+          tasks={state.tasks}
+          selectedTaskIds={state.selectedTaskIds ?? []}
+          onTaskClick={(taskId) => toggleTaskSelected(activeBuilding, taskId)}
+        />
 
-        {/* Implement / Evaluate actions */}
+        {/* Implement / Evaluate — uses selected tasks when any selected, else all pending */}
         {pendingTaskIds.length > 0 && (
-          <ImplementActions buildingId={activeBuilding} pendingTaskIds={pendingTaskIds} />
+          <ImplementActions buildingId={activeBuilding} taskIds={taskIdsToFix} />
         )}
       </div>
 
@@ -91,31 +102,31 @@ export default function BuildingPanel() {
 
 function ImplementActions({
   buildingId,
-  pendingTaskIds,
+  taskIds,
 }: {
   buildingId: import('@/types').BuildingId
-  pendingTaskIds: string[]
+  taskIds: string[]
 }) {
   const { runImplement, runEvaluate, isRunning } = useImplement(buildingId)
 
   return (
     <div className="flex gap-2 mt-3">
-      <Button
-        variant="primary"
-        disabled={isRunning}
-        onClick={() => runImplement(pendingTaskIds)}
-        className="flex-1 !px-3 !py-2 text-xs"
-      >
-        {isRunning ? 'Working…' : 'Auto-fix'}
-      </Button>
-      <Button
-        variant="ghost"
-        disabled={isRunning}
-        onClick={() => runEvaluate(pendingTaskIds)}
-        className="flex-1 !px-3 !py-2 text-xs"
-      >
-        Evaluate
-      </Button>
+        <Button
+          variant="primary"
+          disabled={isRunning}
+          onClick={() => runImplement(taskIds)}
+          className="flex-1 !px-3 !py-2 text-xs"
+        >
+          {isRunning ? 'Working…' : 'Auto-fix'}
+        </Button>
+        <Button
+          variant="ghost"
+          disabled={isRunning}
+          onClick={() => runEvaluate(taskIds)}
+          className="flex-1 !px-3 !py-2 text-xs"
+        >
+          Evaluate
+        </Button>
     </div>
   )
 }

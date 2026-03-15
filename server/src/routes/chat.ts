@@ -41,10 +41,11 @@ async function summarizeHistory(messages: Message[]): Promise<string> {
 }
 
 router.post('/', async (req: Request, res: Response): Promise<void> => {
-  const { sessionId, buildingId, message } = req.body as {
+  const { sessionId, buildingId, message, taskIds } = req.body as {
     sessionId?: string
     buildingId?: BuildingId
     message?: string
+    taskIds?: string[]
   }
 
   if (!sessionId || !buildingId || !message) {
@@ -58,11 +59,26 @@ router.post('/', async (req: Request, res: Response): Promise<void> => {
     return
   }
 
+  if (!session.repoPath) {
+    res.status(409).json({ error: 'Scan is still in progress — please wait for it to finish before chatting.' })
+    return
+  }
+
   // Server is source of truth for conversation history
   const history: Message[] = session.conversations[buildingId] ?? []
 
   // Build change log context for cross-building awareness
   const changeLogContext = buildChangeLogContext(session, buildingId)
+
+  // When taskIds provided, filter scan result so agent focuses on those tasks; else use all
+  const rawResult = session.results[buildingId]
+  const scanResult =
+    taskIds?.length && rawResult
+      ? {
+          ...rawResult,
+          tasks: rawResult.tasks.filter((t) => taskIds.includes(t.id)),
+        }
+      : rawResult
 
   try {
     const reply = await callAgent({
@@ -70,7 +86,7 @@ router.post('/', async (req: Request, res: Response): Promise<void> => {
       repoPath: session.repoPath,
       message,
       history,
-      scanResult: session.results[buildingId],
+      scanResult,
       changeLogContext: changeLogContext || undefined,
     })
 

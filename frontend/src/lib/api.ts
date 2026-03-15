@@ -31,6 +31,7 @@ export async function sendChatMessage(params: {
   buildingId: BuildingId
   message: string
   history: Message[]
+  taskIds?: string[]
 }): Promise<{ reply: Message }> {
   const res = await fetch(`${API_BASE}/api/chat`, {
     method: 'POST',

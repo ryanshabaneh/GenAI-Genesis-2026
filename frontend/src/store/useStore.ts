@@ -43,6 +43,7 @@ function makeInitialBuildings(): Record<BuildingId, BuildingState> {
         chatHistory: [],
         implementStatus: 'idle' as const,
         taskFeedback: {},
+        selectedTaskIds: [],
       },
     ])
   ) as unknown as Record<BuildingId, BuildingState>
@@ -76,6 +77,7 @@ interface ShipCityStore {
   setGithubUser: (user: GitHubUser | null) => void
   setImplementStatus: (id: BuildingId, status: 'idle' | 'running') => void
   setTaskFeedback: (id: BuildingId, taskId: string, feedback: string) => void
+  toggleTaskSelected: (id: BuildingId, taskId: string) => void
 }
 
 export const useStore = create<ShipCityStore>((set) => ({
@@ -149,4 +151,18 @@ export const useStore = create<ShipCityStore>((set) => ({
         },
       },
     })),
+
+  toggleTaskSelected: (id, taskId) =>
+    set((state) => {
+      const current = state.buildings[id].selectedTaskIds
+      const next = current.includes(taskId)
+        ? current.filter((t) => t !== taskId)
+        : [...current, taskId]
+      return {
+        buildings: {
+          ...state.buildings,
+          [id]: { ...state.buildings[id], selectedTaskIds: next },
+        },
+      }
+    }),
 }))

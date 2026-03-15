@@ -31,6 +31,11 @@ router.post('/', async (req: Request, res: Response): Promise<void> => {
     return
   }
 
+  if (!session.repoPath) {
+    res.status(409).json({ error: 'Scan is still in progress — please wait for it to finish.' })
+    return
+  }
+
   const buildingResult = session.results[buildingId]
   if (!buildingResult) {
     res.status(404).json({ error: `No scan results for building: ${buildingId}` })

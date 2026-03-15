@@ -36,6 +36,8 @@ export interface BuildingState {
   chatHistory: Message[]
   implementStatus: 'idle' | 'running'
   taskFeedback: Record<string, string>
+  /** Task IDs the user has clicked to select (checkbox checked but not implemented) */
+  selectedTaskIds: string[]
 }
 
 export type MessageRole = 'user' | 'assistant'

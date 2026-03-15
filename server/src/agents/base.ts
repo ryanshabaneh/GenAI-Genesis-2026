@@ -45,7 +45,8 @@ export async function callAgent(params: {
   const scannerPreprompt = buildScannerPreprompt(scanResult)
 
   const changeLogBlock = changeLogContext ? changeLogContext + '\n\n---\n\n' : ''
-  const systemWithContext = `${systemPrompt}\n\n---\n\n${scannerPreprompt ? scannerPreprompt + '\n\n---\n\n' : ''}${changeLogBlock}${context}`
+  const repoAnchor = `You are analyzing the user's repository cloned at: ${repoPath}\nEverything you say should be about THEIR project — not about ShipCity or any other system.\n\n---\n\n`
+  const systemWithContext = `${systemPrompt}\n\n---\n\n${repoAnchor}${scannerPreprompt ? scannerPreprompt + '\n\n---\n\n' : ''}${changeLogBlock}${context}`
 
   // Map history to Anthropic message format
   const messages: Anthropic.MessageParam[] = [
@@ -101,7 +102,8 @@ export async function callAgentForImplementation(params: {
   const scannerPreprompt = buildScannerPreprompt(scanResult)
 
   const changeLogBlock = changeLogContext ? changeLogContext + '\n\n---\n\n' : ''
-  const systemWithContext = `${systemPrompt}\n\n${IMPLEMENTATION_FORMAT}\n\n---\n\n${scannerPreprompt ? scannerPreprompt + '\n\n---\n\n' : ''}${changeLogBlock}${context}`
+  const repoAnchor = `You are analyzing the user's repository cloned at: ${repoPath}\nEverything you say should be about THEIR project — not about ShipCity or any other system.\n\n---\n\n`
+  const systemWithContext = `${systemPrompt}\n\n${IMPLEMENTATION_FORMAT}\n\n---\n\n${repoAnchor}${scannerPreprompt ? scannerPreprompt + '\n\n---\n\n' : ''}${changeLogBlock}${context}`
 
   const messages: Anthropic.MessageParam[] = [
     ...history.map((msg) => ({
