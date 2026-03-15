@@ -45,6 +45,8 @@ function makeInitialBuildings(): Record<BuildingId, BuildingState> {
         implementStatus: 'idle' as const,
         taskFeedback: {},
         selectedTaskIds: [],
+        acceptedPaths: [],
+        rejectedPaths: [],
       },
     ])
   ) as unknown as Record<BuildingId, BuildingState>
@@ -85,6 +87,8 @@ interface ShipyardStore {
   toggleTaskSelected: (id: BuildingId, taskId: string) => void
   setDeploymentRecommendation: (rec: DeploymentRecommendation) => void
   setChosenPlatform: (platform: string) => void
+  markPathAccepted: (id: BuildingId, path: string) => void
+  markPathRejected: (id: BuildingId, path: string) => void
 }
 
 export const useStore = create<ShipyardStore>((set) => ({
@@ -166,6 +170,32 @@ export const useStore = create<ShipyardStore>((set) => ({
   setDeploymentRecommendation: (rec) => set({ deploymentRecommendation: rec }),
 
   setChosenPlatform: (platform) => set({ chosenPlatform: platform }),
+
+  markPathAccepted: (id, path) =>
+    set((state) => ({
+      buildings: {
+        ...state.buildings,
+        [id]: {
+          ...state.buildings[id],
+          acceptedPaths: state.buildings[id].acceptedPaths.includes(path)
+            ? state.buildings[id].acceptedPaths
+            : [...state.buildings[id].acceptedPaths, path],
+        },
+      },
+    })),
+
+  markPathRejected: (id, path) =>
+    set((state) => ({
+      buildings: {
+        ...state.buildings,
+        [id]: {
+          ...state.buildings[id],
+          rejectedPaths: state.buildings[id].rejectedPaths.includes(path)
+            ? state.buildings[id].rejectedPaths
+            : [...state.buildings[id].rejectedPaths, path],
+        },
+      },
+    })),
 
   toggleTaskSelected: (id, taskId) =>
     set((state) => {

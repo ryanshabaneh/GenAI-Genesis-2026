@@ -38,6 +38,9 @@ export interface BuildingState {
   taskFeedback: Record<string, string>
   /** Task IDs the user has clicked to select (checkbox checked but not implemented) */
   selectedTaskIds: string[]
+  /** File paths that have been accepted or skipped in CodePreview */
+  acceptedPaths: string[]
+  rejectedPaths: string[]
 }
 
 export type MessageRole = 'user' | 'assistant'
