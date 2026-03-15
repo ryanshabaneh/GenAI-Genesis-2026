@@ -5,10 +5,12 @@ Shipyard analyzes a GitHub repository and visualizes its production readiness as
 ## What it does
 
 1. Sign in with GitHub and pick one of your repos, or paste any public GitHub URL
-2. Shipyard clones the repo and runs 8 deterministic analyzers — results stream live via WebSocket as buildings rise in real time
-3. Click any building to open a chat with its specialist AI agent, which reads your actual source files for context
-4. The agent generates code. Accept changes to queue them up
-5. Export all accepted changes as a ZIP
+2. Shipyard clones the repo and runs 8 deterministic analyzers, results stream live via WebSocket as buildings rise in real time
+3. Deeper analysis is run while considering 8 angles in order to determine how the gap can be closed between what is in the repo and deployment 
+4. Click any building in the side bar to open a chat with its specialist AI agent, which reads your actual source files for context
+5. The agent generates code. Accept changes to queue them up
+6. Commit and push within the application
+7. When deployment bar is full, chat with the specialized deployment agent to get your app up and running
 
 ## The 8 buildings
 
