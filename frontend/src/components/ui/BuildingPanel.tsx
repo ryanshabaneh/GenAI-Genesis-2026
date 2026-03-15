@@ -6,6 +6,7 @@ import { useStore } from '@/store/useStore'
 import { BUILDINGS } from '@/lib/buildings'
 import { percentToStage } from '@/lib/stages'
 import ChatWindow from './ChatWindow'
+import TaskChecklist from './TaskChecklist'
 import PolyProgress from './PolyProgress'
 import { useImplement } from '@/hooks/useImplement'
 import { useBuildingFlow } from '@/hooks/useBuildingFlow'
@@ -146,7 +147,15 @@ function StepTasklist({ buildingId, state, pendingTasks, onChat }: {
   onChat: () => void
 }) {
   const { runImplement, runEvaluate, isRunning } = useImplement(buildingId)
+  const toggleTaskSelected = useStore((s) => s.toggleTaskSelected)
+
   const pendingIds = pendingTasks.map((t) => t.id)
+  const selectedIds = state.selectedTaskIds ?? []
+  // When tasks are selected, use only those; otherwise use all pending (default)
+  const taskIdsToFix =
+    selectedIds.length > 0
+      ? pendingIds.filter((id) => selectedIds.includes(id))
+      : pendingIds
 
   return (
     <div className="px-5 py-4 flex flex-col gap-4">
@@ -154,18 +163,11 @@ function StepTasklist({ buildingId, state, pendingTasks, onChat }: {
         <p className="text-fog text-[10px] font-display font-black uppercase tracking-[1.5px] mb-3">
           Checklist — {state.tasks.filter((t) => t.done).length}/{state.tasks.length} done
         </p>
-        <div className="stagger-parent flex flex-col gap-1.5">
-          {state.tasks.map((task) => (
-            <div key={task.id} className="stagger-item flex items-center gap-2.5 py-1.5">
-              <span className={`shrink-0 w-4 h-4 rounded border flex items-center justify-center text-[9px] transition-colors duration-[200ms] ${task.done ? 'bg-teal/20 border-teal/40 text-teal' : 'bg-white/5 border-white/15 text-fog'}`}>
-                {task.done ? '✓' : ''}
-              </span>
-              <span className={`text-xs font-ui leading-snug transition-colors duration-[200ms] ${task.done ? 'text-fog line-through decoration-fog/50' : 'text-white/80'}`}>
-                {task.label}
-              </span>
-            </div>
-          ))}
-        </div>
+        <TaskChecklist
+          tasks={state.tasks}
+          selectedTaskIds={selectedIds}
+          onTaskClick={(taskId) => toggleTaskSelected(buildingId, taskId)}
+        />
       </div>
 
       {pendingTasks.length > 0 && (
@@ -174,11 +176,11 @@ function StepTasklist({ buildingId, state, pendingTasks, onChat }: {
             Talk to Agent →
           </button>
           <div className="flex gap-2">
-            <button disabled={isRunning} onClick={() => runImplement(pendingIds)}
+            <button disabled={isRunning} onClick={() => runImplement(taskIdsToFix)}
               className="flex-1 py-2.5 rounded-[10px] bg-blue/20 border border-blue/30 text-blue text-xs font-display font-black uppercase tracking-[1px] hover:bg-blue/30 disabled:opacity-40 disabled:pointer-events-none transition-all duration-[150ms] active:scale-[0.98]">
               {isRunning ? 'Working…' : 'Auto-fix'}
             </button>
-            <button disabled={isRunning} onClick={() => runEvaluate(pendingIds)}
+            <button disabled={isRunning} onClick={() => runEvaluate(taskIdsToFix)}
               className="flex-1 py-2.5 rounded-[10px] bg-surface3 border border-white/10 text-fog text-xs font-display font-black uppercase tracking-[1px] hover:bg-surface3/80 hover:text-white disabled:opacity-40 disabled:pointer-events-none transition-all duration-[150ms] active:scale-[0.98]">
               Evaluate
             </button>
