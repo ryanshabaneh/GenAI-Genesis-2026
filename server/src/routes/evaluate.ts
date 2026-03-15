@@ -63,7 +63,10 @@ router.post('/', async (req: Request, res: Response): Promise<void> => {
           filesChanged: [],
           completedAt: Date.now(),
         })
-        return { ...t, done: true }
+        return { ...t, done: true, feedback: undefined }
+      }
+      if (evalResult && !evalResult.pass) {
+        return { ...t, feedback: evalResult.feedback }
       }
       return t
     })
@@ -103,6 +106,7 @@ router.post('/', async (req: Request, res: Response): Promise<void> => {
           ? { taskId: r.taskId, pass: true, summary: r.summary }
           : { taskId: r.taskId, pass: false, feedback: r.feedback }
       ),
+      tasks: updatedTasks,
       percent,
       score,
     })
