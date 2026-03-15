@@ -14,11 +14,17 @@ interface CodePreviewProps {
 }
 
 export default function CodePreview({ codeBlock, buildingId, onAccepted, onRejected }: CodePreviewProps) {
-  const [status, setStatus] = useState<'idle' | 'accepting' | 'accepted' | 'rejected'>('idle')
+  const bid = buildingId as import('@/types').BuildingId
+  const isAccepted = useStore((s) => s.buildings[bid]?.acceptedPaths.includes(codeBlock.path))
+  const isRejected = useStore((s) => s.buildings[bid]?.rejectedPaths.includes(codeBlock.path))
+  const initialStatus = isAccepted ? 'accepted' : isRejected ? 'rejected' : 'idle'
+  const [status, setStatus] = useState<'idle' | 'accepting' | 'accepted' | 'rejected'>(initialStatus)
   const setBuildingStatus = useStore((s) => s.setBuildingStatus)
   const setScore = useStore((s) => s.setScore)
   const addChange = useStore((s) => s.addChange)
   const setHasUnpushedCommits = useStore((s) => s.setHasUnpushedCommits)
+  const markPathAccepted = useStore((s) => s.markPathAccepted)
+  const markPathRejected = useStore((s) => s.markPathRejected)
 
   async function handleAccept() {
     setStatus('accepting')
@@ -34,6 +40,7 @@ export default function CodePreview({ codeBlock, buildingId, onAccepted, onRejec
       setScore(score)
       addChange({ id: `change-${Date.now()}`, buildingId: bid, files: [{ path: codeBlock.path, content: codeBlock.content, isNew: true }], acceptedAt: Date.now() })
       setHasUnpushedCommits(true)
+      markPathAccepted(bid, codeBlock.path)
       setStatus('accepted')
       onAccepted?.(codeBlock.path)
     } catch {
@@ -51,6 +58,7 @@ export default function CodePreview({ codeBlock, buildingId, onAccepted, onRejec
     } catch {
       // Reject API may fail if no pending review — still update UI
     }
+    markPathRejected(bid, codeBlock.path)
     setStatus('rejected')
     onRejected?.(codeBlock.path)
   }

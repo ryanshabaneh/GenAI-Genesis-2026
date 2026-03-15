@@ -1,7 +1,6 @@
 'use client'
 
 import { useRef } from 'react'
-import { motion } from 'framer-motion'
 import VariableProximity from './VariableProximity'
 
 interface SplitHeaderProps {
@@ -11,12 +10,6 @@ interface SplitHeaderProps {
   accentGradient?: boolean
   className?: string
 }
-
-const slide = (dir: 1 | -1) => ({
-  initial:    { x: `${dir * 140}%`, opacity: 0 },
-  animate:    { x: '0%', opacity: 1 },
-  transition: { type: 'spring' as const, stiffness: 280, damping: 22, delay: 0.08 },
-})
 
 export default function SplitHeader({
   left,
@@ -30,19 +23,15 @@ export default function SplitHeader({
   return (
     <div
       ref={containerRef}
-      className={`flex items-baseline justify-center overflow-hidden ${className}`}
+      className={`flex items-baseline justify-center ${className}`}
       style={{
         fontFamily: "'Iosevka Charon Mono', sans-serif",
-        // smaller than before — subheader + button sit closer to it in hierarchy
-        fontSize: 'clamp(2rem, 5.5vw, 4rem)',
+        fontSize: 'clamp(2.8rem, 6vw, 4.5rem)',
         lineHeight: 1,
+        animation: 'wordmark-fade 0.5s ease both',
       }}
     >
-      {/* left word: white, slides from left — starts at 500 (solid), goes to 700 on hover */}
-      <motion.span
-        {...slide(-1)}
-        className="text-white uppercase tracking-tight"
-      >
+      <span className="text-white uppercase tracking-tight">
         <VariableProximity
           label={left}
           containerRef={containerRef as React.RefObject<HTMLElement>}
@@ -51,11 +40,9 @@ export default function SplitHeader({
           falloff="gaussian"
           radius={120}
         />
-      </motion.span>
+      </span>
 
-      {/* right word: gradient, wider tracking, starts light (200) — distinct from Ship */}
-      <motion.span
-        {...slide(1)}
+      <span
         className={`uppercase ml-[0.18em] ${accentGradient ? 'gradient-shift-text' : ''}`}
         style={{
           letterSpacing: '0.1em',
@@ -73,7 +60,7 @@ export default function SplitHeader({
           falloff="gaussian"
           radius={120}
         />
-      </motion.span>
+      </span>
     </div>
   )
 }

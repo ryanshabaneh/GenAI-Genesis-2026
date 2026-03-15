@@ -40,6 +40,9 @@ export interface BuildingState {
   selectedTaskIds: string[]
   /** Auto-fix message queued to be sent when navigating to chat */
   pendingChatMessage?: string
+  /** File paths that have been accepted or skipped in CodePreview */
+  acceptedPaths: string[]
+  rejectedPaths: string[]
 }
 
 export type MessageRole = 'user' | 'assistant'

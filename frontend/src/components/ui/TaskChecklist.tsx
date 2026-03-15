@@ -23,7 +23,7 @@ export default function TaskChecklist({
         const isDone = task.done
         const isSelected = !task.done && selectedTaskIds.includes(task.id)
         return (
-          <li key={task.id} className="flex items-center gap-2">
+          <li key={task.id} className="flex items-start gap-2">
             <button
               type="button"
               onClick={() => !task.done && onTaskClick(task.id)}

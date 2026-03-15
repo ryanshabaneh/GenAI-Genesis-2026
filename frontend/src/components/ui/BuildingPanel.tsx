@@ -57,8 +57,8 @@ function PanelInner({ buildingId, onClose }: { buildingId: BuildingId; onClose: 
 
       <div className="px-5 pt-3 pb-2 border-b border-white/[0.06]">
         <div className="flex items-center justify-between mb-2">
-          <span className="text-fog text-[10px] font-display font-black uppercase tracking-[1.5px]">Readiness</span>
-          <span className="text-xs font-display font-black gradient-progress-text tabular-nums">{state.percent}%</span>
+          <span className="text-white/60 text-[10px] font-display font-black uppercase tracking-[1.5px]">Readiness</span>
+          <span className="text-xs font-display font-black tabular-nums" style={{ color: config.theme.primary }}>{state.percent}%</span>
         </div>
         <PolyProgress value={state.percent} segments={12} height={10} animated={state.implementStatus === 'running'} fromColor={config.theme.gradient.from} toColor={config.theme.gradient.to} />
       </div>
@@ -93,8 +93,8 @@ function PanelHeader({ config, step, canGoBack, onBack, onClose }: {
           <button onClick={onBack} aria-label="Go back" className="shrink-0 mt-1 text-fog hover:text-cyan transition-colors duration-[120ms] text-sm">←</button>
         )}
         <div className="min-w-0">
-          <div className="flex items-center gap-2">
-            <p className="text-fog text-[10px] font-display font-black uppercase tracking-[1.5px]">{config?.category}</p>
+          <div className="flex items-center gap-1.5">
+            <p className="text-white/60 text-[10px] font-display font-black uppercase tracking-[1.5px]">{config?.category}</p>
             {stepLabel[step] && (
               <span className="text-[9px] font-display font-black uppercase tracking-[1.5px] text-cyan/60 bg-cyan/10 px-1.5 py-0.5 rounded-full">{stepLabel[step]}</span>
             )}
@@ -154,7 +154,7 @@ function StepOverview({ buildingId, config, isComplete, pendingCount, onInspect 
         ) : (
           <>
             <p className="text-white/80 text-xs font-ui">
-              <span className="text-blue font-black">{pendingCount} task{pendingCount !== 1 ? 's' : ''}</span> remaining to reach production-ready.
+              <span className="text-white font-black">{pendingCount} task{pendingCount !== 1 ? 's' : ''}</span> remaining to reach production-ready.
             </p>
             <p className="text-fog text-[11px] font-ui">Your specialist agent is ready to help.</p>
           </>
@@ -214,16 +214,18 @@ function StepTasklist({ buildingId, state, pendingTasks, onChat }: {
         <p className="text-fog text-[10px] font-display font-black uppercase tracking-[1.5px] mb-3">
           Checklist — {state.tasks.filter((t) => t.done).length}/{state.tasks.length} done
         </p>
-        <TaskChecklist
-          tasks={state.tasks}
-          selectedTaskIds={selectedIds}
-          onTaskClick={(taskId) => toggleTaskSelected(buildingId, taskId)}
-        />
+        <div className="overflow-y-auto pr-1" style={{ maxHeight: '220px' }}>
+          <TaskChecklist
+            tasks={state.tasks}
+            selectedTaskIds={selectedIds}
+            onTaskClick={(taskId) => toggleTaskSelected(buildingId, taskId)}
+          />
+        </div>
       </div>
 
       {pendingTasks.length > 0 && (
         <div className="flex flex-col gap-2 mt-1 stagger-item" style={{ animationDelay: '0.35s' }}>
-          <button onClick={onChat} className="w-full py-2.5 rounded-[10px] bg-cyan/10 border border-cyan/25 text-cyan text-xs font-display font-black uppercase tracking-[1px] hover:bg-cyan/20 hover:border-cyan/40 transition-all duration-[150ms] active:scale-[0.98]">
+          <button onClick={onChat} className="w-full py-2.5 rounded-[10px] bg-white/5 border border-white/20 text-white text-xs font-display font-black uppercase tracking-[1px] hover:bg-white/10 hover:border-white/35 transition-all duration-[150ms] active:scale-[0.98]">
             Talk to Agent →
           </button>
           <button onClick={handleAutoFix}
@@ -260,17 +262,17 @@ function StepChat({ buildingId, onTasklist }: { buildingId: BuildingId; onTaskli
       </div>
       <div className="px-5 py-3 border-t border-white/[0.06] flex gap-2">
         <button disabled={isRunning} onClick={() => runEvaluate(taskIdsToEval)}
-          className="flex-1 py-2.5 rounded-[10px] bg-surface3 border border-white/10 text-fog text-xs font-display font-black uppercase tracking-[1px] hover:bg-surface3/80 hover:text-white disabled:opacity-40 disabled:pointer-events-none transition-all duration-[150ms] active:scale-[0.98]">
+          className="flex-1 py-2.5 rounded-[10px] bg-surface3 border border-white/30 text-white text-xs font-display font-black uppercase tracking-[1px] hover:bg-surface3/80 hover:border-white/50 disabled:opacity-40 disabled:pointer-events-none transition-all duration-[150ms] active:scale-[0.98]">
           {isRunning ? 'Working…' : 'Evaluate'}
         </button>
         {isDeployment && (
           <button disabled={isRunning} onClick={runVerify}
-            className="flex-1 py-2.5 rounded-[10px] bg-teal/10 border border-teal/25 text-teal text-xs font-display font-black uppercase tracking-[1px] hover:bg-teal/20 hover:border-teal/40 disabled:opacity-40 disabled:pointer-events-none transition-all duration-[150ms] active:scale-[0.98]">
+            className="flex-1 py-2.5 rounded-[10px] bg-teal/10 border-2 border-teal text-white text-xs font-display font-black uppercase tracking-[1px] hover:bg-teal/20 disabled:opacity-40 disabled:pointer-events-none transition-all duration-[150ms] active:scale-[0.98]">
             {isRunning ? 'Working…' : 'Verify Build'}
           </button>
         )}
         <button onClick={onTasklist}
-          className="flex-1 py-2.5 rounded-[10px] bg-cyan/10 border border-cyan/25 text-cyan text-xs font-display font-black uppercase tracking-[1px] hover:bg-cyan/20 hover:border-cyan/40 transition-all duration-[150ms] active:scale-[0.98]">
+          className="flex-1 py-2.5 rounded-[10px] bg-cyan/10 border border-cyan text-white text-xs font-display font-black uppercase tracking-[1px] hover:bg-cyan/20 transition-all duration-[150ms] active:scale-[0.98]">
           Task List
         </button>
       </div>
