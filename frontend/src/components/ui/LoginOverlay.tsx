@@ -28,10 +28,8 @@ export default function LoginOverlay() {
 
   return (
     <>
-      {/* landing — header + subheader + CTA, shifted up to reveal more land */}
       <div className="absolute inset-0 flex flex-col items-center justify-center px-6 -translate-y-32">
 
-        {/* glowing orbs rising from the bottom */}
         <div className="absolute inset-0 pointer-events-none overflow-hidden">
           {([
             { size: 7,  left: '12%', delay: '0s',   dur: '9s'  },
@@ -56,25 +54,23 @@ export default function LoginOverlay() {
           transition={{ duration: 0.4 }}
           className="flex flex-col items-center text-center"
         >
-          {/* logo mark — halo sits behind it, both bob together */}
-          <div className="animate-bob relative" style={{ marginBottom: '2.5rem' }}>
+          <div className="animate-bob relative mb-10">
             <div className="lighthouse-glow-halo" />
             <LighthouseLogo size={120} />
           </div>
 
-          <div style={{ marginBottom: '0.75rem' }}>
+          <div className="mb-3">
             <SplitHeader left="Ship" right="Yard" />
           </div>
 
           <p
-            className="text-white/60 leading-relaxed max-w-xs"
-            style={{ fontSize: 'clamp(1rem, 2.2vw, 1.25rem)', marginBottom: '3rem', fontFamily: "'Gabarito', sans-serif", fontWeight: 400 }}
+            className="font-ui text-white/60 leading-relaxed max-w-xs mb-12"
+            style={{ fontSize: 'clamp(1rem, 2.2vw, 1.25rem)' }}
           >
             Every codebase deserves to ship.<br />Fix what's broken, then set sail.
           </p>
         </motion.div>
 
-        {/* water CTA — triggers auth modal */}
         <motion.div
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
@@ -98,7 +94,6 @@ export default function LoginOverlay() {
         />
       </div>
 
-      {/* auth modal — spring pop on button click */}
       <GameModal
         isOpen={isAuthOpen}
         onClose={() => setIsAuthOpen(false)}
@@ -117,7 +112,6 @@ export default function LoginOverlay() {
           </p>
         )}
 
-        {/* bubble burst plays for 400ms before navigating — feels intentional */}
         <BubblyButton
           label="Cast Off with GitHub"
           onClick={() => setTimeout(() => { window.location.href = `${API_URL}/api/auth/github` }, 400)}

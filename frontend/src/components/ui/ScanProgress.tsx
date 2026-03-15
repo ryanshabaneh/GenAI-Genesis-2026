@@ -1,9 +1,5 @@
 'use client'
 
-// ScanProgress — live building scan overlay with staggered row entries,
-// PolyProgress bars per row, and timed slide-in animation.
-// Each building row appears with a cascading delay so the panel feels alive.
-
 import { motion, AnimatePresence } from 'framer-motion'
 import { useStore } from '@/store/useStore'
 import { BUILDINGS } from '@/lib/buildings'
@@ -29,9 +25,8 @@ export default function ScanProgress() {
         animate={{ opacity: 1, y: 0,  scale: 1    }}
         exit={{    opacity: 0, y: 16, scale: 0.97  }}
         transition={{ type: 'spring', stiffness: 300, damping: 26 }}
-        className="overlay game-border rounded-[20px] px-6 py-5 w-full max-w-sm pointer-events-auto hover-lift"
+        className="overlay rounded-[20px] px-6 py-5 w-full max-w-sm pointer-events-auto hover-lift"
       >
-        {/* Header */}
         <div className="mb-4">
           <div className="flex items-center justify-between mb-1">
             <motion.h2
@@ -53,7 +48,6 @@ export default function ScanProgress() {
           </div>
           <p className="text-fog-light text-xs mb-3">Scout is checking every district.</p>
 
-          {/* Overall poly progress */}
           <PolyProgress
             value={overallPercent}
             segments={8}
@@ -63,7 +57,6 @@ export default function ScanProgress() {
           />
         </div>
 
-        {/* Building rows — staggered entry */}
         <ul className="flex flex-col gap-1.5">
           {BUILDINGS.map((cfg, i) => {
             const state     = buildings[cfg.id]
@@ -102,7 +95,6 @@ export default function ScanProgress() {
                   </span>
                 </div>
 
-                {/* Per-row poly bar — only shown when scanning or done */}
                 {(isScanning || isDone) && (
                   <div className="mt-1.5">
                     <PolyProgress
