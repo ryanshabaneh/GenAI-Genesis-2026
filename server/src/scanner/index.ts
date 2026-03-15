@@ -85,8 +85,17 @@ export async function runScan(
     }
   }
 
+  // Emit complete after Phase 1 so the frontend transitions to 3D scene immediately
+  const heuristicSession = getSession(sessionId)
+  const heuristicResults = Object.values(heuristicSession?.results ?? {})
+  const heuristicScore =
+    heuristicResults.length > 0
+      ? Math.round(heuristicResults.reduce((sum, r) => sum + (r?.percent ?? 0), 0) / heuristicResults.length)
+      : 0
+  io.to(sessionId).emit('message', { type: 'complete', score: heuristicScore })
+
   // Phase 2: deep analysis (LLM, reads actual code, adds tasks)
-  // Runs after all heuristic results are in so the frontend isn't blocked
+  // Runs in background after frontend has transitioned to 3D scene
   const allAgentTasks = new Map<BuildingId, Task[]>()
 
   for (const result of results) {
@@ -138,13 +147,12 @@ export async function runScan(
     }
   }
 
-  // Calculate overall score from final enriched state
-  const session = getSession(sessionId)
-  const allResults = Object.values(session?.results ?? {})
-  const score =
+  // Emit orchestrator:complete after Phase 2 so score bar updates
+  const finalSession = getSession(sessionId)
+  const allResults = Object.values(finalSession?.results ?? {})
+  const finalScore =
     allResults.length > 0
       ? Math.round(allResults.reduce((sum, r) => sum + (r?.percent ?? 0), 0) / allResults.length)
       : 0
-
-  io.to(sessionId).emit('message', { type: 'complete', score })
+  io.to(sessionId).emit('message', { type: 'orchestrator:complete', score: finalScore })
 }
