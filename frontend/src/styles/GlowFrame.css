@@ -1,0 +1,30 @@
+.glow-frame {
+  position: relative;
+  border: var(--gf-width, 2px) solid transparent;
+  border-image: linear-gradient(
+    45deg,
+    var(--gf-c1, #A78BFA),
+    var(--gf-c2, #00D4FF)
+  ) 1;
+  clip-path: inset(0px round var(--gf-radius, 18px));
+}
+
+/* hue-rotate loop — opt-in via .glow-frame--animated */
+.glow-frame--animated {
+  animation: glow-frame-hue var(--gf-speed, 8s) infinite linear;
+}
+
+/* pulse variant — slower, breathes rather than loops */
+.glow-frame--pulse {
+  animation: glow-frame-pulse var(--gf-speed, 3s) ease-in-out infinite alternate;
+}
+
+@keyframes glow-frame-hue {
+  0%   { filter: hue-rotate(0deg);   }
+  100% { filter: hue-rotate(360deg); }
+}
+
+@keyframes glow-frame-pulse {
+  0%   { filter: hue-rotate(0deg)   brightness(1);    }
+  100% { filter: hue-rotate(40deg)  brightness(1.25); }
+}
