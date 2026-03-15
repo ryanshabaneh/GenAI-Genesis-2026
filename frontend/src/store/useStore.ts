@@ -97,15 +97,17 @@ export const useStore = create<ShipCityStore>((set) => ({
   // Merges a partial update into a single building's state without touching others.
   // useSocket calls this on every 'result' WebSocket event.
   setBuildingStatus: (id, update) =>
-    set((state) => ({
-      buildings: {
+    set((state) => {
+      const updatedBuildings = {
         ...state.buildings,
-        [id]: {
-          ...state.buildings[id],
-          ...update,
-        },
-      },
-    })),
+        [id]: { ...state.buildings[id], ...update },
+      }
+      const score = Math.round(
+        ALL_BUILDING_IDS.reduce((sum, bid) => sum + updatedBuildings[bid].percent, 0) /
+          ALL_BUILDING_IDS.length
+      )
+      return { buildings: updatedBuildings, score }
+    }),
 
   setActiveBuilding: (id) => set({ activeBuilding: id }),
 

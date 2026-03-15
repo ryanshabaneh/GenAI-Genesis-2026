@@ -49,13 +49,17 @@ export default function Building({ buildingId }: BuildingProps) {
   // Raise box so it sits on the island surface
   const y = (boxHeight / 2) + 0.05
 
+  // TODO: re-enable guard when done testing — flip to true to require scan before click
+  const BUILDING_GUARD_ENABLED = false
+  const scanStatus = useStore((s) => s.scanStatus)
+  const canClick = !BUILDING_GUARD_ENABLED || (scanStatus !== 'idle' && scanStatus !== 'error')
+
   return (
     <mesh
       position={[x, y, z]}
       scale={[stageConfig.scale, stageConfig.scale, stageConfig.scale]}
       castShadow
-      // Clicking a building opens its detail panel in the right column
-      onClick={() => setActiveBuilding(buildingId)}
+      onClick={canClick ? () => setActiveBuilding(buildingId) : undefined}
     >
       <boxGeometry args={[3, 2, 3]} />
       <meshStandardMaterial
