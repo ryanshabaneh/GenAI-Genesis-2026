@@ -88,12 +88,11 @@ export default function LoginOverlay() {
         </motion.div>
       </div>
 
-      {/* cinematic ticker strip — floats above scene at bottom */}
-      <div className="absolute bottom-0 left-0 right-0 pointer-events-none" style={{ opacity: 0.28 }}>
+      <div className="absolute bottom-0 left-0 right-0 pointer-events-none" style={{ opacity: 0.32 }}>
         <CurvedLoop
-          marqueeText="SHIP ✦ DEPLOY ✦ SET SAIL ✦ "
+          marqueeText="a deep dive into your codebase ✦ bridge the gap ✦ "
           speed={1.1}
-          curveAmount={35}
+          curveAmount={-18}
           direction="left"
           interactive={false}
         />

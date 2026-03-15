@@ -8,11 +8,13 @@
   width: 100%;
   aspect-ratio: 100 / 12;
   overflow: visible;
-  font-size: 5rem;
+  font-size: 2.5rem;
   font-family: var(--font-action), 'SFTSchriftedRoundComp', 'Nunito', sans-serif;
   font-weight: 900;
   text-transform: uppercase;
   line-height: 1;
+  fill: #ffffff;
+  filter: drop-shadow(0 0 6px rgba(255, 255, 255, 0.38)) drop-shadow(0 0 14px rgba(255, 255, 255, 0.15));
   user-select: none;
   -moz-user-select: none;
   -webkit-user-select: none;
