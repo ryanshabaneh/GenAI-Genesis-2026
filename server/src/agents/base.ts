@@ -16,12 +16,12 @@ export function parseCodeBlocks(
 ): Array<{ path: string; content: string; language: string }> {
   const blocks: Array<{ path: string; content: string; language: string }> = []
 
-  // Match optional "// File: ..." comment before a fenced code block
-  const pattern = /(?:\/\/\s*File:\s*(.+?)\n)?```(\w+)?\n([\s\S]*?)```/g
+  // Only treat a code block as actionable if prefixed with "// File: path"
+  const pattern = /\/\/\s*File:\s*(.+?)\n```(\w+)?\n([\s\S]*?)```/g
   let match: RegExpExecArray | null
 
   while ((match = pattern.exec(text)) !== null) {
-    const filePath = match[1]?.trim() ?? 'snippet'
+    const filePath = match[1].trim()
     const language = match[2]?.trim() ?? 'text'
     const content = match[3] ?? ''
     blocks.push({ path: filePath, content, language })
