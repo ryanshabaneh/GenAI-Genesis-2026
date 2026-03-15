@@ -22,7 +22,13 @@ export function useImplement(buildingId: BuildingId) {
     setImplementStatus(buildingId, 'running')
     try {
       const result = await implementTasks({ sessionId, buildingId, taskIds })
-      setBuildingStatus(buildingId, { percent: result.percent })
+      // Mark completed tasks as done in the store so checklist updates immediately
+      const currentTasks = useStore.getState().buildings[buildingId].tasks
+      const updatedTasks = currentTasks.map((t) => ({
+        ...t,
+        done: t.done || result.completedTaskIds.includes(t.id),
+      }))
+      setBuildingStatus(buildingId, { percent: result.percent, tasks: updatedTasks })
       setScore(result.score)
     } catch (err) {
       console.error('[useImplement] implement failed:', err)
@@ -38,7 +44,14 @@ export function useImplement(buildingId: BuildingId) {
     setImplementStatus(buildingId, 'running')
     try {
       const result = await evaluateTasks({ sessionId, buildingId, taskIds })
-      setBuildingStatus(buildingId, { percent: result.percent })
+      // Mark passing tasks as done in the store
+      const currentTasks = useStore.getState().buildings[buildingId].tasks
+      const passingIds = result.results.filter((r) => r.pass).map((r) => r.taskId)
+      const updatedTasks = currentTasks.map((t) => ({
+        ...t,
+        done: t.done || passingIds.includes(t.id),
+      }))
+      setBuildingStatus(buildingId, { percent: result.percent, tasks: updatedTasks })
       setScore(result.score)
     } catch (err) {
       console.error('[useImplement] evaluate failed:', err)
