@@ -11,8 +11,8 @@ import ScoreBar from '@/components/ui/ScoreBar'
 import BuildingPanel from '@/components/ui/BuildingPanel'
 import ScanProgress from '@/components/ui/ScanProgress'
 
+import { useSocket } from '@/hooks/useSocket'
 import CityStub from '@/components/scene/CityStub'
-import { SocketProvider } from '@/contexts/SocketContext'
 
 const VillageScene = dynamic(() => import('@/components/scene/Village'), {
   ssr: false,
@@ -21,12 +21,12 @@ const VillageScene = dynamic(() => import('@/components/scene/Village'), {
 
 export default function HomePage() {
   useAuth() // hydrates githubUser into store on mount
+  useSocket() // keep socket alive for the entire page lifecycle
 
   const githubUser = useStore((s) => s.githubUser)
   const scanStatus = useStore((s) => s.scanStatus)
 
   return (
-    <SocketProvider>
     <main className="relative w-screen h-screen overflow-hidden bg-ink">
       {/* City — always in background */}
       <div className="absolute inset-0">
@@ -55,6 +55,5 @@ export default function HomePage() {
         </>
       )}
     </main>
-    </SocketProvider>
   )
 }
