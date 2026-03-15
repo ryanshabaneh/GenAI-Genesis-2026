@@ -41,14 +41,14 @@ const SUGGESTIONS: Record<string, string[]> = {
 function EmptyState({ buildingId, onSuggest }: { buildingId: BuildingId; onSuggest: (q: string) => void }) {
   const suggestions = SUGGESTIONS[buildingId] ?? []
   return (
-    <div className="flex flex-col items-center gap-4 mt-8 px-2">
+    <div className="flex flex-col items-center gap-3 mt-3 px-2">
       <p className="text-fog text-xs text-center leading-relaxed">Ask your specialist agent anything, or try a suggestion:</p>
-      <div className="flex flex-col gap-2 w-full">
+      <div className="flex flex-col gap-1.5 w-full">
         {suggestions.map((q) => (
           <button
             key={q}
             onClick={() => onSuggest(q)}
-            className="text-left text-xs font-ui text-white/70 bg-surface2 border border-white/10 rounded-[10px] px-3 py-2 hover:border-blue/40 hover:text-white transition-all duration-[120ms]"
+            className="text-left text-[11px] font-ui font-normal text-white/80 bg-surface2 border border-white/[0.08] rounded-[8px] px-3 py-2 leading-snug hover:border-white/20 hover:text-white transition-all duration-[120ms]"
           >
             {q}
           </button>
@@ -90,13 +90,6 @@ export default function ChatWindow({ buildingId }: { buildingId: BuildingId }) {
     await sendMessage(text)
   }
 
-  function handleKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault()
-      void handleSend()
-    }
-  }
-
   return (
     <div className="flex flex-col h-full">
       {/* Messages */}
@@ -112,20 +105,20 @@ export default function ChatWindow({ buildingId }: { buildingId: BuildingId }) {
       </div>
 
       {/* Input */}
-      <div className="border-t border-white/[0.06] p-3 flex gap-2">
-        <textarea
-          rows={2}
+      <div className="border-t border-white/[0.06] px-3 py-4 flex items-center gap-2">
+        <input
+          type="text"
           value={input}
           onChange={(e) => setInput(e.target.value)}
-          onKeyDown={handleKeyDown}
+          onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); void handleSend() }}}
           placeholder="Ask the agent…"
           disabled={isLoading}
-          className="flex-1 bg-surface2 text-white text-xs font-ui rounded-[10px] px-3 py-2 resize-none border border-white/10 focus:outline-none focus:border-blue/40 placeholder:text-fog transition-colors duration-[120ms]"
+          className="flex-1 bg-surface2 text-white text-xs font-ui rounded-[10px] px-4 py-3 border border-white/10 focus:outline-none focus:border-blue/40 placeholder:text-fog transition-colors duration-[120ms]"
         />
         <button
           onClick={() => void handleSend()}
           disabled={isLoading || !input.trim()}
-          className="self-end px-3 py-2 rounded-[999px] bg-blue text-ink text-xs font-display font-black transition-all duration-[120ms] active:scale-[0.97] disabled:opacity-40 disabled:pointer-events-none btn-fx-shimmer"
+          className="shrink-0 px-4 py-2 rounded-[10px] bg-blue/20 border border-blue/40 text-blue text-xs font-display font-black hover:bg-blue/30 hover:border-blue/60 transition-all duration-[120ms] active:scale-[0.97] disabled:opacity-40 disabled:pointer-events-none"
         >
           Send
         </button>

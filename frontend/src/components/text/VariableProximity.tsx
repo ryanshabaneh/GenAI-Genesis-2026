@@ -1,7 +1,6 @@
 'use client'
 
 import { forwardRef, useMemo, useRef, useEffect, HTMLAttributes, RefObject } from 'react'
-import { motion } from 'framer-motion'
 
 interface VariableProximityProps extends HTMLAttributes<HTMLSpanElement> {
   label: string
@@ -103,14 +102,14 @@ const VariableProximity = forwardRef<HTMLSpanElement, VariableProximityProps>((p
           {word.split('').map(letter => {
             const i = idx++
             return (
-              <motion.span
+              <span
                 key={i}
                 ref={(e: HTMLSpanElement | null) => { letterRefs.current[i] = e }}
                 style={{ display: 'inline-block' }}
                 aria-hidden="true"
               >
                 {letter}
-              </motion.span>
+              </span>
             )
           })}
           {wi < words.length - 1 && <span style={{ display: 'inline-block' }}>&nbsp;</span>}
