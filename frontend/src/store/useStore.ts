@@ -172,7 +172,7 @@ export const useStore = create<ShipyardStore>((set) => ({
       const current = state.buildings[id].selectedTaskIds
       const next = current.includes(taskId)
         ? current.filter((t) => t !== taskId)
-        : current.length >= 3 ? current : [...current, taskId]
+        : [...current, taskId]
       return {
         buildings: {
           ...state.buildings,
