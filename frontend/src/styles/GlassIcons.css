@@ -39,6 +39,7 @@
 }
 
 .icon-btn__back {
+  background: rgba(255, 255, 255, 0.05);
   box-shadow: 0.5em -0.5em 0.75em hsla(223, 10%, 10%, 0.15);
   display: block;
   transform: rotate(15deg);
