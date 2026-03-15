@@ -1,7 +1,55 @@
+import fs from 'fs'
+import path from 'path'
 import { client } from './client'
 import { buildAgentContext } from './context'
 import { EVALUATOR_FORMAT, REPO_EVALUATOR_FORMAT } from './prompts'
 import type { BuildingId, EvaluatorResult, Task } from '../types'
+
+/**
+ * Deterministic checks for tasks that can be verified without an LLM.
+ * Used to avoid false positives (e.g. LLM saying .env.example exists when repo is empty)
+ * and to avoid path confusion when repoPath is wrong.
+ */
+function runDeterministicCheck(
+  buildingId: string,
+  taskId: string,
+  repoPath: string
+): { pass: boolean; feedback: string; summary: string } | null {
+  if (buildingId === 'envVars' && taskId === 'env-example') {
+    const hasEnvExample =
+      fs.existsSync(path.join(repoPath, '.env.example')) ||
+      fs.existsSync(path.join(repoPath, '.env.template'))
+    return {
+      pass: hasEnvExample,
+      feedback: hasEnvExample ? '' : 'No .env.example or .env.template file found in the repository.',
+      summary: hasEnvExample ? '.env.example or .env.template found in repository' : '',
+    }
+  }
+
+  // .env in .gitignore — security (security-env-ignored) and envVars (env-gitignore)
+  if (
+    (buildingId === 'security' && taskId === 'security-env-ignored') ||
+    (buildingId === 'envVars' && taskId === 'env-gitignore')
+  ) {
+    const gitignorePath = path.join(repoPath, '.gitignore')
+    let envInGitignore = false
+    if (fs.existsSync(gitignorePath)) {
+      try {
+        const content = fs.readFileSync(gitignorePath, 'utf8')
+        envInGitignore = content.split('\n').some((line) => line.trim() === '.env')
+      } catch {
+        /* ignore */
+      }
+    }
+    return {
+      pass: envInGitignore,
+      feedback: envInGitignore ? '' : 'No .gitignore found, or .env is not listed in .gitignore.',
+      summary: envInGitignore ? '.env is listed in .gitignore' : '',
+    }
+  }
+
+  return null
+}
 
 const EVALUATOR_SYSTEM_PROMPT = `You are the Quality Inspector for ShipCity.
 
@@ -109,6 +157,17 @@ export async function evaluateRepoState(params: {
   const results: Array<{ taskId: string; pass: boolean; feedback: string; summary: string }> = []
 
   for (const task of tasksToEval) {
+    const deterministic = runDeterministicCheck(buildingId, task.id, repoPath)
+    if (deterministic !== null) {
+      results.push({
+        taskId: task.id,
+        pass: deterministic.pass,
+        feedback: deterministic.feedback,
+        summary: deterministic.summary,
+      })
+      continue
+    }
+
     const userMessage = `## Building: ${buildingId}
 
 ## Task to evaluate:
