@@ -27,6 +27,37 @@ function MessageBubble({ message, buildingId }: { message: Message; buildingId: 
   )
 }
 
+const SUGGESTIONS: Record<string, string[]> = {
+  envVars:       ["How do I set up a .env.example file?", "Are there any hardcoded values I should move to env vars?"],
+  security:      ["What secrets might be exposed in this repo?", "How do I improve my .gitignore for security?"],
+  tests:         ["What test coverage am I missing?", "How do I set up a test framework for this project?"],
+  cicd:          ["How do I add a GitHub Actions workflow?", "What should my CI pipeline check?"],
+  docker:        ["How do I write a good Dockerfile for this project?", "Should I add a docker-compose file?"],
+  documentation: ["What's missing from my README?", "How do I document my environment variables?"],
+  logging:       ["How do I add structured logging?", "What log levels should I be using?"],
+  deployment:    ["What's the fastest way to fix my deployment config?", "How do I add a health check endpoint?"],
+}
+
+function EmptyState({ buildingId, onSuggest }: { buildingId: BuildingId; onSuggest: (q: string) => void }) {
+  const suggestions = SUGGESTIONS[buildingId] ?? []
+  return (
+    <div className="flex flex-col items-center gap-4 mt-8 px-2">
+      <p className="text-fog text-xs text-center leading-relaxed">Ask your specialist agent anything, or try a suggestion:</p>
+      <div className="flex flex-col gap-2 w-full">
+        {suggestions.map((q) => (
+          <button
+            key={q}
+            onClick={() => onSuggest(q)}
+            className="text-left text-xs font-ui text-white/70 bg-surface2 border border-white/10 rounded-[10px] px-3 py-2 hover:border-blue/40 hover:text-white transition-all duration-[120ms]"
+          >
+            {q}
+          </button>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 function TypingIndicator() {
   return (
     <div className="flex items-start">
@@ -71,9 +102,7 @@ export default function ChatWindow({ buildingId }: { buildingId: BuildingId }) {
       {/* Messages */}
       <div className="flex-1 overflow-y-auto px-4 py-3 flex flex-col gap-2.5">
         {chatHistory.length === 0 && (
-          <p className="text-fog text-xs text-center mt-8 leading-relaxed">
-            Ask the agent anything about improving this area.
-          </p>
+          <EmptyState buildingId={buildingId} onSuggest={(q) => { setInput(q) }} />
         )}
         {chatHistory.map((msg) => (
           <MessageBubble key={msg.id} message={msg} buildingId={buildingId} />

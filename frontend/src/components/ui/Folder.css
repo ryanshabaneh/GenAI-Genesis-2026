@@ -1,0 +1,101 @@
+.folder {
+  --transition: 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  width: 100px;
+  height: 80px;
+  position: relative;
+  cursor: pointer;
+  user-select: none;
+}
+
+.folderback {
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+.folderback::before {
+  content: '';
+  position: absolute;
+  top: -12px;
+  left: 0;
+  width: 40%;
+  height: 12px;
+  background: var(--folder-back-color);
+  border-radius: 4px 6px 0 0;
+}
+
+.folderback::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--folder-back-color);
+  border-radius: 2px 6px 6px 6px;
+}
+
+.folderfront {
+  position: absolute;
+  inset: 0;
+  background: var(--folder-color);
+  border-radius: 2px 6px 6px 6px;
+  z-index: 10;
+  transition: transform var(--transition);
+  transform-origin: bottom center;
+}
+
+.folder__front.right {
+  position: absolute;
+  inset: 0;
+  background: color-mix(in srgb, var(--folder-color) 85%, transparent);
+  border-radius: 2px 6px 6px 6px;
+  z-index: 9;
+  transition: transform var(--transition);
+  transform-origin: bottom center;
+}
+
+.folder.open .folderfront {
+  transform: rotateX(45deg) translateY(-6px);
+}
+
+.folder.open .folder__front.right {
+  transform: rotateX(30deg) translateY(-3px);
+}
+
+.paper {
+  position: absolute;
+  left: 50%;
+  bottom: 10%;
+  width: 70%;
+  height: 80%;
+  border-radius: 4px;
+  transform: translateX(-50%);
+  z-index: 5;
+  transition: transform var(--transition);
+  transform-origin: bottom center;
+}
+
+.paper-1 {
+  background: var(--paper-1);
+  z-index: 7;
+}
+
+.paper-2 {
+  background: var(--paper-2);
+  z-index: 6;
+}
+
+.paper-3 {
+  background: var(--paper-3);
+  z-index: 5;
+}
+
+.folder.open .paper-1 {
+  transform: translateX(calc(-50% + var(--magnet-x, 0px))) translateY(calc(-60% + var(--magnet-y, 0px))) rotate(-15deg);
+}
+
+.folder.open .paper-2 {
+  transform: translateX(calc(-50% + var(--magnet-x, 0px))) translateY(calc(-50% + var(--magnet-y, 0px))) rotate(0deg);
+}
+
+.folder.open .paper-3 {
+  transform: translateX(calc(-50% + var(--magnet-x, 0px))) translateY(calc(-40% + var(--magnet-y, 0px))) rotate(15deg);
+}
