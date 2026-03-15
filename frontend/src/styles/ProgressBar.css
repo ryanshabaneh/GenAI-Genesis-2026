@@ -1,0 +1,31 @@
+/* animated XGui-style progress bar — themed via --bar-from / --bar-to / --bar-glow / --bar-border */
+
+.bar-track {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  border-radius: 5px;
+  border: 1px solid var(--bar-border);
+  background: rgba(255,255,255,0.03);
+  transform: skew(-8deg, 0deg);
+  animation: bar-glow-pulse 2.5s ease-in-out infinite;
+}
+
+.bar-fill {
+  height: 100%;
+  border-radius: 5px;
+  background: linear-gradient(90deg, var(--bar-from), var(--bar-to), var(--bar-from));
+  background-size: 200% 100%;
+  animation: bar-shift 2.8s linear infinite;
+  transition: width 420ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes bar-glow-pulse {
+  0%, 100% { box-shadow: 0 0 8px  var(--bar-glow), 0 0 4px  var(--bar-glow) inset; }
+  50%       { box-shadow: 0 0 28px var(--bar-glow), 0 0 14px var(--bar-glow) inset; }
+}
+
+@keyframes bar-shift {
+  0%   { background-position: 0%   50%; }
+  100% { background-position: 200% 50%; }
+}

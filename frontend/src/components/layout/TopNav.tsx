@@ -5,8 +5,8 @@ import { AnimatePresence, motion } from 'framer-motion'
 import type { CSSProperties } from 'react'
 import { useStore } from '@/store/useStore'
 import { getBuildingConfig, iconPath } from '@/lib/buildings'
-import CubeProgress from '@/components/ui/CubeProgress'
 import CountUp from '@/components/text/CountUp'
+
 
 function UserAvatar({ url, login }: { url: string; login: string }) {
   return (
@@ -63,9 +63,8 @@ function ReadinessBlock() {
   const label    = building ? building.category : 'Production Readiness'
   const key      = building ? activeBuilding! : 'global'
 
-  const cubeColors: [string, string, string] = building
-    ? [building.theme.primary, building.theme.primary, building.theme.primary]
-    : ['#2563EB', '#06B6D4', '#2DD4BF']
+  const fromColor = building ? building.theme.gradient.from : '#4A78D4'
+  const toColor   = building ? building.theme.gradient.to   : '#00D4FF'
 
   const numStyle: CSSProperties = building
     ? { color: building.theme.primary, fontSize: '2rem', lineHeight: 1 }
@@ -92,13 +91,19 @@ function ReadinessBlock() {
         </motion.div>
       </AnimatePresence>
 
-      <div className="flex flex-col gap-1 min-w-0 pt-1" style={{ width: 'clamp(140px, 16vw, 260px)' }}>
-        <CubeProgress
-          value={value}
-          height={34}
-          colors={cubeColors}
-          animated={!building && value > 0}
-        />
+      <div className="flex flex-col gap-1.5 min-w-0 pt-1" style={{ width: 'clamp(220px, 28vw, 460px)' }}>
+        <div
+          className="bar-track"
+          style={{
+            height:          '22px',
+            '--bar-from':    fromColor,
+            '--bar-to':      toColor,
+            '--bar-glow':    `${fromColor}90`,
+            '--bar-border':  `${fromColor}50`,
+          } as CSSProperties}
+        >
+          <div className="bar-fill" style={{ width: `${value}%` }} />
+        </div>
         <AnimatePresence mode="wait">
           <motion.span
             key={label}
