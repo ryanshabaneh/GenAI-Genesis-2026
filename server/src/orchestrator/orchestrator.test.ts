@@ -1,11 +1,12 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 
 // Mock dependencies before imports
-const { mockCallAider, mockResetAiderChanges, mockCallEvaluator, mockCallAgentForImplementation, mockAddChange, mockGetSession, mockUpdateSession } = vi.hoisted(() => ({
+const { mockCallAider, mockResetAiderChanges, mockCallEvaluator, mockCallAgentForImplementation, mockCallAgent, mockAddChange, mockGetSession, mockUpdateSession } = vi.hoisted(() => ({
   mockCallAider: vi.fn(),
   mockResetAiderChanges: vi.fn(),
   mockCallEvaluator: vi.fn(),
   mockCallAgentForImplementation: vi.fn(),
+  mockCallAgent: vi.fn(),
   mockAddChange: vi.fn(),
   mockGetSession: vi.fn(),
   mockUpdateSession: vi.fn(),
@@ -15,7 +16,11 @@ vi.mock('../agents/aider', () => ({
   callAider: mockCallAider,
   resetAiderChanges: mockResetAiderChanges,
 }))
-vi.mock('../agents/base', () => ({ callAgentForImplementation: mockCallAgentForImplementation }))
+vi.mock('../agents/base', () => ({
+  callAgentForImplementation: mockCallAgentForImplementation,
+  callAgent: mockCallAgent,
+  parseCodeBlocks: vi.fn().mockReturnValue([]),
+}))
 vi.mock('../agents/evaluator', () => ({ callEvaluator: mockCallEvaluator }))
 vi.mock('../changes/queue', () => ({ addChange: mockAddChange }))
 vi.mock('../session/store', () => ({
@@ -23,7 +28,7 @@ vi.mock('../session/store', () => ({
   updateSession: mockUpdateSession,
 }))
 
-import { runTaskImplementation } from './index'
+import { runTaskImplementation, _setAiderAvailable } from './index'
 
 function makeIo() {
   const emit = vi.fn()
@@ -63,15 +68,29 @@ function makeAiderFailure(error = 'aider error') {
 }
 
 describe('runTaskImplementation', () => {
+  let currentSession: ReturnType<typeof makeSession> | undefined
+
   beforeEach(() => {
     vi.clearAllMocks()
+    currentSession = undefined
     mockResetAiderChanges.mockResolvedValue(undefined)
     mockCallAgentForImplementation.mockResolvedValue('Agent-generated implementation instructions')
+    // Force aider as available for tests (skip the execSync check)
+    _setAiderAvailable(true)
+    // Make updateSession actually mutate the session so getSession returns updated state
+    mockUpdateSession.mockImplementation((_id: string, updates: Record<string, unknown>) => {
+      if (currentSession) Object.assign(currentSession, updates)
+    })
   })
 
+  function setupSession(overrides = {}) {
+    currentSession = makeSession(overrides)
+    mockGetSession.mockReturnValue(currentSession)
+    return currentSession
+  }
+
   it('runs aider + evaluator and returns completed task IDs on success', async () => {
-    const session = makeSession()
-    mockGetSession.mockReturnValue(session)
+    setupSession()
     mockCallAider.mockResolvedValue(makeAiderSuccess())
     mockCallEvaluator.mockResolvedValue({ pass: true, feedback: '', summary: 'Added unit tests' })
 
@@ -90,8 +109,7 @@ describe('runTaskImplementation', () => {
   })
 
   it('emits task:start and task:complete events', async () => {
-    const session = makeSession()
-    mockGetSession.mockReturnValue(session)
+    setupSession()
     mockCallAider.mockResolvedValue(makeAiderSuccess())
     mockCallEvaluator.mockResolvedValue({ pass: true, feedback: '', summary: 'Done' })
 
@@ -109,8 +127,7 @@ describe('runTaskImplementation', () => {
   })
 
   it('retries when evaluator fails', async () => {
-    const session = makeSession()
-    mockGetSession.mockReturnValue(session)
+    setupSession()
     mockCallAider.mockResolvedValue(makeAiderSuccess())
     mockCallEvaluator
       .mockResolvedValueOnce({ pass: false, feedback: 'Missing coverage', summary: '' })
@@ -130,8 +147,7 @@ describe('runTaskImplementation', () => {
   })
 
   it('auto-accepts after MAX_ITERATIONS even if evaluator fails', async () => {
-    const session = makeSession()
-    mockGetSession.mockReturnValue(session)
+    setupSession()
     mockCallAider.mockResolvedValue(makeAiderSuccess())
     mockCallEvaluator.mockResolvedValue({ pass: false, feedback: 'Still bad', summary: '' })
 
@@ -149,8 +165,7 @@ describe('runTaskImplementation', () => {
   })
 
   it('saves accepted changes via addChange', async () => {
-    const session = makeSession()
-    mockGetSession.mockReturnValue(session)
+    setupSession()
     mockCallAider.mockResolvedValue(makeAiderSuccess([
       { path: 'test.ts', content: 'test code' },
     ]))
@@ -171,8 +186,7 @@ describe('runTaskImplementation', () => {
   })
 
   it('handles aider failure gracefully', async () => {
-    const session = makeSession()
-    mockGetSession.mockReturnValue(session)
+    setupSession()
     mockCallAider.mockResolvedValue(makeAiderFailure('timeout'))
 
     const io = makeIo()
@@ -201,8 +215,7 @@ describe('runTaskImplementation', () => {
   })
 
   it('throws if another implementation is already running', async () => {
-    const session = makeSession()
-    mockGetSession.mockReturnValue(session)
+    setupSession()
     mockCallAider.mockImplementation(() => new Promise((resolve) => setTimeout(() => resolve(makeAiderSuccess()), 100)))
     mockCallEvaluator.mockResolvedValue({ pass: true, feedback: '', summary: 'Done' })
 
@@ -228,8 +241,7 @@ describe('runTaskImplementation', () => {
   })
 
   it('includes user message in agent call', async () => {
-    const session = makeSession()
-    mockGetSession.mockReturnValue(session)
+    setupSession()
     mockCallAider.mockResolvedValue(makeAiderSuccess())
     mockCallEvaluator.mockResolvedValue({ pass: true, feedback: '', summary: 'Done' })
 

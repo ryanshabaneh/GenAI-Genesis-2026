@@ -6,10 +6,10 @@
 import { Router } from 'express'
 import type { Request, Response } from 'express'
 import type { Server as SocketIOServer } from 'socket.io'
-import type { BuildingId, ChangeLogEntry } from '../types'
+import type { BuildingId, ChangeLogEntry, Message } from '../types'
 import { getSession, updateSession } from '../session/store'
-import { evaluateRepoState } from '../agents/evaluator'
-import { calculatePercent } from '../agents/scanner-context'
+import { evaluateRepoState, computeRepoHash, buildEvalSummary } from '../agents/evaluator'
+import { calculatePercent, formatDeploymentRecommendation } from '../agents/scanner-context'
 
 const router = Router()
 
@@ -31,6 +31,11 @@ router.post('/', async (req: Request, res: Response): Promise<void> => {
     return
   }
 
+  if (!session.repoPath) {
+    res.status(409).json({ error: 'Scan is still in progress — please wait for it to finish.' })
+    return
+  }
+
   const buildingResult = session.results[buildingId]
   if (!buildingResult) {
     res.status(404).json({ error: `No scan results for building: ${buildingId}` })
@@ -40,6 +45,27 @@ router.post('/', async (req: Request, res: Response): Promise<void> => {
   const io = req.app.locals['io'] as SocketIOServer
 
   try {
+    // Check if repo changed since last evaluation — skip if identical
+    const currentHash = await computeRepoHash(buildingId, session.repoPath)
+    const lastHash = session.lastEvalHash?.[buildingId]
+    if (lastHash === currentHash) {
+      // Nothing changed — return cached task state without re-evaluating
+      const percent = calculatePercent(buildingResult.tasks)
+      const allResults = Object.values(session.results)
+      const score = allResults.length > 0
+        ? Math.round(allResults.reduce((sum, r) => sum + (r?.percent ?? 0), 0) / allResults.length)
+        : 0
+      res.json({
+        results: [],
+        tasks: buildingResult.tasks,
+        percent,
+        score,
+        skipped: true,
+        message: 'No changes detected since last evaluation.',
+      })
+      return
+    }
+
     const evalResults = await evaluateRepoState({
       buildingId,
       repoPath: session.repoPath,
@@ -63,12 +89,29 @@ router.post('/', async (req: Request, res: Response): Promise<void> => {
           filesChanged: [],
           completedAt: Date.now(),
         })
-        return { ...t, done: true }
+        return { ...t, done: true, feedback: undefined }
+      }
+      if (evalResult && !evalResult.pass) {
+        return { ...t, feedback: evalResult.feedback }
       }
       return t
     })
 
     const percent = calculatePercent(updatedTasks)
+
+    // Inject evaluation summary into the chat history so the chat agent has context
+    const evalSummaryText = buildEvalSummary(evalResults, buildingResult.tasks)
+    const chatHistory: Message[] = freshSession.conversations[buildingId] ?? []
+    const updatedHistory: Message[] = [
+      ...chatHistory,
+      { role: 'assistant', content: evalSummaryText },
+    ]
+
+    // If deployment building just hit 100%, inject the deployment recommendation
+    if (buildingId === 'deployment' && percent === 100 && freshSession.deploymentRecommendation) {
+      const recMessage = formatDeploymentRecommendation(freshSession.deploymentRecommendation)
+      updatedHistory.push({ role: 'assistant', content: recMessage })
+    }
 
     updateSession(sessionId, {
       results: {
@@ -76,6 +119,14 @@ router.post('/', async (req: Request, res: Response): Promise<void> => {
         [buildingId]: { ...current, tasks: updatedTasks, percent },
       },
       changeLog: [...freshSession.changeLog, ...newLogEntries],
+      conversations: {
+        ...freshSession.conversations,
+        [buildingId]: updatedHistory,
+      },
+      lastEvalHash: {
+        ...freshSession.lastEvalHash,
+        [buildingId]: currentHash,
+      },
     })
 
     // Emit eval:result per task
@@ -103,6 +154,7 @@ router.post('/', async (req: Request, res: Response): Promise<void> => {
           ? { taskId: r.taskId, pass: true, summary: r.summary }
           : { taskId: r.taskId, pass: false, feedback: r.feedback }
       ),
+      tasks: updatedTasks,
       percent,
       score,
     })

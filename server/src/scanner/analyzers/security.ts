@@ -61,6 +61,17 @@ const LOCKFILES = [
   'Pipfile.lock',
 ]
 
+function hasLockfileInSubdirs(repoPath: string): boolean {
+  const skip = new Set(['node_modules', '.git', 'dist', 'build', '.next', 'coverage', '.cache'])
+  try {
+    for (const entry of fs.readdirSync(repoPath, { withFileTypes: true })) {
+      if (!entry.isDirectory() || skip.has(entry.name)) continue
+      if (LOCKFILES.some((f) => fs.existsSync(path.join(repoPath, entry.name, f)))) return true
+    }
+  } catch {}
+  return false
+}
+
 export const securityAnalyzer: Analyzer = {
   buildingId: 'security',
 
@@ -76,7 +87,8 @@ export const securityAnalyzer: Analyzer = {
 
     const envTracked = fs.existsSync(path.join(ctx.repoPath, '.env'))
     const noSecretPatterns = !scanForSecrets(ctx.repoPath)
-    const hasLockfile = LOCKFILES.some((f) => fs.existsSync(path.join(ctx.repoPath, f)))
+    const hasLockfile = LOCKFILES.some((f) => fs.existsSync(path.join(ctx.repoPath, f))) ||
+      hasLockfileInSubdirs(ctx.repoPath)
 
     const tasks: Task[] = [
       { id: 'security-env-ignored', label: '.env listed in .gitignore', done: envInGitignore },

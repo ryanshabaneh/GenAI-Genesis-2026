@@ -36,6 +36,8 @@ export interface BuildingState {
   chatHistory: Message[]
   implementStatus: 'idle' | 'running'
   taskFeedback: Record<string, string>
+  /** Task IDs the user has clicked to select (checkbox checked but not implemented) */
+  selectedTaskIds: string[]
 }
 
 export type MessageRole = 'user' | 'assistant'
@@ -68,6 +70,14 @@ export interface CodeChange {
   acceptedAt: number
 }
 
+export interface DeploymentRecommendation {
+  platform: string
+  reason: string
+  framework: string | null
+  services: string[]
+  steps: string[]
+}
+
 export type ScanStatus = 'idle' | 'scanning' | 'complete' | 'error'
 
 // GitHubUser is the public user summary returned by GET /api/auth/me.
@@ -92,4 +102,8 @@ export type WsMessage =
   | { type: 'task:start'; building: BuildingId; taskId: string; taskLabel: string }
   | { type: 'task:complete'; building: BuildingId; taskId: string; success: boolean; summary: string }
   | { type: 'eval:result'; building: BuildingId; taskId: string; pass: boolean; feedback: string }
+  | { type: 'deploy:recommendation'; recommendation: DeploymentRecommendation }
+  | { type: 'verify:start'; building: BuildingId }
+  | { type: 'verify:result'; command: string; success: boolean; output: string }
+  | { type: 'verify:complete'; building: BuildingId; success: boolean; output: string }
   | { type: 'orchestrator:complete'; score: number }
