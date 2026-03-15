@@ -37,9 +37,15 @@
   --t-mid:  220ms ease;
   --t-slow: 380ms ease;
 
-  /* fonts */
-  --font-display: 'Iosevka Charon Mono', var(--font-exo2), sans-serif;
-  --font-ui:      'SFTSchriftedRound', var(--font-nunito), 'Nunito', sans-serif;
+  /* fonts
+     display  → SFTSchriftedRound Black  
+     action   → SFTSchriftedRoundComp   
+     ui       → Gabarito                 
+     mono     → JetBrains Mono           
+  */
+  --font-display: 'SFTSchriftedRound', 'Nunito', sans-serif;
+  --font-action:  'SFTSchriftedRoundComp', 'Nunito', sans-serif;
+  --font-ui:      var(--font-gabarito), 'Gabarito', 'Nunito', sans-serif;
   --font-mono:    var(--font-mono-jb), 'JetBrains Mono', monospace;
 
 }

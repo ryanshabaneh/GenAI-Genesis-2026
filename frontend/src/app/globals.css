@@ -2,6 +2,12 @@
 
 @import '../styles/tokens.css';
 @import '../styles/button-effects.css';
+@import '../styles/GlassIcons.css';
+@import '../styles/CubeProgress.css';
+@import '../styles/GlowFrame.css';
+@import '../styles/CurvedLoop.css';
+@import '../styles/WaveCard.css';
+@import '../styles/FeatureCard.css';
 
 /* local fonts */
 @font-face {
@@ -19,7 +25,6 @@
   src: url('/fonts/SFTSchriftedRound/SFTSchriftedRoundTRIAL-Regular.ttf') format('truetype');
   font-weight: 400; font-style: normal; font-display: swap;
 }
-/* CompBlack — condensed + maximum weight, used for font-action (big buttons, readiness number) */
 @font-face {
   font-family: 'SFTSchriftedRoundComp';
   src: url('/fonts/SFTSchriftedRound/SFTSchriftedRoundTRIAL-CompBlack.ttf') format('truetype');
@@ -97,7 +102,7 @@
   .blob-drift-b           { animation: drift  9s ease-in-out infinite 2s reverse; }
   .blob-drift-c           { animation: drift 15s ease-in-out infinite 4s; }
 
-  /* reusable hover lift — scale + float for panels/cards that aren't buttons */
+  /* reusable hover lift, scale + float for panels/cards that aren't buttons */
   .hover-lift { transition: transform 0.18s ease, box-shadow 0.18s ease; }
   .hover-lift:hover { transform: scale(1.025) translateY(-3px); box-shadow: 0 12px 32px rgba(0,0,0,0.35); }
 }
@@ -506,3 +511,25 @@
   0%, 100% { transform: translateY(0) rotate(-1deg); }
   50%       { transform: translateY(-5px) rotate(1deg); }
 }
+
+.lighthouse-glow-halo {
+  position: absolute;
+  /* extends well beyond the 120px logo box */
+  inset: -70%;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    rgba(200, 225, 255, 0.22) 0%,
+    rgba(120, 170, 255, 0.10) 35%,
+    rgba( 60, 130, 255, 0.04) 58%,
+    transparent 72%
+  );
+  pointer-events: none;
+  z-index: 0;
+  animation: halo-pulse 5s ease-in-out infinite alternate;
+}
+@keyframes halo-pulse {
+  0%   { opacity: 0.65; transform: scale(0.95); }
+  100% { opacity: 1;    transform: scale(1.12); }
+}
+
