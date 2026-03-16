@@ -31,7 +31,7 @@ Shipyard analyzes a GitHub repository and visualizes its production readiness as
 |---|---|
 | Frontend | Next.js 14, React Three Fiber, Zustand, Socket.IO, Tailwind, Framer Motion |
 | Backend | Express, Socket.IO, TypeScript |
-| AI | Claude Sonnet 4.6 via Anthropic API |
+| AI | Claude Sonnet 4.6 via Anthropic API | Aider framework |
 | Auth | GitHub OAuth 2.0 |
 
 ## Setup
